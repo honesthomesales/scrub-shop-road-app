@@ -100,4 +100,4 @@ Environment variables needed:
 
 MIT License 
 
-<!-- Trigger redeploy for GitHub Pages --> 
+<!-- Trigger redeploy for GitHub Pages (permissions fix) --> 
