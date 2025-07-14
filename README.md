@@ -99,3 +99,5 @@ Environment variables needed:
 ## 📄 License
 
 MIT License 
+
+<!-- Trigger redeploy for GitHub Pages --> 
