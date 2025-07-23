@@ -7,6 +7,9 @@ import DailySales from './pages/DailySales'
 import Calendar from './pages/Calendar'
 import Venues from './pages/Venues'
 import Staff from './pages/Staff'
+import Messages from './pages/Messages'
+import Tasks from './pages/Tasks'
+import Team from './pages/Team'
 import AuthCallback from './components/AuthCallback'
 
 function AppContent() {
@@ -37,6 +40,9 @@ function AppContent() {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/venues" element={<Venues />} />
         <Route path="/staff" element={<Staff />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/tasks" element={<Tasks />} />
+        <Route path="/team" element={<Team />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
     </div>
@@ -45,7 +51,7 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
+    <Router basename={import.meta.env.BASE_URL}>
       <AppProvider>
         <AppContent />
       </AppProvider>

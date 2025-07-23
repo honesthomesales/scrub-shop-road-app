@@ -550,6 +550,416 @@ class SupabaseAPI {
     // In the future, you can implement Supabase Auth here
     return true
   }
+
+  // ===== TEAM COMMUNICATION & TASK MANAGEMENT FUNCTIONS =====
+
+  // Users Management
+  async getUsers() {
+    try {
+      if (!supabase) {
+        const mockUsers = [
+          { id: 1, name: 'John Smith', email: 'john@scrubshop.com', role: 'manager', is_active: true },
+          { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com', role: 'worker', is_active: true },
+          { id: 3, name: 'Mike Johnson', email: 'mike@scrubshop.com', role: 'worker', is_active: true },
+          { id: 4, name: 'Sarah Wilson', email: 'sarah@scrubshop.com', role: 'worker', is_active: true },
+          { id: 5, name: 'Tom Brown', email: 'tom@scrubshop.com', role: 'admin', is_active: true }
+        ]
+        return { success: true, data: mockUsers }
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('is_active', true)
+        .order('name')
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get users:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async addUser(userData) {
+    try {
+      if (!supabase) {
+        const newUser = { id: Date.now(), ...userData, created_at: new Date().toISOString() }
+        return { success: true, data: newUser }
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .insert([userData])
+        .select()
+        .single()
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Failed to add user:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async updateUser(userId, userData) {
+    try {
+      if (!supabase) {
+        return { success: true, data: { id: userId, ...userData } }
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .update(userData)
+        .eq('id', userId)
+        .select()
+        .single()
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Failed to update user:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Message Groups Management
+  async getMessageGroups() {
+    try {
+      if (!supabase) {
+        const mockGroups = [
+          { id: 1, group_name: 'Team Chat', created_by: 1, is_active: true }
+        ]
+        return { success: true, data: mockGroups }
+      }
+
+      const { data, error } = await supabase
+        .from('message_groups')
+        .select('*')
+        .eq('is_active', true)
+        .order('group_name')
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get message groups:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async getGroupMembers(groupId) {
+    try {
+      if (!supabase) {
+        const mockMembers = [
+          { id: 1, group_id: 1, user_id: 1, role: 'admin' },
+          { id: 2, group_id: 1, user_id: 2, role: 'member' },
+          { id: 3, group_id: 1, user_id: 3, role: 'member' },
+          { id: 4, group_id: 1, user_id: 4, role: 'member' },
+          { id: 5, group_id: 1, user_id: 5, role: 'admin' }
+        ]
+        return { success: true, data: mockMembers }
+      }
+
+      const { data, error } = await supabase
+        .from('group_members')
+        .select(`
+          *,
+          users (id, name, email, role, avatar_url)
+        `)
+        .eq('group_id', groupId)
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get group members:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  // Team Messages Management
+  async getMessages(groupId = null, recipientId = null, limit = 50) {
+    try {
+      if (!supabase) {
+        const mockMessages = [
+          {
+            id: 1,
+            sender_id: 1,
+            group_id: 1,
+            message_text: 'Hello team! How is everyone doing today?',
+            message_type: 'text',
+            created_at: new Date().toISOString()
+          },
+          {
+            id: 2,
+            sender_id: 2,
+            group_id: 1,
+            message_text: 'Doing great! Ready for the weekend shows.',
+            message_type: 'text',
+            created_at: new Date(Date.now() - 3600000).toISOString()
+          }
+        ]
+        return { success: true, data: mockMessages }
+      }
+
+      let query = supabase
+        .from('team_messages')
+        .select(`
+          *,
+          sender:users!team_messages_sender_id_fkey (id, name, email, avatar_url)
+        `)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (groupId) {
+        query = query.eq('group_id', groupId)
+      } else if (recipientId) {
+        query = query.eq('recipient_id', recipientId)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get messages:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async sendMessage(messageData) {
+    try {
+      if (!supabase) {
+        const newMessage = {
+          id: Date.now(),
+          ...messageData,
+          created_at: new Date().toISOString()
+        }
+        return { success: true, data: newMessage }
+      }
+
+      const { data, error } = await supabase
+        .from('team_messages')
+        .insert([messageData])
+        .select(`
+          *,
+          sender:users!team_messages_sender_id_fkey (id, name, email, avatar_url)
+        `)
+        .single()
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Tasks Management
+  async getTasks(assignedTo = null, status = null) {
+    try {
+      if (!supabase) {
+        const mockTasks = [
+          {
+            id: 1,
+            title: 'Prepare trailer for weekend shows',
+            description: 'Clean and stock the trailer for upcoming events',
+            assigned_by: 1,
+            assigned_to: 2,
+            priority: 'high',
+            status: 'pending',
+            due_date: new Date(Date.now() + 86400000).toISOString(),
+            category: 'maintenance'
+          },
+          {
+            id: 2,
+            title: 'Contact new venue',
+            description: 'Follow up with the new venue we discussed',
+            assigned_by: 1,
+            assigned_to: 3,
+            priority: 'normal',
+            status: 'in_progress',
+            due_date: new Date(Date.now() + 172800000).toISOString(),
+            category: 'venue'
+          }
+        ]
+        return { success: true, data: mockTasks }
+      }
+
+      let query = supabase
+        .from('tasks')
+        .select(`
+          *,
+          assigned_by_user:users!tasks_assigned_by_fkey (id, name, email),
+          assigned_to_user:users!tasks_assigned_to_fkey (id, name, email)
+        `)
+        .order('created_at', { ascending: false })
+
+      if (assignedTo) {
+        query = query.eq('assigned_to', assignedTo)
+      }
+
+      if (status) {
+        query = query.eq('status', status)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get tasks:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async createTask(taskData) {
+    try {
+      if (!supabase) {
+        const newTask = {
+          id: Date.now(),
+          ...taskData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        return { success: true, data: newTask }
+      }
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([taskData])
+        .select(`
+          *,
+          assigned_by_user:users!tasks_assigned_by_fkey (id, name, email),
+          assigned_to_user:users!tasks_assigned_to_fkey (id, name, email)
+        `)
+        .single()
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Failed to create task:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async updateTask(taskId, taskData) {
+    try {
+      if (!supabase) {
+        return { success: true, data: { id: taskId, ...taskData } }
+      }
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ ...taskData, updated_at: new Date().toISOString() })
+        .eq('id', taskId)
+        .select(`
+          *,
+          assigned_by_user:users!tasks_assigned_by_fkey (id, name, email),
+          assigned_to_user:users!tasks_assigned_to_fkey (id, name, email)
+        `)
+        .single()
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Failed to update task:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async deleteTask(taskId) {
+    try {
+      if (!supabase) {
+        return { success: true }
+      }
+
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+
+      if (error) throw new Error(error.message)
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to delete task:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Task Comments Management
+  async getTaskComments(taskId) {
+    try {
+      if (!supabase) {
+        const mockComments = [
+          {
+            id: 1,
+            task_id: 1,
+            user_id: 2,
+            comment_text: 'Started working on this task',
+            created_at: new Date().toISOString()
+          }
+        ]
+        return { success: true, data: mockComments }
+      }
+
+      const { data, error } = await supabase
+        .from('task_comments')
+        .select(`
+          *,
+          user:users (id, name, email, avatar_url)
+        `)
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: true })
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get task comments:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async addTaskComment(commentData) {
+    try {
+      if (!supabase) {
+        const newComment = {
+          id: Date.now(),
+          ...commentData,
+          created_at: new Date().toISOString()
+        }
+        return { success: true, data: newComment }
+      }
+
+      const { data, error } = await supabase
+        .from('task_comments')
+        .insert([commentData])
+        .select(`
+          *,
+          user:users (id, name, email, avatar_url)
+        `)
+        .single()
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Failed to add task comment:', error)
+      return { success: false, error: error.message }
+    }
+  }
 }
 
 // Create and export singleton instance

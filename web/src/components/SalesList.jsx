@@ -13,6 +13,11 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
 
   // Filter sales by current month
   useEffect(() => {
+    console.log('=== SALES LIST DEBUG ===')
+    console.log('Current month:', currentMonth)
+    console.log('Total sales data:', salesData.length)
+    console.log('All sales dates:', salesData.map(s => ({ date: s.date, parsed: parseDateString(s.date) })))
+    
     const filtered = salesData.filter(sale => {
       // Use the parseDateString function for consistent date parsing
       const saleDate = parseDateString(sale.date)
@@ -23,20 +28,27 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
         return false
       }
       
-      return saleDate.getMonth() === currentMonth.getMonth() && 
-             saleDate.getFullYear() === currentMonth.getFullYear()
+      const matchesMonth = saleDate.getMonth() === currentMonth.getMonth() && 
+                          saleDate.getFullYear() === currentMonth.getFullYear()
+      
+      console.log(`Sale date: ${sale.date} -> ${saleDate}, matches current month (${currentMonth.getMonth()}/${currentMonth.getFullYear()}): ${matchesMonth}`)
+      
+      return matchesMonth
     }).sort((a, b) => {
       const dateA = parseDateString(a.date)
       const dateB = parseDateString(b.date)
       return dateB - dateA
     })
     
+    console.log('Filtered sales count:', filtered.length)
+    console.log('Filtered sales:', filtered)
+    
     setFilteredSales(filtered)
   }, [salesData, currentMonth])
 
   const getVenueName = (venueId) => {
-    const venue = venuesData.find(v => v.id === venueId)
-    return venue ? venue.promo : venueId || 'N/A'
+    // venueId is actually the venue name (common_venue_name) from the database
+    return venueId || 'N/A'
   }
 
   const getStatusColor = (status) => {
@@ -87,7 +99,7 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
           </button>
           
           <h2 className="text-xl font-semibold text-secondary-900">
-            {getMonthName(currentMonth)}
+            {getMonthName(currentMonth)} ({currentMonth.getFullYear()})
           </h2>
           
           <button
@@ -99,13 +111,21 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
           </button>
         </div>
         
-        <button
-          onClick={onAddSale}
-          className="btn-primary"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Sale
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setCurrentMonth(new Date(2024, 6, 1))} // July 2024
+            className="btn-outline text-sm"
+          >
+            Go to July 2024
+          </button>
+          <button
+            onClick={onAddSale}
+            className="btn-primary"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Sale
+          </button>
+        </div>
       </div>
 
       {/* Sales List */}

@@ -30,10 +30,8 @@ const DailySales = () => {
   const handleEditSale = (sale) => {
     console.log('DEBUG SALE:', sale);
     console.log('DEBUG DATE INPUT VALUE:', formatDateInput(sale.date));
-    // Map venue name to venue id for select
-    const venueIdFromName = venuesData.find(
-      v => v.promo === sale.venueId || v.promo === sale.venue_id || v.promo === sale.venue
-    )?.id || '';
+    // Map venue name to venue name for select (since we're using venue.promo as value)
+    const venueName = sale.venueId || sale.venue_id || sale.venue || '';
     setEditingSale(sale)
     // Use local yyyy-MM-dd for input type="date"
     setFormData({
@@ -42,7 +40,7 @@ const DailySales = () => {
       salesTax: sale.salesTax !== undefined && sale.salesTax !== null ? sale.salesTax : 0,
       netSales: sale.netSales !== undefined && sale.netSales !== null ? sale.netSales : 0,
       grossSales: sale.grossSales !== undefined && sale.grossSales !== null ? sale.grossSales : 0,
-      venueId: venueIdFromName,
+      venueId: venueName,
     })
     setFormErrors({})
     setShowModal(true)
@@ -231,7 +229,7 @@ const DailySales = () => {
                   >
                     <option value="">Select Venue</option>
                     {venuesData.map(venue => (
-                      <option key={venue.id} value={venue.id}>
+                      <option key={venue.id} value={venue.promo}>
                         {venue.promo} - {venue.addressCity}
                       </option>
                     ))}

@@ -11,6 +11,9 @@ import DailySalesScreen from './src/screens/DailySalesScreen'
 import CalendarScreen from './src/screens/CalendarScreen'
 import VenuesScreen from './src/screens/VenuesScreen'
 import StaffScreen from './src/screens/StaffScreen'
+import MessagesScreen from './src/screens/MessagesScreen'
+import TasksScreen from './src/screens/TasksScreen'
+import TeamScreen from './src/screens/TeamScreen'
 
 // Import context
 import { AppProvider } from './src/contexts/AppContext'
@@ -35,6 +38,12 @@ function TabNavigator() {
             iconName = focused ? 'location' : 'location-outline'
           } else if (route.name === 'Staff') {
             iconName = focused ? 'people' : 'people-outline'
+          } else if (route.name === 'Messages') {
+            iconName = focused ? 'chatbubbles' : 'chatbubbles-outline'
+          } else if (route.name === 'Tasks') {
+            iconName = focused ? 'checkbox' : 'checkbox-outline'
+          } else if (route.name === 'Team') {
+            iconName = focused ? 'people-circle' : 'people-circle-outline'
           }
 
           return <Ionicons name={iconName} size={size} color={color} />
@@ -49,6 +58,9 @@ function TabNavigator() {
       <Tab.Screen name="Calendar" component={CalendarScreen} />
       <Tab.Screen name="Venues" component={VenuesScreen} />
       <Tab.Screen name="Staff" component={StaffScreen} />
+      <Tab.Screen name="Messages" component={MessagesScreen} />
+      <Tab.Screen name="Tasks" component={TasksScreen} />
+      <Tab.Screen name="Team" component={TeamScreen} />
     </Tab.Navigator>
   )
 }

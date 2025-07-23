@@ -1,42 +1,44 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useApp } from '../contexts/AppContext'
 
 const AuthStatus = () => {
-  const { isAuthenticated, setIsAuthenticated } = useApp()
+  const { isAuthenticated, toggleSupabaseConnection, loading } = useApp()
+  const [isConnecting, setIsConnecting] = useState(false)
 
-  const handleLogout = () => {
-    // Clear stored tokens (if any)
-    setIsAuthenticated(false)
-  }
-
-  if (isAuthenticated) {
-    return (
-      <div className="flex items-center space-x-2">
-        <div className="flex items-center space-x-1">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-sm text-gray-600">Connected to Supabase</span>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="text-sm text-red-600 hover:text-red-800 font-medium"
-        >
-          Disconnect
-        </button>
-      </div>
-    )
+  const handleToggleConnection = async () => {
+    setIsConnecting(true)
+    try {
+      if (isAuthenticated) {
+        // Disconnect from Supabase
+        await toggleSupabaseConnection(false)
+      } else {
+        // Connect to Supabase
+        await toggleSupabaseConnection(true)
+      }
+    } catch (error) {
+      console.error('Connection toggle error:', error)
+    } finally {
+      setIsConnecting(false)
+    }
   }
 
   return (
-    <div className="flex items-center space-x-2">
-      <div className="flex items-center space-x-1">
-        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-        <span className="text-sm text-gray-600">Not connected to Supabase</span>
-      </div>
+    <div className="flex items-center">
       <button
-        onClick={() => setIsAuthenticated(true)}
-        className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        onClick={handleToggleConnection}
+        disabled={isConnecting || loading}
+        className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        title={isAuthenticated ? "Click to disconnect from Supabase" : "Click to connect to Supabase"}
       >
-        Connect
+        <div 
+          className={`w-3 h-3 rounded-full transition-colors duration-200 ${
+            isConnecting 
+              ? 'bg-yellow-500 animate-pulse' 
+              : isAuthenticated 
+                ? 'bg-green-500' 
+                : 'bg-red-500'
+          }`}
+        />
       </button>
     </div>
   )

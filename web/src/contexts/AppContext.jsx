@@ -12,7 +12,16 @@ const initialState = {
   error: null,
   currentMonth: new Date(),
   selectedVenue: null,
-  isAuthenticated: false
+  isAuthenticated: false,
+  // Team Communication & Task Management
+  usersData: [],
+  messagesData: [],
+  messageGroups: [],
+  tasksData: [],
+  taskComments: [],
+  currentUser: null,
+  selectedGroup: null,
+  selectedTask: null
 }
 
 // Action types
@@ -34,7 +43,21 @@ const ACTIONS = {
   DELETE_STAFF_ENTRY: 'DELETE_STAFF_ENTRY',
   SET_CURRENT_MONTH: 'SET_CURRENT_MONTH',
   SET_SELECTED_VENUE: 'SET_SELECTED_VENUE',
-  SET_AUTHENTICATED: 'SET_AUTHENTICATED'
+  SET_AUTHENTICATED: 'SET_AUTHENTICATED',
+  // Team Communication & Task Management
+  SET_USERS_DATA: 'SET_USERS_DATA',
+  SET_MESSAGES_DATA: 'SET_MESSAGES_DATA',
+  SET_MESSAGE_GROUPS: 'SET_MESSAGE_GROUPS',
+  SET_TASKS_DATA: 'SET_TASKS_DATA',
+  SET_TASK_COMMENTS: 'SET_TASK_COMMENTS',
+  ADD_MESSAGE: 'ADD_MESSAGE',
+  ADD_TASK: 'ADD_TASK',
+  UPDATE_TASK: 'UPDATE_TASK',
+  DELETE_TASK: 'DELETE_TASK',
+  ADD_TASK_COMMENT: 'ADD_TASK_COMMENT',
+  SET_CURRENT_USER: 'SET_CURRENT_USER',
+  SET_SELECTED_GROUP: 'SET_SELECTED_GROUP',
+  SET_SELECTED_TASK: 'SET_SELECTED_TASK'
 }
 
 // Reducer function
@@ -90,11 +113,21 @@ function appReducer(state, action) {
       }
     
     case ACTIONS.UPDATE_SALES_ENTRY:
+      console.log('=== REDUCER UPDATE DEBUG ===')
+      console.log('Updating entry with ID:', action.payload.id)
+      console.log('New entry data:', action.payload)
+      console.log('Current sales data length:', state.salesData.length)
+      
+      const updatedSalesData = state.salesData.map(entry => 
+        entry.id === action.payload.id ? action.payload : entry
+      )
+      
+      console.log('Updated sales data length:', updatedSalesData.length)
+      console.log('Updated entry in array:', updatedSalesData.find(e => e.id === action.payload.id))
+      
       return {
         ...state,
-        salesData: state.salesData.map(entry => 
-          entry.id === action.payload.id ? action.payload : entry
-        )
+        salesData: updatedSalesData
       }
     
     case ACTIONS.DELETE_SALES_ENTRY:
@@ -161,6 +194,87 @@ function appReducer(state, action) {
         isAuthenticated: action.payload
       }
     
+    // Team Communication & Task Management
+    case ACTIONS.SET_USERS_DATA:
+      return {
+        ...state,
+        usersData: action.payload
+      }
+    
+    case ACTIONS.SET_MESSAGES_DATA:
+      return {
+        ...state,
+        messagesData: action.payload
+      }
+    
+    case ACTIONS.SET_MESSAGE_GROUPS:
+      return {
+        ...state,
+        messageGroups: action.payload
+      }
+    
+    case ACTIONS.SET_TASKS_DATA:
+      return {
+        ...state,
+        tasksData: action.payload
+      }
+    
+    case ACTIONS.SET_TASK_COMMENTS:
+      return {
+        ...state,
+        taskComments: action.payload
+      }
+    
+    case ACTIONS.ADD_MESSAGE:
+      return {
+        ...state,
+        messagesData: [action.payload, ...state.messagesData]
+      }
+    
+    case ACTIONS.ADD_TASK:
+      return {
+        ...state,
+        tasksData: [action.payload, ...state.tasksData]
+      }
+    
+    case ACTIONS.UPDATE_TASK:
+      return {
+        ...state,
+        tasksData: state.tasksData.map(task => 
+          task.id === action.payload.id ? action.payload : task
+        )
+      }
+    
+    case ACTIONS.DELETE_TASK:
+      return {
+        ...state,
+        tasksData: state.tasksData.filter(task => task.id !== action.payload)
+      }
+    
+    case ACTIONS.ADD_TASK_COMMENT:
+      return {
+        ...state,
+        taskComments: [...state.taskComments, action.payload]
+      }
+    
+    case ACTIONS.SET_CURRENT_USER:
+      return {
+        ...state,
+        currentUser: action.payload
+      }
+    
+    case ACTIONS.SET_SELECTED_GROUP:
+      return {
+        ...state,
+        selectedGroup: action.payload
+      }
+    
+    case ACTIONS.SET_SELECTED_TASK:
+      return {
+        ...state,
+        selectedTask: action.payload
+      }
+    
     default:
       return state
   }
@@ -194,7 +308,8 @@ export function AppProvider({ children }) {
         await Promise.all([
           loadSalesData(),
           loadVenuesData(),
-          loadStaffData()
+          loadStaffData(),
+          loadTeamData()
         ])
       }
     } catch (error) {
@@ -275,9 +390,18 @@ export function AppProvider({ children }) {
   const addSalesEntry = async (entryData) => {
     try {
       const tableName = state.currentSheet === 'TRAILER_HISTORY' ? 'trailer_history' : 'camper_history'
-      // Transform sales data to the correct format for Google Sheets
-      const sheetData = transformSalesData(entryData, state.currentSheet)
-      const result = await supabaseAPI.addRow(tableName, sheetData)
+      
+      // Transform the entry data to match database schema
+      const dbData = {
+        date: entryData.date,
+        status: entryData.status,
+        sales_tax: entryData.sales_tax,
+        net_sales: entryData.net_sales,
+        gross_sales: entryData.gross_sales,
+        common_venue_name: entryData.venue_id // Map venue_id to common_venue_name
+      }
+      
+      const result = await supabaseAPI.addRow(tableName, dbData)
       
       if (result.success) {
         const newEntry = transformSalesData(result.data, state.currentSheet)
@@ -293,16 +417,38 @@ export function AppProvider({ children }) {
 
   const updateSalesEntry = async (entryId, entryData) => {
     try {
+      console.log('=== UPDATE SALES ENTRY DEBUG ===')
+      console.log('Entry ID:', entryId)
+      console.log('Entry Data:', entryData)
+      
       const tableName = state.currentSheet === 'TRAILER_HISTORY' ? 'trailer_history' : 'camper_history'
-      const result = await supabaseAPI.updateRow(tableName, entryId, entryData)
+      
+      // Transform the entry data to match database schema
+      const dbData = {
+        date: entryData.date,
+        status: entryData.status,
+        sales_tax: entryData.sales_tax,
+        net_sales: entryData.net_sales,
+        gross_sales: entryData.gross_sales,
+        common_venue_name: entryData.venue_id // Map venue_id to common_venue_name
+      }
+      
+      console.log('DB Data being sent:', dbData)
+      
+      const result = await supabaseAPI.updateRow(tableName, entryId, dbData)
+      console.log('Update result:', result)
+      
       if (result.success) {
-        const updatedEntry = { ...entryData, id: entryId }
+        // Use the returned data from the database to ensure consistency
+        const updatedEntry = transformSalesData(result.data, state.currentSheet)
+        console.log('Transformed updated entry:', updatedEntry)
         dispatch({ type: ACTIONS.UPDATE_SALES_ENTRY, payload: updatedEntry })
         return { success: true }
       } else {
         return { success: false, error: result.error }
       }
     } catch (error) {
+      console.error('Update sales entry error:', error)
       return { success: false, error: error.message }
     }
   }
@@ -439,9 +585,186 @@ export function AppProvider({ children }) {
     dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: authenticated })
   }
 
+  const toggleSupabaseConnection = async (connect) => {
+    if (connect) {
+      // Connect to Supabase
+      try {
+        const isInitialized = await supabaseAPI.init()
+        if (isInitialized) {
+          dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: true })
+          // Load data after successful connection
+          await Promise.all([
+            loadSalesData(),
+            loadVenuesData(),
+            loadStaffData()
+          ])
+        } else {
+          dispatch({ type: ACTIONS.SET_ERROR, payload: 'Failed to connect to Supabase' })
+        }
+      } catch (error) {
+        dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
+      }
+    } else {
+      // Disconnect from Supabase
+      dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: false })
+      // Clear data when disconnected
+      dispatch({ type: ACTIONS.SET_SALES_DATA, payload: [] })
+      dispatch({ type: ACTIONS.SET_VENUES_DATA, payload: [] })
+      dispatch({ type: ACTIONS.SET_STAFF_DATA, payload: [] })
+    }
+  }
+
   // Get active workers for calendar (filter by status)
   const getActiveWorkers = () => {
     return state.staffData.filter(staff => staff.status === 'Active')
+  }
+
+  // ===== TEAM COMMUNICATION & TASK MANAGEMENT FUNCTIONS =====
+
+  // Load team data
+  const loadTeamData = async () => {
+    try {
+      const [usersResult, groupsResult] = await Promise.all([
+        supabaseAPI.getUsers(),
+        supabaseAPI.getMessageGroups()
+      ])
+
+      if (usersResult.success) {
+        dispatch({ type: ACTIONS.SET_USERS_DATA, payload: usersResult.data })
+      }
+
+      if (groupsResult.success) {
+        dispatch({ type: ACTIONS.SET_MESSAGE_GROUPS, payload: groupsResult.data })
+      }
+    } catch (error) {
+      console.error('Failed to load team data:', error)
+    }
+  }
+
+  // Load messages for a group
+  const loadMessages = async (groupId) => {
+    try {
+      const result = await supabaseAPI.getMessages(groupId)
+      if (result.success) {
+        dispatch({ type: ACTIONS.SET_MESSAGES_DATA, payload: result.data })
+      }
+    } catch (error) {
+      console.error('Failed to load messages:', error)
+    }
+  }
+
+  // Send a message
+  const sendMessage = async (messageData) => {
+    try {
+      const result = await supabaseAPI.sendMessage(messageData)
+      if (result.success) {
+        dispatch({ type: ACTIONS.ADD_MESSAGE, payload: result.data })
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Load tasks
+  const loadTasks = async (assignedTo = null, status = null) => {
+    try {
+      const result = await supabaseAPI.getTasks(assignedTo, status)
+      if (result.success) {
+        dispatch({ type: ACTIONS.SET_TASKS_DATA, payload: result.data })
+      }
+    } catch (error) {
+      console.error('Failed to load tasks:', error)
+    }
+  }
+
+  // Create a task
+  const createTask = async (taskData) => {
+    try {
+      const result = await supabaseAPI.createTask(taskData)
+      if (result.success) {
+        dispatch({ type: ACTIONS.ADD_TASK, payload: result.data })
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Update a task
+  const updateTask = async (taskId, taskData) => {
+    try {
+      const result = await supabaseAPI.updateTask(taskId, taskData)
+      if (result.success) {
+        dispatch({ type: ACTIONS.UPDATE_TASK, payload: result.data })
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Delete a task
+  const deleteTask = async (taskId) => {
+    try {
+      const result = await supabaseAPI.deleteTask(taskId)
+      if (result.success) {
+        dispatch({ type: ACTIONS.DELETE_TASK, payload: taskId })
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Load task comments
+  const loadTaskComments = async (taskId) => {
+    try {
+      const result = await supabaseAPI.getTaskComments(taskId)
+      if (result.success) {
+        dispatch({ type: ACTIONS.SET_TASK_COMMENTS, payload: result.data })
+      }
+    } catch (error) {
+      console.error('Failed to load task comments:', error)
+    }
+  }
+
+  // Add task comment
+  const addTaskComment = async (commentData) => {
+    try {
+      const result = await supabaseAPI.addTaskComment(commentData)
+      if (result.success) {
+        dispatch({ type: ACTIONS.ADD_TASK_COMMENT, payload: result.data })
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Set current user
+  const setCurrentUser = (user) => {
+    dispatch({ type: ACTIONS.SET_CURRENT_USER, payload: user })
+  }
+
+  // Set selected group
+  const setSelectedGroup = (group) => {
+    dispatch({ type: ACTIONS.SET_SELECTED_GROUP, payload: group })
+  }
+
+  // Set selected task
+  const setSelectedTask = (task) => {
+    dispatch({ type: ACTIONS.SET_SELECTED_TASK, payload: task })
   }
 
   const value = {
@@ -464,7 +787,21 @@ export function AppProvider({ children }) {
     loadSalesData,
     loadVenuesData,
     loadStaffData,
-    setIsAuthenticated
+    setIsAuthenticated,
+    toggleSupabaseConnection,
+    // Team Communication & Task Management
+    loadTeamData,
+    loadMessages,
+    sendMessage,
+    loadTasks,
+    createTask,
+    updateTask,
+    deleteTask,
+    loadTaskComments,
+    addTaskComment,
+    setCurrentUser,
+    setSelectedGroup,
+    setSelectedTask
   }
 
   return (

@@ -120,3 +120,79 @@ export const formatDateInput = (date) => {
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 } 
+
+/**
+ * Calculate the average of the last 5 gross sales by venue, rounded to the nearest hundred
+ * @param {Array} salesData - Array of sales entries
+ * @param {Array} venuesData - Array of venue entries
+ * @returns {Array} Array of venues with average sales data
+ */
+export const calculateVenueAverageSales = (salesData, venuesData) => {
+  // Group sales by venue
+  const salesByVenue = {}
+  
+  salesData.forEach(sale => {
+    if (sale.venueId && sale.grossSales > 0) {
+      if (!salesByVenue[sale.venueId]) {
+        salesByVenue[sale.venueId] = []
+      }
+      salesByVenue[sale.venueId].push({
+        ...sale,
+        date: new Date(sale.date)
+      })
+    }
+  })
+  
+  // Calculate average for each venue
+  const venueAverages = venuesData.map(venue => {
+    const venueSales = salesByVenue[venue.promo] || []
+    
+    // Sort by date (most recent first) and take last 5
+    const recentSales = venueSales
+      .sort((a, b) => b.date - a.date)
+      .slice(0, 5)
+      .map(sale => sale.grossSales)
+    
+    let averageSales = 0
+    if (recentSales.length > 0) {
+      const sum = recentSales.reduce((acc, sale) => acc + sale, 0)
+      averageSales = sum / recentSales.length
+      // Round to nearest hundred
+      averageSales = Math.round(averageSales / 100) * 100
+    }
+    
+
+    
+    return {
+      ...venue,
+      averageSales,
+      salesCount: recentSales.length
+    }
+  })
+  
+  // Sort by average sales (highest to lowest)
+  return venueAverages.sort((a, b) => b.averageSales - a.averageSales)
+} 
+
+/**
+ * Get the last 5 sales with dates and amounts for a specific venue
+ * @param {Array} salesData - Array of sales entries
+ * @param {string} venueName - Name of the venue
+ * @returns {Array} Array of sales with date and amount
+ */
+export const getLastFiveSalesForVenue = (salesData, venueName) => {
+  const venueSales = salesData
+    .filter(sale => sale.venueId === venueName && sale.grossSales > 0)
+    .map(sale => ({
+      ...sale,
+      date: new Date(sale.date)
+    }))
+    .sort((a, b) => b.date - a.date)
+    .slice(0, 5)
+    .map(sale => ({
+      date: sale.date.toLocaleDateString(),
+      amount: sale.grossSales
+    }))
+  
+  return venueSales
+} 

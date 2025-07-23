@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ChevronDown, BarChart3, Calendar, MapPin, Users, DollarSign } from 'lucide-react'
+import { ChevronDown, BarChart3, Calendar, MapPin, Users, DollarSign, MessageSquare, CheckSquare, UserPlus } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { cn } from '../utils/cn'
 import AuthStatus from './AuthStatus'
@@ -14,7 +14,10 @@ const Header = () => {
     { name: 'Daily Sales', href: '/daily-sales', icon: DollarSign },
     { name: 'Calendar', href: '/calendar', icon: Calendar },
     { name: 'Venues', href: '/venues', icon: MapPin },
-    { name: 'Staff', href: '/staff', icon: Users }
+    { name: 'Staff', href: '/staff', icon: Users },
+    { name: 'Messages', href: '/messages', icon: MessageSquare },
+    { name: 'Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Team', href: '/team', icon: UserPlus }
   ]
 
   const isActive = (path) => {

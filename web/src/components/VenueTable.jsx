@@ -1,22 +1,34 @@
-import React, { useState, useEffect } from 'react'
-import { Edit, Trash2, Plus, Search, MapPin } from 'lucide-react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { Edit, Trash2, Plus, Search, MapPin, DollarSign } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { cn } from '../utils/cn'
+import { calculateVenueAverageSales, getLastFiveSalesForVenue } from '../utils/dateUtils'
 
 const VenueTable = ({ onAddVenue, onEditVenue, onDeleteVenue }) => {
-  const { venuesData } = useApp()
+  const { venuesData, salesData } = useApp()
+  
+
   const [filteredVenues, setFilteredVenues] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
   const [selectedVenue, setSelectedVenue] = useState(null)
   const [showDetails, setShowDetails] = useState(false)
 
+  // Calculate venue averages and sort by highest to lowest
+  const venuesWithAverages = useMemo(() => {
+    const result = calculateVenueAverageSales(salesData, venuesData)
+    return result
+  }, [salesData, venuesData])
+
   // Get unique cities for filter
-  const cities = [...new Set(venuesData.map(venue => venue.addressCity).filter(Boolean))]
+  const cities = useMemo(() => 
+    [...new Set(venuesWithAverages.map(venue => venue.addressCity).filter(Boolean))],
+    [venuesWithAverages]
+  )
 
   // Filter venues based on search and city
   useEffect(() => {
-    let filtered = venuesData
+    let filtered = venuesWithAverages
 
     if (searchTerm) {
       filtered = filtered.filter(venue =>
@@ -31,7 +43,7 @@ const VenueTable = ({ onAddVenue, onEditVenue, onDeleteVenue }) => {
     }
 
     setFilteredVenues(filtered)
-  }, [venuesData, searchTerm, selectedCity])
+  }, [venuesWithAverages, searchTerm, selectedCity])
 
   const handleDelete = async (venueId) => {
     if (window.confirm('Are you sure you want to delete this venue?')) {
@@ -100,41 +112,49 @@ const VenueTable = ({ onAddVenue, onEditVenue, onDeleteVenue }) => {
 
       {/* Results Count */}
       <div className="text-sm text-secondary-600">
-        Showing {filteredVenues.length} of {venuesData.length} venues
+        Showing {filteredVenues.length} of {venuesWithAverages.length} venues
       </div>
 
       {/* Venues Table */}
       <div className="card">
         <div className="card-body p-0">
           <div className="overflow-x-auto">
-            <table className="table">
+            <table className="table w-full">
               <thead className="table-header">
                 <tr>
                   <th className="table-header-cell">Venue Name</th>
                   <th className="table-header-cell">City</th>
-                  <th className="table-header-cell">Contact</th>
-                  <th className="table-header-cell">Phone</th>
-                  <th className="table-header-cell">Email</th>
-                  <th className="table-header-cell">Times</th>
                   <th className="table-header-cell sticky right-0 bg-white z-10">Actions</th>
                 </tr>
               </thead>
               <tbody className="table-body">
                 {filteredVenues.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="table-cell text-center text-secondary-500 py-8">
+                    <td colSpan="3" className="table-cell text-center text-secondary-500 py-8">
                       {searchTerm || selectedCity ? 'No venues match your search criteria' : 'No venues found'}
                     </td>
                   </tr>
                 ) : (
-                  filteredVenues.map((venue) => (
+                  filteredVenues.map((venue, index) => (
                     <tr key={venue.id} className="table-row">
                       <td className="table-cell">
                         <div>
-                          <div className="font-medium text-secondary-900">{venue.promo}</div>
+                          <div className="font-medium text-secondary-900 flex items-center">
+                            {venue.averageSales > 0 && (
+                              <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-primary-600 rounded-full mr-2">
+                                #{index + 1}
+                              </span>
+                            )}
+                            {venue.promo}
+                          </div>
                           {venue.promoSend && (
                             <div className="text-xs text-secondary-500">
                               Promo: {venue.promoSend}
+                            </div>
+                          )}
+                          {venue.averageSales > 0 && (
+                            <div className="text-xs text-primary-600 font-medium mt-1">
+                              💰 Avg Sales: ${venue.averageSales.toLocaleString()} ({venue.salesCount} sales)
                             </div>
                           )}
                         </div>
@@ -145,17 +165,6 @@ const VenueTable = ({ onAddVenue, onEditVenue, onDeleteVenue }) => {
                           {venue.addressCity}
                         </div>
                       </td>
-                      <td className="table-cell">{venue.contact}</td>
-                      <td className="table-cell">{venue.phone}</td>
-                      <td className="table-cell">
-                        <a 
-                          href={`mailto:${venue.email}`}
-                          className="text-primary-600 hover:text-primary-900"
-                        >
-                          {venue.email}
-                        </a>
-                      </td>
-                      <td className="table-cell">{venue.times}</td>
                       <td className="table-cell sticky right-0 bg-white z-10">
                         <div className="flex items-center space-x-2">
                           <button
@@ -257,6 +266,29 @@ const VenueTable = ({ onAddVenue, onEditVenue, onDeleteVenue }) => {
               <div>
                 <label className="text-sm font-medium text-secondary-600">Forecast Will</label>
                 <p className="text-secondary-900">{selectedVenue.forecastWill || 'N/A'}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-secondary-600">Last 5 Sales</label>
+                <div className="text-secondary-900">
+                  {(() => {
+                    const lastFiveSales = getLastFiveSalesForVenue(salesData, selectedVenue.promo)
+                    if (lastFiveSales.length > 0) {
+                      return (
+                        <div className="space-y-1">
+                          {lastFiveSales.map((sale, index) => (
+                            <div key={index} className="flex justify-between items-center text-sm">
+                              <span className="text-secondary-600">{sale.date}</span>
+                              <span className="font-medium">${sale.amount.toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    } else {
+                      return <span className="text-secondary-500">No sales data</span>
+                    }
+                  })()}
+                </div>
               </div>
             </div>
             
