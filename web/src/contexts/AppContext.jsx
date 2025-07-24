@@ -22,17 +22,22 @@ const initialState = {
   // Tasks functionality
   tasksData: [],
   taskComments: [],
-  selectedTask: null
+  selectedTask: null,
+  // Sales Analysis functionality
+  salesAnalysisData: [],
+  salesAnalysisStats: {}
 }
 
 // Action types
 const ACTIONS = {
-  SET_CURRENT_SHEET: 'SET_CURRENT_SHEET',
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR',
   SET_SALES_DATA: 'SET_SALES_DATA',
   SET_VENUES_DATA: 'SET_VENUES_DATA',
   SET_STAFF_DATA: 'SET_STAFF_DATA',
+  SET_CURRENT_SHEET: 'SET_CURRENT_SHEET',
+  SET_CURRENT_MONTH: 'SET_CURRENT_MONTH',
+  SET_SELECTED_VENUE: 'SET_SELECTED_VENUE',
   ADD_SALES_ENTRY: 'ADD_SALES_ENTRY',
   UPDATE_SALES_ENTRY: 'UPDATE_SALES_ENTRY',
   DELETE_SALES_ENTRY: 'DELETE_SALES_ENTRY',
@@ -42,24 +47,16 @@ const ACTIONS = {
   ADD_STAFF_ENTRY: 'ADD_STAFF_ENTRY',
   UPDATE_STAFF_ENTRY: 'UPDATE_STAFF_ENTRY',
   DELETE_STAFF_ENTRY: 'DELETE_STAFF_ENTRY',
-  SET_CURRENT_MONTH: 'SET_CURRENT_MONTH',
-  SET_SELECTED_VENUE: 'SET_SELECTED_VENUE',
-  SET_AUTHENTICATED: 'SET_AUTHENTICATED',
-  // Messages functionality
+  SET_IS_AUTHENTICATED: 'SET_IS_AUTHENTICATED',
   SET_USERS_DATA: 'SET_USERS_DATA',
   SET_MESSAGES_DATA: 'SET_MESSAGES_DATA',
   SET_MESSAGE_GROUPS: 'SET_MESSAGE_GROUPS',
-  ADD_MESSAGE: 'ADD_MESSAGE',
   SET_CURRENT_USER: 'SET_CURRENT_USER',
   SET_SELECTED_GROUP: 'SET_SELECTED_GROUP',
-  // Tasks functionality
   SET_TASKS_DATA: 'SET_TASKS_DATA',
-  ADD_TASK: 'ADD_TASK',
-  UPDATE_TASK: 'UPDATE_TASK',
-  DELETE_TASK: 'DELETE_TASK',
-  SET_TASK_COMMENTS: 'SET_TASK_COMMENTS',
-  ADD_TASK_COMMENT: 'ADD_TASK_COMMENT',
-  SET_SELECTED_TASK: 'SET_SELECTED_TASK'
+  SET_SELECTED_TASK: 'SET_SELECTED_TASK',
+  SET_SALES_ANALYSIS_DATA: 'SET_SALES_ANALYSIS_DATA',
+  SET_SALES_ANALYSIS_STATS: 'SET_SALES_ANALYSIS_STATS'
 }
 
 // Reducer function
@@ -180,7 +177,7 @@ function appReducer(state, action) {
         selectedVenue: action.payload
       }
     
-    case ACTIONS.SET_AUTHENTICATED:
+    case ACTIONS.SET_IS_AUTHENTICATED:
       return {
         ...state,
         isAuthenticated: action.payload
@@ -268,6 +265,19 @@ function appReducer(state, action) {
         selectedTask: action.payload
       }
     
+    // Sales Analysis functionality
+    case ACTIONS.SET_SALES_ANALYSIS_DATA:
+      return {
+        ...state,
+        salesAnalysisData: action.payload
+      }
+    
+    case ACTIONS.SET_SALES_ANALYSIS_STATS:
+      return {
+        ...state,
+        salesAnalysisStats: action.payload
+      }
+    
     default:
       return state
   }
@@ -318,7 +328,7 @@ export function AppProvider({ children }) {
     
     try {
       const isInitialized = await supabaseAPI.init()
-      dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: isInitialized })
+      dispatch({ type: ACTIONS.SET_IS_AUTHENTICATED, payload: isInitialized })
       
       if (isInitialized) {
         await Promise.all([
@@ -584,7 +594,7 @@ export function AppProvider({ children }) {
   }
 
   const setIsAuthenticated = (authenticated) => {
-    dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: authenticated })
+    dispatch({ type: ACTIONS.SET_IS_AUTHENTICATED, payload: authenticated })
   }
 
   // Get active workers for calendar (filter by status)
@@ -714,6 +724,29 @@ export function AppProvider({ children }) {
     dispatch({ type: ACTIONS.SET_SELECTED_TASK, payload: task })
   }
 
+  // Sales Analysis functionality
+  const loadSalesAnalysisData = async () => {
+    try {
+      const result = await supabaseAPI.getSalesAnalysisData()
+      if (result.success) {
+        dispatch({ type: ACTIONS.SET_SALES_ANALYSIS_DATA, payload: result.data })
+      }
+    } catch (error) {
+      console.error('Failed to load sales analysis data:', error)
+    }
+  }
+
+  const loadSalesAnalysisStats = async () => {
+    try {
+      const result = await supabaseAPI.getSalesAnalysisStats()
+      if (result.success) {
+        dispatch({ type: ACTIONS.SET_SALES_ANALYSIS_STATS, payload: result.data })
+      }
+    } catch (error) {
+      console.error('Failed to load sales analysis stats:', error)
+    }
+  }
+
   const value = {
     ...state,
     workers: getActiveWorkers(), // Use real staff data instead of hardcoded workers
@@ -746,7 +779,9 @@ export function AppProvider({ children }) {
     deleteTask,
     loadTaskComments,
     addTaskComment,
-    setSelectedTask
+    setSelectedTask,
+    loadSalesAnalysisData,
+    loadSalesAnalysisStats
   }
 
   return (

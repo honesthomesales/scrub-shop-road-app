@@ -10,6 +10,7 @@ import Staff from './pages/Staff'
 import Calendar from './pages/Calendar'
 import Tasks from './pages/Tasks'
 import Messages from './pages/Messages'
+import SalesUpload from './pages/SalesUpload'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/messages" element={<Messages />} />
+              <Route path="/admin/sales-upload" element={<SalesUpload />} />
             </Routes>
           </main>
           <UserSelectionModal />

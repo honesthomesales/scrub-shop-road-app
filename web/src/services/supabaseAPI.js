@@ -966,6 +966,234 @@ class SupabaseAPI {
       return { success: false, error: error.message }
     }
   }
+
+  // Sales Analysis Management
+  async addSalesAnalysisBatch(salesData) {
+    try {
+      if (!supabase) {
+        // Mock implementation for development
+        console.log('Mock: Adding sales analysis batch:', salesData.length, 'records')
+        return { success: true, data: salesData.map((item, index) => ({ ...item, id: Date.now() + index })) }
+      }
+
+      const { data, error } = await supabase
+        .from('sales_analysis')
+        .insert(salesData)
+        .select()
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to add sales analysis batch:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async getSalesAnalysis(options = {}) {
+    try {
+      if (!supabase) {
+        // Mock data for development
+        const mockData = [
+          {
+            id: 1,
+            store_id: 1,
+            invoice_date: '2024-01-15',
+            invoice_no: 'INV-001-123',
+            po_no: 'PO-001',
+            vendor: 'Sample Vendor',
+            style: 'STYLE-001',
+            color: 'Blue',
+            size: 'M',
+            product: 'Sample Product',
+            description: 'Sample description',
+            department: 'Clothing',
+            sold_qty: 5,
+            spec_qty: 2,
+            total_qty: 7,
+            cost: 25.00,
+            retail: 50.00,
+            actual: 45.00
+          }
+        ]
+        return { success: true, data: mockData }
+      }
+
+      let query = supabase
+        .from('sales_analysis')
+        .select('*')
+        .order('invoice_date', { ascending: false })
+
+      // Apply filters
+      if (options.storeId) {
+        query = query.eq('store_id', options.storeId)
+      }
+      if (options.startDate) {
+        query = query.gte('invoice_date', options.startDate)
+      }
+      if (options.endDate) {
+        query = query.lte('invoice_date', options.endDate)
+      }
+      if (options.vendor) {
+        query = query.eq('vendor', options.vendor)
+      }
+      if (options.department) {
+        query = query.eq('department', options.department)
+      }
+      if (options.limit) {
+        query = query.limit(options.limit)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get sales analysis:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async getSalesAnalysisStats(options = {}) {
+    try {
+      if (!supabase) {
+        // Mock stats for development
+        return {
+          success: true,
+          data: {
+            totalSales: 15000.00,
+            totalCost: 7500.00,
+            totalProfit: 7500.00,
+            totalItems: 150,
+            avgProfitMargin: 50.0,
+            topVendors: [
+              { vendor: 'Vendor A', sales: 5000.00 },
+              { vendor: 'Vendor B', sales: 4000.00 }
+            ],
+            topDepartments: [
+              { department: 'Clothing', sales: 8000.00 },
+              { department: 'Accessories', sales: 4000.00 }
+            ]
+          }
+        }
+      }
+
+      // Get basic stats
+      const { data: salesData, error } = await supabase
+        .from('sales_analysis')
+        .select('*')
+
+      if (error) throw new Error(error.message)
+
+      // Calculate stats
+      const stats = {
+        totalSales: 0,
+        totalCost: 0,
+        totalProfit: 0,
+        totalItems: 0,
+        vendors: {},
+        departments: {}
+      }
+
+      salesData.forEach(item => {
+        const actual = parseFloat(item.actual) || 0
+        const cost = parseFloat(item.cost) || 0
+        const soldQty = parseInt(item.sold_qty) || 0
+
+        stats.totalSales += actual * soldQty
+        stats.totalCost += cost * soldQty
+        stats.totalItems += soldQty
+
+        // Track vendors
+        if (item.vendor) {
+          if (!stats.vendors[item.vendor]) {
+            stats.vendors[item.vendor] = 0
+          }
+          stats.vendors[item.vendor] += actual * soldQty
+        }
+
+        // Track departments
+        if (item.department) {
+          if (!stats.departments[item.department]) {
+            stats.departments[item.department] = 0
+          }
+          stats.departments[item.department] += actual * soldQty
+        }
+      })
+
+      stats.totalProfit = stats.totalSales - stats.totalCost
+      stats.avgProfitMargin = stats.totalSales > 0 ? (stats.totalProfit / stats.totalSales) * 100 : 0
+
+      // Get top vendors and departments
+      const topVendors = Object.entries(stats.vendors)
+        .map(([vendor, sales]) => ({ vendor, sales }))
+        .sort((a, b) => b.sales - a.sales)
+        .slice(0, 5)
+
+      const topDepartments = Object.entries(stats.departments)
+        .map(([department, sales]) => ({ department, sales }))
+        .sort((a, b) => b.sales - a.sales)
+        .slice(0, 5)
+
+      return {
+        success: true,
+        data: {
+          ...stats,
+          topVendors,
+          topDepartments
+        }
+      }
+    } catch (error) {
+      console.error('Failed to get sales analysis stats:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async deleteSalesAnalysis(recordId) {
+    try {
+      if (!supabase) {
+        return { success: true }
+      }
+
+      const { error } = await supabase
+        .from('sales_analysis')
+        .delete()
+        .eq('id', recordId)
+
+      if (error) throw new Error(error.message)
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to delete sales analysis record:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async clearSalesAnalysis(storeId = null) {
+    try {
+      if (!supabase) {
+        return { success: true }
+      }
+
+      let query = supabase
+        .from('sales_analysis')
+        .delete()
+
+      if (storeId) {
+        query = query.eq('store_id', storeId)
+      }
+
+      const { error } = await query
+
+      if (error) throw new Error(error.message)
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to clear sales analysis:', error)
+      return { success: false, error: error.message }
+    }
+  }
 }
 
 // Create and export singleton instance

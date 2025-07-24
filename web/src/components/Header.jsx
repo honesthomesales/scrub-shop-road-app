@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   ChevronDown,
-  User
+  User,
+  Upload
 } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { cn } from '../utils/cn'
@@ -68,7 +69,8 @@ const Header = () => {
     { name: 'Staff', href: '/staff', icon: Users },
     { name: 'Calendar', href: '/calendar', icon: Calendar },
     { name: 'Tasks', href: '/tasks', icon: CheckSquare },
-    { name: 'Messages', href: '/messages', icon: MessageSquare }
+    { name: 'Messages', href: '/messages', icon: MessageSquare },
+    { name: 'Sales Upload', href: '/admin/sales-upload', icon: Upload }
   ]
 
   return (
