@@ -9,8 +9,9 @@ console.log('All import.meta.env:', import.meta.env);
 console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
 console.log('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY);
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key'
+// Hardcode the Supabase credentials since .env file isn't being read in production
+const SUPABASE_URL = 'https://kvsbrrmzedadyffqtcdq.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2c2Jycm16ZWRhZHlmZnF0Y2RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxOTQxNzQsImV4cCI6MjA2Nzc3MDE3NH0.S3DSc-15No3SUr2Zmw_Qf7GQ4xABMYhMtN7LwvDDAiw'
 
 // Create Supabase client with fallback for missing credentials
 let supabase = null
@@ -18,6 +19,7 @@ try {
   if (SUPABASE_URL && SUPABASE_URL !== 'https://placeholder.supabase.co' && 
       SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'placeholder-key') {
     supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    console.log('Supabase client created successfully with hardcoded credentials')
   } else {
     console.warn('Supabase credentials not configured. Using mock data mode.')
   }
