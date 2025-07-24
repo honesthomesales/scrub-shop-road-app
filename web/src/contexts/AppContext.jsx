@@ -357,13 +357,10 @@ export function AppProvider({ children }) {
       const result = await supabaseAPI.readTable(tableName)
       console.log('[loadSalesData] Raw API result:', result);
       if (result.success) {
-        console.log('[loadSalesData] Sales rows from API:', result.data);
         const transformedData = result.data.map(row => {
           const transformed = transformSalesData(row, state.currentSheet);
-          console.log('[loadSalesData] Transforming row:', row, '=>', transformed);
           return transformed;
         });
-        console.log('[loadSalesData] Transformed salesData:', transformedData);
         dispatch({ type: ACTIONS.SET_SALES_DATA, payload: transformedData })
       } else {
         console.error('[loadSalesData] API error:', result.error);
@@ -381,13 +378,10 @@ export function AppProvider({ children }) {
       const result = await supabaseAPI.readTable('venues')
       console.log('[loadVenuesData] Raw API result:', result);
       if (result.success) {
-        console.log('[loadVenuesData] Venue rows from API:', result.data);
         const transformedData = result.data.map(row => {
           const transformed = transformVenueData(row);
-          console.log('[loadVenuesData] Transforming row:', row, '=>', transformed);
           return transformed;
         });
-        console.log('[loadVenuesData] Transformed venuesData:', transformedData);
         dispatch({ type: ACTIONS.SET_VENUES_DATA, payload: transformedData })
       } else {
         console.error('[loadVenuesData] API error:', result.error);
