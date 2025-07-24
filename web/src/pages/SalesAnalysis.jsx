@@ -80,6 +80,14 @@ const SalesAnalysis = () => {
         console.log('Analysis data loaded:', result.data.length, 'records')
         console.log('Sample data:', result.data.slice(0, 3))
         console.log('Store IDs in data:', [...new Set(result.data.map(item => item.store_id))])
+        console.log('Requested store IDs:', options.storeIds)
+        console.log('Date range:', options.startDate, 'to', options.endDate)
+        
+        // Check if we're getting the expected number of records
+        if (result.data.length >= 1000) {
+          console.warn('⚠️ Data may be limited to 1000 records. Consider implementing pagination.')
+        }
+        
         setAnalysisData(result.data)
       } else {
         console.error('Failed to load analysis data:', result.error)

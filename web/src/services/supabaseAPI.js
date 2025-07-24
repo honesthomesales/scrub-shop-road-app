@@ -1019,39 +1019,63 @@ class SupabaseAPI {
         return { success: true, data: mockData }
       }
 
-      let query = supabase
-        .from('sales_analysis')
-        .select('*')
-        .order('invoice_date', { ascending: false })
+      // Use pagination to get all data beyond the 1000 limit
+      let allData = []
+      let page = 0
+      const pageSize = 1000
+      let hasMore = true
 
-      // Apply filters
-      if (options.storeIds && options.storeIds.length > 0) {
-        query = query.in('store_id', options.storeIds)
-      } else if (options.storeId) {
-        query = query.eq('store_id', options.storeId)
-      }
-      if (options.startDate) {
-        query = query.gte('invoice_date', options.startDate)
-      }
-      if (options.endDate) {
-        query = query.lte('invoice_date', options.endDate)
-      }
-      if (options.vendor) {
-        query = query.eq('vendor', options.vendor)
-      }
-      if (options.department) {
-        query = query.eq('department', options.department)
-      }
-      
-      // Set a higher limit to get more data (default is 1000)
-      const limit = options.limit || 10000
-      query = query.limit(limit)
+      while (hasMore) {
+        let query = supabase
+          .from('sales_analysis')
+          .select('*')
+          .order('invoice_date', { ascending: false })
+          .range(page * pageSize, (page + 1) * pageSize - 1)
 
-      const { data, error } = await query
+        // Apply filters
+        if (options.storeIds && options.storeIds.length > 0) {
+          query = query.in('store_id', options.storeIds)
+        } else if (options.storeId) {
+          query = query.eq('store_id', options.storeId)
+        }
+        if (options.startDate) {
+          query = query.gte('invoice_date', options.startDate)
+        }
+        if (options.endDate) {
+          query = query.lte('invoice_date', options.endDate)
+        }
+        if (options.vendor) {
+          query = query.eq('vendor', options.vendor)
+        }
+        if (options.department) {
+          query = query.eq('department', options.department)
+        }
 
-      if (error) throw new Error(error.message)
+        const { data, error } = await query
 
-      return { success: true, data: data || [] }
+        if (error) throw new Error(error.message)
+
+        if (data && data.length > 0) {
+          allData = allData.concat(data)
+          page++
+          
+          // Stop if we got less than pageSize (means we're at the end)
+          if (data.length < pageSize) {
+            hasMore = false
+          }
+          
+          // Safety check to prevent infinite loops
+          if (page > 10) {
+            console.warn('Stopping pagination after 10 pages to prevent infinite loop')
+            hasMore = false
+          }
+        } else {
+          hasMore = false
+        }
+      }
+
+      console.log(`Retrieved ${allData.length} records through pagination`)
+      return { success: true, data: allData }
     } catch (error) {
       console.error('Failed to get sales analysis:', error)
       return { success: false, error: error.message, data: [] }
@@ -1082,13 +1106,41 @@ class SupabaseAPI {
         }
       }
 
-      // Get basic stats with higher limit
-      const { data: salesData, error } = await supabase
-        .from('sales_analysis')
-        .select('*')
-        .limit(10000)
+      // Get basic stats with pagination to handle large datasets
+      let allSalesData = []
+      let page = 0
+      const pageSize = 1000
+      let hasMore = true
 
-      if (error) throw new Error(error.message)
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('sales_analysis')
+          .select('*')
+          .range(page * pageSize, (page + 1) * pageSize - 1)
+
+        if (error) throw new Error(error.message)
+
+        if (data && data.length > 0) {
+          allSalesData = allSalesData.concat(data)
+          page++
+          
+          // Stop if we got less than pageSize (means we're at the end)
+          if (data.length < pageSize) {
+            hasMore = false
+          }
+          
+          // Safety check to prevent infinite loops
+          if (page > 10) {
+            console.warn('Stopping pagination after 10 pages to prevent infinite loop')
+            hasMore = false
+          }
+        } else {
+          hasMore = false
+        }
+      }
+
+      console.log(`Retrieved ${allSalesData.length} records for stats through pagination`)
+      const salesData = allSalesData
 
       // Calculate stats
       const stats = {
