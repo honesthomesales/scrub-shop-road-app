@@ -1045,6 +1045,8 @@ class SupabaseAPI {
         } else if (options.storeId) {
           console.log(`🔍 [getSalesAnalysis] Filtering by single store ID:`, options.storeId)
           query = query.eq('store_id', options.storeId)
+        } else {
+          console.log(`🔍 [getSalesAnalysis] No store filtering applied - showing all stores`)
         }
         if (options.startDate) {
           console.log(`🔍 [getSalesAnalysis] Filtering by start date:`, options.startDate)

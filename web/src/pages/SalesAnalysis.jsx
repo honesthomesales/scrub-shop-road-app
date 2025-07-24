@@ -64,10 +64,12 @@ const SalesAnalysis = () => {
         startDate = format(subDays(new Date(), parseInt(dateRange)), 'yyyy-MM-dd')
       }
 
+      // Only apply store filtering if specific stores are selected
+      // If no stores are selected, show all stores (don't filter)
       const options = {
         startDate,
         endDate,
-        storeIds: selectedStores.length > 0 ? selectedStores : null
+        storeIds: selectedStores.length > 0 ? selectedStores : undefined
       }
 
       console.log('Loading analysis data with options:', options)
@@ -402,7 +404,7 @@ const SalesAnalysis = () => {
           <div className="mt-6">
             <div className="flex items-center justify-between mb-3">
               <label className="block text-sm font-medium text-gray-700">
-                Store Selection
+                Store Selection {selectedStores.length === 0 && <span className="text-gray-500">(All Stores)</span>}
               </label>
               <div className="flex space-x-2">
                 <button
@@ -415,7 +417,7 @@ const SalesAnalysis = () => {
                   onClick={handleClearStores}
                   className="text-sm text-gray-600 hover:text-gray-500"
                 >
-                  Clear All
+                  Show All
                 </button>
               </div>
             </div>
@@ -425,7 +427,7 @@ const SalesAnalysis = () => {
                   key={store.id}
                   onClick={() => handleStoreToggle(store.id)}
                   className={`p-2 border rounded-lg text-sm font-medium transition-colors ${
-                    selectedStores.includes(store.id)
+                    selectedStores.length === 0 || selectedStores.includes(store.id)
                       ? 'border-primary-500 bg-primary-50 text-primary-700'
                       : 'border-gray-300 text-gray-700 hover:border-gray-400'
                   }`}
@@ -434,6 +436,16 @@ const SalesAnalysis = () => {
                 </button>
               ))}
             </div>
+            {selectedStores.length === 0 && (
+              <p className="mt-2 text-sm text-gray-500">
+                Showing data from all stores. Select specific stores to filter the data.
+              </p>
+            )}
+            {selectedStores.length > 0 && (
+              <p className="mt-2 text-sm text-gray-500">
+                Showing data from {selectedStores.length} selected store{selectedStores.length !== 1 ? 's' : ''}.
+              </p>
+            )}
           </div>
 
           {/* Export Button */}
