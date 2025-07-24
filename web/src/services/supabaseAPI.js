@@ -564,7 +564,8 @@ class SupabaseAPI {
           { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com', role: 'worker', is_active: true },
           { id: 3, name: 'Mike Johnson', email: 'mike@scrubshop.com', role: 'worker', is_active: true },
           { id: 4, name: 'Sarah Wilson', email: 'sarah@scrubshop.com', role: 'worker', is_active: true },
-          { id: 5, name: 'Tom Brown', email: 'tom@scrubshop.com', role: 'admin', is_active: true }
+          { id: 5, name: 'Tom Brown', email: 'tom@scrubshop.com', role: 'admin', is_active: true },
+          { id: 6, name: 'David Wilson', email: 'david@scrubshop.com', role: 'worker', is_active: true }
         ]
         return { success: true, data: mockUsers }
       }

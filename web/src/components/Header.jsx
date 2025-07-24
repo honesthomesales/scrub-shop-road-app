@@ -22,15 +22,11 @@ const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const userMenuRef = useRef(null)
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-    { name: 'Daily Sales', href: '/daily-sales', icon: BarChart3 },
-    { name: 'Venues', href: '/venues', icon: MapPin },
-    { name: 'Staff', href: '/staff', icon: Users },
-    { name: 'Calendar', href: '/calendar', icon: Calendar },
-    { name: 'Tasks', href: '/tasks', icon: CheckSquare },
-    { name: 'Messages', href: '/messages', icon: MessageSquare }
-  ]
+  // Debug logging
+  useEffect(() => {
+    console.log('Header - currentUser:', currentUser)
+    console.log('Header - staffData length:', staffData.length)
+  }, [currentUser, staffData])
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -60,9 +56,20 @@ const Header = () => {
 
   const handleUserSelect = (userId) => {
     const selectedUser = staffData.find(user => user.id === parseInt(userId))
+    console.log('Header - handleUserSelect called with userId:', userId, 'selectedUser:', selectedUser)
     setCurrentUser(selectedUser)
     setShowUserMenu(false)
   }
+
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
+    { name: 'Daily Sales', href: '/daily-sales', icon: BarChart3 },
+    { name: 'Venues', href: '/venues', icon: MapPin },
+    { name: 'Staff', href: '/staff', icon: Users },
+    { name: 'Calendar', href: '/calendar', icon: Calendar },
+    { name: 'Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Messages', href: '/messages', icon: MessageSquare }
+  ]
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-secondary-200 shadow-sm">

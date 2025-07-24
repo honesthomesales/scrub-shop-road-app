@@ -400,7 +400,8 @@ export function AppProvider({ children }) {
         const defaultStaff = [
           { id: 1, name: 'John Smith', email: 'john@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
           { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
-          { id: 3, name: 'Mike Johnson', email: 'mike@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' }
+          { id: 3, name: 'Mike Johnson', email: 'mike@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
+          { id: 4, name: 'David Wilson', email: 'david@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' }
         ]
         dispatch({ type: ACTIONS.SET_STAFF_DATA, payload: defaultStaff })
       }
@@ -408,7 +409,8 @@ export function AppProvider({ children }) {
       const defaultStaff = [
         { id: 1, name: 'John Smith', email: 'john@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
         { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
-        { id: 3, name: 'Mike Johnson', email: 'mike@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' }
+        { id: 3, name: 'Mike Johnson', email: 'mike@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
+        { id: 4, name: 'David Wilson', email: 'david@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' }
       ]
       dispatch({ type: ACTIONS.SET_STAFF_DATA, payload: defaultStaff })
     }
