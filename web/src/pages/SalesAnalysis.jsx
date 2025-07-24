@@ -30,8 +30,8 @@ const SalesAnalysis = () => {
 
   const stores = [
     { id: 1, name: 'Spartanburg' },
-    { id: 2, name: 'Greenville' },
-    { id: 3, name: 'Columbia' },
+    { id: 3, name: 'Greenville' },
+    { id: 4, name: 'Columbia' },
     { id: 5, name: 'Trailer' },
     { id: 7, name: 'Camper' }
   ]
