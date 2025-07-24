@@ -287,43 +287,7 @@ const AppContext = createContext()
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState)
 
-  // Load initial data
-  useEffect(() => {
-    loadInitialData()
-  }, [])
-
-  // Load data when sheet changes
-  useEffect(() => {
-    loadSalesData()
-  }, [loadSalesData])
-
-  const loadInitialData = async () => {
-    dispatch({ type: ACTIONS.SET_LOADING, payload: true })
-    
-    try {
-      const isInitialized = await supabaseAPI.init()
-      dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: isInitialized })
-      
-      if (isInitialized) {
-        // Load main data first (critical for app functionality)
-        await Promise.all([
-          loadSalesData(),
-          loadVenuesData(),
-          loadStaffData()
-        ])
-        
-        // Load team data separately (non-critical, can fail gracefully)
-        try {
-          await loadTeamData()
-        } catch (teamError) {
-          console.warn('Team data loading failed, but continuing with main app:', teamError)
-        }
-      }
-    } catch (error) {
-      dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
-    }
-  }
-
+  // Simplified data loading functions
   const loadSalesData = useCallback(async () => {
     try {
       const tableName = state.currentSheet === 'TRAILER_HISTORY' ? 'trailer_history' : 'camper_history'
@@ -334,33 +298,27 @@ export function AppProvider({ children }) {
         )
         dispatch({ type: ACTIONS.SET_SALES_DATA, payload: transformedData })
       } else {
+        console.error('Failed to load sales data:', result.error)
         dispatch({ type: ACTIONS.SET_ERROR, payload: result.error })
       }
     } catch (error) {
+      console.error('Error loading sales data:', error)
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     }
   }, [state.currentSheet])
 
   const loadVenuesData = useCallback(async () => {
     try {
-      console.log('[loadVenuesData] Fetching venues from backend...');
       const result = await supabaseAPI.readTable('venues')
-      console.log('[loadVenuesData] Raw API result:', result);
       if (result.success) {
-        console.log('[loadVenuesData] Venue rows from API:', result.data);
-        const transformedData = result.data.map(row => {
-          const transformed = transformVenueData(row);
-          console.log('[loadVenuesData] Transforming row:', row, '=>', transformed);
-          return transformed;
-        });
-        console.log('[loadVenuesData] Transformed venuesData:', transformedData);
+        const transformedData = result.data.map(row => transformVenueData(row))
         dispatch({ type: ACTIONS.SET_VENUES_DATA, payload: transformedData })
       } else {
-        console.error('[loadVenuesData] API error:', result.error);
+        console.error('Failed to load venues data:', result.error)
         dispatch({ type: ACTIONS.SET_ERROR, payload: result.error })
       }
     } catch (error) {
-      console.error('[loadVenuesData] Exception:', error);
+      console.error('Error loading venues data:', error)
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     }
   }, [])
@@ -372,7 +330,7 @@ export function AppProvider({ children }) {
         const transformedData = result.data.map(row => transformStaffData(row))
         dispatch({ type: ACTIONS.SET_STAFF_DATA, payload: transformedData })
       } else {
-        // If staff table doesn't exist, create default staff data
+        // Use default staff data if table doesn't exist
         const defaultStaff = [
           { id: 1, name: 'John Smith', email: 'john@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
           { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
@@ -381,6 +339,7 @@ export function AppProvider({ children }) {
         dispatch({ type: ACTIONS.SET_STAFF_DATA, payload: defaultStaff })
       }
     } catch (error) {
+      console.error('Error loading staff data:', error)
       const defaultStaff = [
         { id: 1, name: 'John Smith', email: 'john@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
         { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
@@ -389,6 +348,77 @@ export function AppProvider({ children }) {
       dispatch({ type: ACTIONS.SET_STAFF_DATA, payload: defaultStaff })
     }
   }, [])
+
+  const loadTeamData = useCallback(async () => {
+    try {
+      const [usersResult, groupsResult] = await Promise.all([
+        supabaseAPI.getUsers(),
+        supabaseAPI.getMessageGroups()
+      ])
+
+      if (usersResult.success) {
+        dispatch({ type: ACTIONS.SET_USERS_DATA, payload: usersResult.data })
+      }
+
+      if (groupsResult.success) {
+        dispatch({ type: ACTIONS.SET_MESSAGE_GROUPS, payload: groupsResult.data })
+      }
+    } catch (error) {
+      console.error('Failed to load team data:', error)
+      // Don't set error for team data - it's non-critical
+    }
+  }, [])
+
+  const loadMessages = useCallback(async (groupId) => {
+    try {
+      const result = await supabaseAPI.getMessages(groupId)
+      if (result.success) {
+        dispatch({ type: ACTIONS.SET_MESSAGES_DATA, payload: result.data })
+      }
+    } catch (error) {
+      console.error('Failed to load messages:', error)
+    }
+  }, [])
+
+  // Load initial data
+  useEffect(() => {
+    const initializeApp = async () => {
+      dispatch({ type: ACTIONS.SET_LOADING, payload: true })
+      
+      try {
+        const isInitialized = await supabaseAPI.init()
+        dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: isInitialized })
+        
+        if (isInitialized) {
+          // Load critical data first
+          await Promise.all([
+            loadSalesData(),
+            loadVenuesData(),
+            loadStaffData()
+          ])
+          
+          // Load team data separately (non-critical)
+          loadTeamData().catch(error => {
+            console.warn('Team data loading failed:', error)
+          })
+        }
+      } catch (error) {
+        console.error('Failed to initialize app:', error)
+        dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
+      } finally {
+        dispatch({ type: ACTIONS.SET_LOADING, payload: false })
+      }
+    }
+
+    initializeApp()
+  }, []) // Empty dependency array - only run once
+
+  // Load data when sheet changes
+  useEffect(() => {
+    if (state.isAuthenticated) {
+      loadSalesData()
+    }
+  }, [state.currentSheet, loadSalesData])
 
   const setCurrentSheet = (sheet) => {
     dispatch({ type: ACTIONS.SET_CURRENT_SHEET, payload: sheet })
@@ -628,37 +658,7 @@ export function AppProvider({ children }) {
 
   // ===== TEAM COMMUNICATION & TASK MANAGEMENT FUNCTIONS =====
 
-  // Load team data
-  const loadTeamData = useCallback(async () => {
-    try {
-      const [usersResult, groupsResult] = await Promise.all([
-        supabaseAPI.getUsers(),
-        supabaseAPI.getMessageGroups()
-      ])
 
-      if (usersResult.success) {
-        dispatch({ type: ACTIONS.SET_USERS_DATA, payload: usersResult.data })
-      }
-
-      if (groupsResult.success) {
-        dispatch({ type: ACTIONS.SET_MESSAGE_GROUPS, payload: groupsResult.data })
-      }
-    } catch (error) {
-      console.error('Failed to load team data:', error)
-    }
-  }, [])
-
-  // Load messages for a group
-  const loadMessages = useCallback(async (groupId) => {
-    try {
-      const result = await supabaseAPI.getMessages(groupId)
-      if (result.success) {
-        dispatch({ type: ACTIONS.SET_MESSAGES_DATA, payload: result.data })
-      }
-    } catch (error) {
-      console.error('Failed to load messages:', error)
-    }
-  }, [])
 
   // Send a message
   const sendMessage = async (messageData) => {
