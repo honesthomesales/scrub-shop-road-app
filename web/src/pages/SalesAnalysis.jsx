@@ -70,9 +70,15 @@ const SalesAnalysis = () => {
         storeIds: selectedStores.length > 0 ? selectedStores : null
       }
 
+      console.log('Loading analysis data with options:', options)
+      console.log('Selected stores:', selectedStores)
+
       const result = await supabaseAPI.getSalesAnalysis(options)
       if (result.success) {
+        console.log('Analysis data loaded:', result.data.length, 'records')
         setAnalysisData(result.data)
+      } else {
+        console.error('Failed to load analysis data:', result.error)
       }
     } catch (error) {
       console.error('Failed to load analysis data:', error)

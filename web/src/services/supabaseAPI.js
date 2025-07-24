@@ -1025,7 +1025,9 @@ class SupabaseAPI {
         .order('invoice_date', { ascending: false })
 
       // Apply filters
-      if (options.storeId) {
+      if (options.storeIds && options.storeIds.length > 0) {
+        query = query.in('store_id', options.storeIds)
+      } else if (options.storeId) {
         query = query.eq('store_id', options.storeId)
       }
       if (options.startDate) {
