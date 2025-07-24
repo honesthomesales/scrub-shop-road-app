@@ -85,6 +85,15 @@ const SalesAnalysis = () => {
         console.log('Requested store IDs:', options.storeIds)
         console.log('Date range:', options.startDate, 'to', options.endDate)
         
+        // Debug store selection vs data availability
+        if (selectedStores.length > 0) {
+          const storesWithData = [...new Set(result.data.map(item => item.store_id))]
+          const storesWithoutData = selectedStores.filter(id => !storesWithData.includes(id))
+          if (storesWithoutData.length > 0) {
+            console.log('⚠️ Selected stores with no data in date range:', storesWithoutData.map(id => getStoreName(id)))
+          }
+        }
+        
         // Check if we're getting the expected number of records
         if (result.data.length >= 1000) {
           console.warn('⚠️ Data may be limited to 1000 records. Consider implementing pagination.')
@@ -184,6 +193,39 @@ const SalesAnalysis = () => {
       }
       return acc
     }, [])
+
+    // Add stores with no data to show them in the UI
+    if (selectedStores.length > 0) {
+      // When specific stores are selected, include all selected stores even if they have no data
+      selectedStores.forEach(storeId => {
+        const existing = storeData.find(s => s.storeId === storeId)
+        if (!existing) {
+          storeData.push({
+            storeId,
+            storeName: getStoreName(storeId),
+            sales: 0,
+            cost: 0,
+            profit: 0,
+            count: 0
+          })
+        }
+      })
+    } else {
+      // When no stores are selected (showing all), include all available stores
+      stores.forEach(store => {
+        const existing = storeData.find(s => s.storeId === store.id)
+        if (!existing) {
+          storeData.push({
+            storeId: store.id,
+            storeName: store.name,
+            sales: 0,
+            cost: 0,
+            profit: 0,
+            count: 0
+          })
+        }
+      })
+    }
 
     // Product type data
     const productData = analysisData.reduce((acc, item) => {
@@ -504,7 +546,7 @@ const SalesAnalysis = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Stores Active</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {storeData.length}
+                  {selectedStores.length > 0 ? selectedStores.length : stores.length}
                 </p>
               </div>
             </div>
