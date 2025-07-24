@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Send } from 'lucide-react'
 
-const MessageInput = ({ onSendMessage, disabled = false }) => {
+const MessageInput = ({ onSendMessage, disabled = false, disabledReason = '' }) => {
   const [message, setMessage] = useState('')
 
   const handleSubmit = (e) => {
@@ -21,13 +21,18 @@ const MessageInput = ({ onSendMessage, disabled = false }) => {
 
   return (
     <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4">
+      {disabled && disabledReason && (
+        <div className="mb-2 text-sm text-red-600">
+          {disabledReason}
+        </div>
+      )}
       <div className="flex items-center space-x-2">
         <input
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Type your message..."
+          placeholder={disabled ? "Select your name to send messages..." : "Type your message..."}
           disabled={disabled}
           className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:opacity-50"
         />

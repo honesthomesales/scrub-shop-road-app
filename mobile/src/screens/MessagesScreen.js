@@ -19,15 +19,15 @@ const MessagesScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Team Messages</Text>
-        <Text style={styles.subtitle}>Communicate with your team members</Text>
+        <Text style={styles.title}>Staff Messages</Text>
+        <Text style={styles.subtitle}>Communicate with your staff members</Text>
       </View>
 
       <View style={styles.content}>
         <View style={styles.placeholderContainer}>
           <Text style={styles.placeholderTitle}>Messages Coming Soon</Text>
           <Text style={styles.placeholderText}>
-            Team messaging functionality is being implemented. You'll be able to chat with team members, share updates, and stay connected.
+            Staff messaging functionality is being implemented. You'll be able to chat with staff members, share updates, and stay connected.
           </Text>
         </View>
       </View>

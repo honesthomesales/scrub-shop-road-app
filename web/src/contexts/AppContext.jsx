@@ -282,24 +282,24 @@ export function AppProvider({ children }) {
 
   // ===== MESSAGES FUNCTIONALITY =====
 
-  // Load team data (users and groups)
-  const loadTeamData = async () => {
+  // Load staff data and message groups
+  const loadStaffAndGroups = async () => {
     try {
-      const [usersResult, groupsResult] = await Promise.all([
-        supabaseAPI.getUsers(),
+      const [staffResult, groupsResult] = await Promise.all([
+        supabaseAPI.getUsers(), // This actually gets staff data
         supabaseAPI.getMessageGroups()
       ])
 
-      if (usersResult.success) {
-        dispatch({ type: ACTIONS.SET_USERS_DATA, payload: usersResult.data })
+      if (staffResult.success) {
+        dispatch({ type: ACTIONS.SET_USERS_DATA, payload: staffResult.data })
       }
 
       if (groupsResult.success) {
         dispatch({ type: ACTIONS.SET_MESSAGE_GROUPS, payload: groupsResult.data })
       }
     } catch (error) {
-      console.error('Failed to load team data:', error)
-      // Don't set error for team data - it's non-critical
+      console.error('Failed to load staff and groups data:', error)
+      // Don't set error for staff and groups data - it's non-critical
     }
   }
 
@@ -327,14 +327,16 @@ export function AppProvider({ children }) {
           loadStaffData()
         ])
         
-        // Load team data separately (non-critical)
-        loadTeamData()
+        // Load staff and groups data separately (non-critical)
+        loadStaffAndGroups()
         
         // Load tasks separately (non-critical)
         loadTasks()
       }
     } catch (error) {
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
+    } finally {
+      dispatch({ type: ACTIONS.SET_LOADING, payload: false })
     }
   }
 
@@ -641,7 +643,7 @@ export function AppProvider({ children }) {
 
   const addTask = async (taskData) => {
     try {
-      const result = await supabaseAPI.addTask(taskData)
+      const result = await supabaseAPI.createTask(taskData)
       if (result.success) {
         dispatch({ type: ACTIONS.ADD_TASK, payload: result.data })
         return { success: true }
@@ -731,7 +733,7 @@ export function AppProvider({ children }) {
     loadVenuesData,
     loadStaffData,
     setIsAuthenticated,
-    loadTeamData, // Add new functions to context value
+    loadStaffAndGroups, // Add new functions to context value
     loadMessages,
     sendMessage,
     setCurrentUser,

@@ -8,7 +8,7 @@ const Messages = () => {
     loading, 
     messagesData, 
     messageGroups, 
-    usersData, 
+    staffData, 
     currentUser,
     loadMessages, 
     sendMessage,
@@ -20,17 +20,12 @@ const Messages = () => {
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
-    // Set default current user (first user) if none selected
-    if (usersData.length > 0 && !currentUser) {
-      setCurrentUser(usersData[0])
-    }
-
     // Set default group (first group) if none selected
     if (messageGroups.length > 0 && !selectedGroupId) {
       setSelectedGroupId(messageGroups[0].id)
       setSelectedGroup(messageGroups[0])
     }
-  }, [usersData, messageGroups, currentUser, selectedGroupId])
+  }, [messageGroups, selectedGroupId])
 
   useEffect(() => {
     if (selectedGroupId) {
@@ -44,7 +39,10 @@ const Messages = () => {
   }, [messagesData])
 
   const handleSendMessage = async (messageText) => {
-    if (!currentUser || !selectedGroupId) return
+    if (!currentUser || !selectedGroupId) {
+      console.error('Cannot send message: currentUser or selectedGroupId is missing', { currentUser, selectedGroupId })
+      return
+    }
 
     const messageData = {
       sender_id: currentUser.id,
@@ -53,6 +51,7 @@ const Messages = () => {
       message_type: 'text'
     }
 
+    console.log('Sending message:', messageData)
     await sendMessage(messageData)
   }
 
@@ -60,6 +59,11 @@ const Messages = () => {
     setSelectedGroupId(groupId)
     const group = messageGroups.find(g => g.id === groupId)
     setSelectedGroup(group)
+  }
+
+  const handleUserSelect = (userId) => {
+    const selectedUser = staffData.find(user => user.id === parseInt(userId))
+    setCurrentUser(selectedUser)
   }
 
   if (loading) {
@@ -78,12 +82,37 @@ const Messages = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-secondary-900">
-            Team Messages
-          </h1>
-          <p className="mt-2 text-secondary-600">
-            Communicate with your team members and stay connected
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-secondary-900">
+                Staff Messages
+              </h1>
+              <p className="mt-2 text-secondary-600">
+                Communicate with your staff members and stay connected
+              </p>
+            </div>
+            
+            {/* User Selector */}
+            <div className="flex items-center space-x-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  You are:
+                </label>
+                <select
+                  value={currentUser?.id || ''}
+                  onChange={(e) => handleUserSelect(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">Select your name</option>
+                  {staffData.map(user => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Messages Interface */}
@@ -118,17 +147,36 @@ const Messages = () => {
             <div className="lg:col-span-3 flex flex-col">
               {/* Messages Header */}
               <div className="p-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {messageGroups.find(g => g.id === selectedGroupId)?.group_name || 'Select a group'}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {messagesData.length} messages
-                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {messageGroups.find(g => g.id === selectedGroupId)?.group_name || 'Select a group'}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {messagesData.length} messages
+                    </p>
+                  </div>
+                  {currentUser && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">You:</span> {currentUser.name}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Messages List */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messagesData.length === 0 ? (
+                {!currentUser ? (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 mb-4">
+                      <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 mb-2">Please select your name above to start messaging</p>
+                    <p className="text-sm text-gray-400">This helps identify who you are in conversations</p>
+                  </div>
+                ) : messagesData.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="text-gray-400 mb-4">
                       <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -150,11 +198,19 @@ const Messages = () => {
               </div>
 
               {/* Message Input */}
-              {selectedGroupId && (
+              {selectedGroupId && currentUser && (
                 <MessageInput
                   onSendMessage={handleSendMessage}
-                  disabled={!currentUser}
+                  disabled={false}
+                  disabledReason=""
                 />
+              )}
+              {selectedGroupId && !currentUser && (
+                <div className="p-4 border-t border-gray-200 bg-gray-50">
+                  <p className="text-center text-gray-500 text-sm">
+                    Select your name above to send messages
+                  </p>
+                </div>
               )}
             </div>
           </div>

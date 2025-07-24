@@ -553,7 +553,7 @@ class SupabaseAPI {
     return true
   }
 
-  // ===== TEAM COMMUNICATION & TASK MANAGEMENT FUNCTIONS =====
+  // ===== STAFF COMMUNICATION & TASK MANAGEMENT FUNCTIONS =====
 
   // Users Management
   async getUsers() {
@@ -633,7 +633,7 @@ class SupabaseAPI {
     try {
       if (!supabase) {
         const mockGroups = [
-          { id: 1, group_name: 'Team Chat', created_by: 1, is_active: true }
+          { id: 1, group_name: 'Staff Chat', created_by: 1, is_active: true }
         ]
         return { success: true, data: mockGroups }
       }
@@ -670,7 +670,7 @@ class SupabaseAPI {
         .from('group_members')
         .select(`
           *,
-          users (id, name, email, role, avatar_url)
+          staff (id, name, email, role)
         `)
         .eq('group_id', groupId)
 
@@ -683,7 +683,7 @@ class SupabaseAPI {
     }
   }
 
-  // Team Messages Management
+  // Staff Messages Management
   async getMessages(groupId = null, recipientId = null, limit = 50) {
     try {
       if (!supabase) {
@@ -692,9 +692,10 @@ class SupabaseAPI {
             id: 1,
             sender_id: 1,
             group_id: 1,
-            message_text: 'Hello team! How is everyone doing today?',
+            message_text: 'Hello staff! How is everyone doing today?',
             message_type: 'text',
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            sender: { id: 1, name: 'John Smith', email: 'john@scrubshop.com' }
           },
           {
             id: 2,
@@ -702,7 +703,8 @@ class SupabaseAPI {
             group_id: 1,
             message_text: 'Doing great! Ready for the weekend shows.',
             message_type: 'text',
-            created_at: new Date(Date.now() - 3600000).toISOString()
+            created_at: new Date(Date.now() - 3600000).toISOString(),
+            sender: { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com' }
           }
         ]
         return { success: true, data: mockMessages }
@@ -712,7 +714,7 @@ class SupabaseAPI {
         .from('team_messages')
         .select(`
           *,
-          sender:users!team_messages_sender_id_fkey (id, name, email, avatar_url)
+          sender:staff!team_messages_sender_id_fkey (id, name, email)
         `)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false })
@@ -741,7 +743,8 @@ class SupabaseAPI {
         const newMessage = {
           id: Date.now(),
           ...messageData,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          sender: { id: messageData.sender_id, name: 'Current User', email: 'user@scrubshop.com' }
         }
         return { success: true, data: newMessage }
       }
@@ -751,7 +754,7 @@ class SupabaseAPI {
         .insert([messageData])
         .select(`
           *,
-          sender:users!team_messages_sender_id_fkey (id, name, email, avatar_url)
+          sender:staff!team_messages_sender_id_fkey (id, name, email)
         `)
         .single()
 
@@ -799,8 +802,8 @@ class SupabaseAPI {
         .from('tasks')
         .select(`
           *,
-          assigned_by_user:users!tasks_assigned_by_fkey (id, name, email),
-          assigned_to_user:users!tasks_assigned_to_fkey (id, name, email)
+          assigned_by_user:staff!tasks_assigned_by_fkey (id, name, email),
+          assigned_to_user:staff!tasks_assigned_to_fkey (id, name, email)
         `)
         .order('created_at', { ascending: false })
 
@@ -840,8 +843,8 @@ class SupabaseAPI {
         .insert([taskData])
         .select(`
           *,
-          assigned_by_user:users!tasks_assigned_by_fkey (id, name, email),
-          assigned_to_user:users!tasks_assigned_to_fkey (id, name, email)
+          assigned_by_user:staff!tasks_assigned_by_fkey (id, name, email),
+          assigned_to_user:staff!tasks_assigned_to_fkey (id, name, email)
         `)
         .single()
 
@@ -866,8 +869,8 @@ class SupabaseAPI {
         .eq('id', taskId)
         .select(`
           *,
-          assigned_by_user:users!tasks_assigned_by_fkey (id, name, email),
-          assigned_to_user:users!tasks_assigned_to_fkey (id, name, email)
+          assigned_by_user:staff!tasks_assigned_by_fkey (id, name, email),
+          assigned_to_user:staff!tasks_assigned_to_fkey (id, name, email)
         `)
         .single()
 
@@ -920,7 +923,7 @@ class SupabaseAPI {
         .from('task_comments')
         .select(`
           *,
-          user:users (id, name, email, avatar_url)
+          user:staff (id, name, email)
         `)
         .eq('task_id', taskId)
         .order('created_at', { ascending: true })
@@ -950,7 +953,7 @@ class SupabaseAPI {
         .insert([commentData])
         .select(`
           *,
-          user:users (id, name, email, avatar_url)
+          user:staff (id, name, email)
         `)
         .single()
 

@@ -27,7 +27,7 @@ const TasksScreen = () => {
         <View style={styles.placeholderContainer}>
           <Text style={styles.placeholderTitle}>Task Management Coming Soon</Text>
           <Text style={styles.placeholderText}>
-            Task management functionality is being implemented. You'll be able to create tasks, assign them to team members, track progress, and manage deadlines.
+            Task management functionality is being implemented. You'll be able to create tasks, assign them to staff members, track progress, and manage deadlines.
           </Text>
         </View>
       </View>

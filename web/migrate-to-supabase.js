@@ -52,7 +52,7 @@ const SAMPLE_DATA = {
       role: 'Worker',
       status: 'Active',
       hire_date: '2024-01-01',
-      notes: 'Experienced team member'
+      notes: 'Experienced staff member'
     },
     {
       name: 'Jane Doe',
@@ -70,7 +70,7 @@ const SAMPLE_DATA = {
       role: 'Manager',
       status: 'Active',
       hire_date: '2023-12-01',
-      notes: 'Team lead'
+      notes: 'Staff lead'
     }
   ],
   trailer_history: [

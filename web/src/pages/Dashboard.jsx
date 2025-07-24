@@ -10,6 +10,9 @@ const Dashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
+  // Debug logging
+  console.log('Dashboard render - loading:', loading, 'salesData length:', salesData.length)
+
   // Calculate summary statistics
   const calculateStats = () => {
     const now = new Date();
@@ -218,6 +221,42 @@ const Dashboard = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
           <p className="mt-4 text-secondary-600">Loading dashboard...</p>
+          <p className="mt-2 text-sm text-gray-500">Please wait while we load your data</p>
+        </div>
+      </div>
+    )
+  }
+
+  // If we have no data but aren't loading, show a basic dashboard
+  if (salesData.length === 0 && !loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Page Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-secondary-900">
+              Dashboard
+            </h1>
+            <p className="mt-2 text-secondary-600">
+              Sales analytics and performance overview for {currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'} operations
+            </p>
+          </div>
+
+          {/* No Data Message */}
+          <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-8 text-center">
+            <div className="text-gray-400 mb-4">
+              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Sales Data Available</h3>
+            <p className="text-gray-500 mb-4">
+              Your dashboard will show sales analytics once you have data in your system.
+            </p>
+            <p className="text-sm text-gray-400">
+              Try adding some sales entries or check your data connection.
+            </p>
+          </div>
         </div>
       </div>
     )

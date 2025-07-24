@@ -1,61 +1,38 @@
 import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { AppProvider, useApp } from './contexts/AppContext'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { AppProvider } from './contexts/AppContext'
 import Header from './components/Header'
+import UserSelectionModal from './components/UserSelectionModal'
 import Dashboard from './pages/Dashboard'
 import DailySales from './pages/DailySales'
-import Calendar from './pages/Calendar'
 import Venues from './pages/Venues'
 import Staff from './pages/Staff'
-import Messages from './pages/Messages'
+import Calendar from './pages/Calendar'
 import Tasks from './pages/Tasks'
-import Team from './pages/Team'
-import AuthCallback from './components/AuthCallback'
-
-function AppContent() {
-  const { error, clearError } = useApp()
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      {/* Error Toast */}
-      {error && (
-        <div className="fixed top-20 right-4 z-50 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg max-w-md">
-          <div className="flex items-center justify-between">
-            <p className="text-sm">{error}</p>
-            <button
-              onClick={clearError}
-              className="ml-4 text-white hover:text-gray-200"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
-
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/daily-sales" element={<DailySales />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/venues" element={<Venues />} />
-        <Route path="/staff" element={<Staff />} />
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/team" element={<Team />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-      </Routes>
-    </div>
-  )
-}
+import Messages from './pages/Messages'
 
 function App() {
   return (
-    <Router basename={import.meta.env.BASE_URL}>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
-    </Router>
+    <AppProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-50">
+          <Header />
+          <main>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/daily-sales" element={<DailySales />} />
+              <Route path="/venues" element={<Venues />} />
+              <Route path="/staff" element={<Staff />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/messages" element={<Messages />} />
+            </Routes>
+          </main>
+          <UserSelectionModal />
+        </div>
+      </Router>
+    </AppProvider>
   )
 }
 

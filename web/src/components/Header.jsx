@@ -1,24 +1,50 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ChevronDown, BarChart3, Calendar, MapPin, Users, DollarSign, MessageSquare, CheckSquare, UserPlus } from 'lucide-react'
+import { 
+  BarChart3, 
+  Calendar, 
+  MapPin, 
+  Users, 
+  MessageSquare, 
+  CheckSquare,
+  Menu,
+  X,
+  ChevronDown,
+  User
+} from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { cn } from '../utils/cn'
 import AuthStatus from './AuthStatus'
 
 const Header = () => {
   const location = useLocation()
-  const { currentSheet, setCurrentSheet } = useApp()
+  const { currentSheet, setCurrentSheet, currentUser, setCurrentUser, staffData } = useApp()
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const userMenuRef = useRef(null)
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: BarChart3 },
-    { name: 'Daily Sales', href: '/daily-sales', icon: DollarSign },
-    { name: 'Calendar', href: '/calendar', icon: Calendar },
+    { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
+    { name: 'Daily Sales', href: '/daily-sales', icon: BarChart3 },
     { name: 'Venues', href: '/venues', icon: MapPin },
     { name: 'Staff', href: '/staff', icon: Users },
-    { name: 'Messages', href: '/messages', icon: MessageSquare },
+    { name: 'Calendar', href: '/calendar', icon: Calendar },
     { name: 'Tasks', href: '/tasks', icon: CheckSquare },
-    { name: 'Team', href: '/team', icon: UserPlus }
+    { name: 'Messages', href: '/messages', icon: MessageSquare }
   ]
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const isActive = (path) => {
     if (path === '/') {
@@ -30,6 +56,12 @@ const Header = () => {
   const handleSheetToggle = () => {
     const newSheet = currentSheet === 'TRAILER_HISTORY' ? 'CAMPER_HISTORY' : 'TRAILER_HISTORY'
     setCurrentSheet(newSheet)
+  }
+
+  const handleUserSelect = (userId) => {
+    const selectedUser = staffData.find(user => user.id === parseInt(userId))
+    setCurrentUser(selectedUser)
+    setShowUserMenu(false)
   }
 
   return (
@@ -65,15 +97,50 @@ const Header = () => {
             })}
           </nav>
 
-          {/* Sheet Toggle and Auth Status */}
+          {/* Sheet Toggle, User Selector, and Auth Status */}
           <div className="flex items-center space-x-4">
             <AuthStatus />
+            
+            {/* User Selector */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {currentUser ? currentUser.name : 'Select User'}
+                </span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Select your name
+                  </div>
+                  {staffData.map(user => (
+                    <button
+                      key={user.id}
+                      onClick={() => handleUserSelect(user.id)}
+                      className={cn(
+                        'w-full text-left px-3 py-2 text-sm hover:bg-gray-100 transition-colors',
+                        currentUser?.id === user.id ? 'bg-primary-50 text-primary-700' : 'text-gray-700'
+                      )}
+                    >
+                      {user.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="relative">
               <button
                 onClick={handleSheetToggle}
-                className="flex items-center px-3 py-2 text-sm font-medium text-secondary-700 bg-secondary-100 rounded-md hover:bg-secondary-200 transition-colors duration-200"
+                className="flex items-center px-3 py-2 text-sm font-medium text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50 rounded-md transition-colors duration-200"
               >
-                <span className="mr-2">
+                <span className="hidden sm:inline mr-2">
                   {currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'}
                 </span>
                 <ChevronDown className="w-4 h-4" />

@@ -108,7 +108,9 @@ const Staff = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
           <h1 className="text-2xl font-bold text-secondary-900">Staff Management</h1>
-          <p className="text-secondary-600">Manage your team members and their roles</p>
+          <p className="mt-2 text-secondary-600">
+            Manage your staff members and their roles
+          </p>
         </div>
         <button
           onClick={handleAddNew}
@@ -196,7 +198,9 @@ const Staff = () => {
                 {staffData.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="text-center py-8 text-secondary-500">
-                      No staff members found. Add your first team member to get started.
+                      <p className="text-gray-500 text-center">
+                        No staff members found. Add your first staff member to get started.
+                      </p>
                     </td>
                   </tr>
                 ) : (

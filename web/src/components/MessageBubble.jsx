@@ -18,11 +18,14 @@ const MessageBubble = ({ message, currentUserId }) => {
           ? 'bg-primary-600 text-white' 
           : 'bg-gray-100 text-gray-900'
       )}>
-        {!isOwnMessage && (
-          <div className="text-xs font-medium text-gray-500 mb-1">
-            {senderName}
-          </div>
-        )}
+        {/* Always show sender name for clarity */}
+        <div className={cn(
+          'text-xs font-medium mb-1',
+          isOwnMessage ? 'text-primary-200' : 'text-gray-600'
+        )}>
+          {senderName}
+          {isOwnMessage && ' (You)'}
+        </div>
         <div className="text-sm">
           {message.message_text}
         </div>

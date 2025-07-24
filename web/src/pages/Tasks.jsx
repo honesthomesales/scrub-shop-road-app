@@ -8,7 +8,7 @@ const Tasks = () => {
   const { 
     loading, 
     tasksData, 
-    usersData, 
+    staffData, 
     currentUser,
     loadTasks, 
     createTask, 
@@ -23,14 +23,14 @@ const Tasks = () => {
   const [priorityFilter, setPriorityFilter] = useState('all')
 
   useEffect(() => {
-    // Set default current user (first user) if none selected
-    if (usersData.length > 0 && !currentUser) {
-      setCurrentUser(usersData[0])
+    // Set default current user (first staff member) if none selected
+    if (staffData.length > 0 && !currentUser) {
+      setCurrentUser(staffData[0])
     }
 
     // Load tasks
     loadTasks()
-  }, [usersData, currentUser, setCurrentUser, loadTasks])
+  }, [staffData, currentUser, setCurrentUser, loadTasks])
 
   const handleCreateTask = async (taskData) => {
     if (!currentUser) return
@@ -99,7 +99,7 @@ const Tasks = () => {
                 Task Management
               </h1>
               <p className="mt-2 text-secondary-600">
-                Create, assign, and track tasks for your team
+                Create, assign, and track tasks for your staff
               </p>
             </div>
             <button
@@ -172,7 +172,7 @@ const Tasks = () => {
         {showTaskForm && (
           <TaskForm
             task={editingTask}
-            users={usersData}
+            users={staffData}
             onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
             onCancel={() => {
               setShowTaskForm(false)
