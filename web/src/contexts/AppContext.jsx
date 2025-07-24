@@ -223,6 +223,29 @@ const AppContext = createContext()
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState)
 
+  // ===== MESSAGES FUNCTIONALITY =====
+
+  // Load team data (users and groups)
+  const loadTeamData = async () => {
+    try {
+      const [usersResult, groupsResult] = await Promise.all([
+        supabaseAPI.getUsers(),
+        supabaseAPI.getMessageGroups()
+      ])
+
+      if (usersResult.success) {
+        dispatch({ type: ACTIONS.SET_USERS_DATA, payload: usersResult.data })
+      }
+
+      if (groupsResult.success) {
+        dispatch({ type: ACTIONS.SET_MESSAGE_GROUPS, payload: groupsResult.data })
+      }
+    } catch (error) {
+      console.error('Failed to load team data:', error)
+      // Don't set error for team data - it's non-critical
+    }
+  }
+
   // Load initial data
   useEffect(() => {
     loadInitialData()
@@ -498,27 +521,6 @@ export function AppProvider({ children }) {
   }
 
   // ===== MESSAGES FUNCTIONALITY =====
-
-  // Load team data (users and groups)
-  const loadTeamData = async () => {
-    try {
-      const [usersResult, groupsResult] = await Promise.all([
-        supabaseAPI.getUsers(),
-        supabaseAPI.getMessageGroups()
-      ])
-
-      if (usersResult.success) {
-        dispatch({ type: ACTIONS.SET_USERS_DATA, payload: usersResult.data })
-      }
-
-      if (groupsResult.success) {
-        dispatch({ type: ACTIONS.SET_MESSAGE_GROUPS, payload: groupsResult.data })
-      }
-    } catch (error) {
-      console.error('Failed to load team data:', error)
-      // Don't set error for team data - it's non-critical
-    }
-  }
 
   // Load messages for a group
   const loadMessages = async (groupId) => {
