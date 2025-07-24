@@ -992,7 +992,10 @@ class SupabaseAPI {
 
   async getSalesAnalysis(options = {}) {
     try {
+      console.log('🔍 [getSalesAnalysis] Starting with options:', options)
+      
       if (!supabase) {
+        console.log('🔍 [getSalesAnalysis] Using mock data (no supabase client)')
         // Mock data for development
         const mockData = [
           {
@@ -1019,6 +1022,7 @@ class SupabaseAPI {
         return { success: true, data: mockData }
       }
 
+      console.log('🔍 [getSalesAnalysis] Using pagination to fetch all data')
       // Use pagination to get all data beyond the 1000 limit
       let allData = []
       let page = 0
@@ -1026,6 +1030,8 @@ class SupabaseAPI {
       let hasMore = true
 
       while (hasMore) {
+        console.log(`🔍 [getSalesAnalysis] Fetching page ${page + 1}...`)
+        
         let query = supabase
           .from('sales_analysis')
           .select('*')
@@ -1034,14 +1040,18 @@ class SupabaseAPI {
 
         // Apply filters
         if (options.storeIds && options.storeIds.length > 0) {
+          console.log(`🔍 [getSalesAnalysis] Filtering by store IDs:`, options.storeIds)
           query = query.in('store_id', options.storeIds)
         } else if (options.storeId) {
+          console.log(`🔍 [getSalesAnalysis] Filtering by single store ID:`, options.storeId)
           query = query.eq('store_id', options.storeId)
         }
         if (options.startDate) {
+          console.log(`🔍 [getSalesAnalysis] Filtering by start date:`, options.startDate)
           query = query.gte('invoice_date', options.startDate)
         }
         if (options.endDate) {
+          console.log(`🔍 [getSalesAnalysis] Filtering by end date:`, options.endDate)
           query = query.lte('invoice_date', options.endDate)
         }
         if (options.vendor) {
@@ -1053,7 +1063,12 @@ class SupabaseAPI {
 
         const { data, error } = await query
 
-        if (error) throw new Error(error.message)
+        if (error) {
+          console.error('🔍 [getSalesAnalysis] Database error:', error)
+          throw new Error(error.message)
+        }
+
+        console.log(`🔍 [getSalesAnalysis] Page ${page + 1} returned ${data?.length || 0} records`)
 
         if (data && data.length > 0) {
           allData = allData.concat(data)
@@ -1061,30 +1076,35 @@ class SupabaseAPI {
           
           // Stop if we got less than pageSize (means we're at the end)
           if (data.length < pageSize) {
+            console.log(`🔍 [getSalesAnalysis] Got ${data.length} records (less than pageSize), stopping pagination`)
             hasMore = false
           }
           
           // Safety check to prevent infinite loops
           if (page > 10) {
-            console.warn('Stopping pagination after 10 pages to prevent infinite loop')
+            console.warn('🔍 [getSalesAnalysis] Stopping pagination after 10 pages to prevent infinite loop')
             hasMore = false
           }
         } else {
+          console.log(`🔍 [getSalesAnalysis] No data returned for page ${page + 1}, stopping pagination`)
           hasMore = false
         }
       }
 
-      console.log(`Retrieved ${allData.length} records through pagination`)
+      console.log(`🔍 [getSalesAnalysis] Final result: Retrieved ${allData.length} records through pagination`)
       return { success: true, data: allData }
     } catch (error) {
-      console.error('Failed to get sales analysis:', error)
+      console.error('🔍 [getSalesAnalysis] Failed to get sales analysis:', error)
       return { success: false, error: error.message, data: [] }
     }
   }
 
   async getSalesAnalysisStats(options = {}) {
     try {
+      console.log('📊 [getSalesAnalysisStats] Starting with options:', options)
+      
       if (!supabase) {
+        console.log('📊 [getSalesAnalysisStats] Using mock stats (no supabase client)')
         // Mock stats for development
         return {
           success: true,
@@ -1106,6 +1126,7 @@ class SupabaseAPI {
         }
       }
 
+      console.log('📊 [getSalesAnalysisStats] Using pagination to fetch all data for stats')
       // Get basic stats with pagination to handle large datasets
       let allSalesData = []
       let page = 0
@@ -1113,12 +1134,19 @@ class SupabaseAPI {
       let hasMore = true
 
       while (hasMore) {
+        console.log(`📊 [getSalesAnalysisStats] Fetching page ${page + 1}...`)
+        
         const { data, error } = await supabase
           .from('sales_analysis')
           .select('*')
           .range(page * pageSize, (page + 1) * pageSize - 1)
 
-        if (error) throw new Error(error.message)
+        if (error) {
+          console.error('📊 [getSalesAnalysisStats] Database error:', error)
+          throw new Error(error.message)
+        }
+
+        console.log(`📊 [getSalesAnalysisStats] Page ${page + 1} returned ${data?.length || 0} records`)
 
         if (data && data.length > 0) {
           allSalesData = allSalesData.concat(data)
@@ -1126,20 +1154,22 @@ class SupabaseAPI {
           
           // Stop if we got less than pageSize (means we're at the end)
           if (data.length < pageSize) {
+            console.log(`📊 [getSalesAnalysisStats] Got ${data.length} records (less than pageSize), stopping pagination`)
             hasMore = false
           }
           
           // Safety check to prevent infinite loops
           if (page > 10) {
-            console.warn('Stopping pagination after 10 pages to prevent infinite loop')
+            console.warn('📊 [getSalesAnalysisStats] Stopping pagination after 10 pages to prevent infinite loop')
             hasMore = false
           }
         } else {
+          console.log(`📊 [getSalesAnalysisStats] No data returned for page ${page + 1}, stopping pagination`)
           hasMore = false
         }
       }
 
-      console.log(`Retrieved ${allSalesData.length} records for stats through pagination`)
+      console.log(`📊 [getSalesAnalysisStats] Final result: Retrieved ${allSalesData.length} records for stats through pagination`)
       const salesData = allSalesData
 
       // Calculate stats
