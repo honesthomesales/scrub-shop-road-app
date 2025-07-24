@@ -1042,9 +1042,10 @@ class SupabaseAPI {
       if (options.department) {
         query = query.eq('department', options.department)
       }
-      if (options.limit) {
-        query = query.limit(options.limit)
-      }
+      
+      // Set a higher limit to get more data (default is 1000)
+      const limit = options.limit || 10000
+      query = query.limit(limit)
 
       const { data, error } = await query
 
@@ -1081,10 +1082,11 @@ class SupabaseAPI {
         }
       }
 
-      // Get basic stats
+      // Get basic stats with higher limit
       const { data: salesData, error } = await supabase
         .from('sales_analysis')
         .select('*')
+        .limit(10000)
 
       if (error) throw new Error(error.message)
 

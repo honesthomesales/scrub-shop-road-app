@@ -78,6 +78,8 @@ const SalesAnalysis = () => {
       
       if (result.success) {
         console.log('Analysis data loaded:', result.data.length, 'records')
+        console.log('Sample data:', result.data.slice(0, 3))
+        console.log('Store IDs in data:', [...new Set(result.data.map(item => item.store_id))])
         setAnalysisData(result.data)
       } else {
         console.error('Failed to load analysis data:', result.error)
@@ -118,17 +120,25 @@ const SalesAnalysis = () => {
   const processChartData = () => {
     if (!analysisData.length) return { dailyData: [], storeData: [], productData: [], brandData: [] }
 
+    console.log('Processing chart data for', analysisData.length, 'records')
+
     // Daily sales data
     const dailyData = analysisData.reduce((acc, item) => {
       const date = item.invoice_date
+      if (!date) return acc
+      
       const existing = acc.find(d => d.date === date)
+      const actual = parseFloat(item.actual) || 0
+      const soldQty = parseInt(item.sold_qty) || 0
+      const sales = actual * soldQty
+      
       if (existing) {
-        existing.sales += parseFloat(item.actual) * parseInt(item.sold_qty)
+        existing.sales += sales
         existing.count += 1
       } else {
         acc.push({
           date,
-          sales: parseFloat(item.actual) * parseInt(item.sold_qty),
+          sales,
           count: 1
         })
       }
@@ -138,22 +148,27 @@ const SalesAnalysis = () => {
     // Store performance data
     const storeData = analysisData.reduce((acc, item) => {
       const storeId = item.store_id
+      if (!storeId) return acc
+      
       const existing = acc.find(s => s.storeId === storeId)
-      const sales = parseFloat(item.actual) * parseInt(item.sold_qty)
-      const cost = parseFloat(item.cost) * parseInt(item.sold_qty)
+      const actual = parseFloat(item.actual) || 0
+      const cost = parseFloat(item.cost) || 0
+      const soldQty = parseInt(item.sold_qty) || 0
+      const sales = actual * soldQty
+      const totalCost = cost * soldQty
       
       if (existing) {
         existing.sales += sales
-        existing.cost += cost
-        existing.profit += (sales - cost)
+        existing.cost += totalCost
+        existing.profit += (sales - totalCost)
         existing.count += 1
       } else {
         acc.push({
           storeId,
           storeName: getStoreName(storeId),
           sales,
-          cost,
-          profit: sales - cost,
+          cost: totalCost,
+          profit: sales - totalCost,
           count: 1
         })
       }
@@ -164,16 +179,18 @@ const SalesAnalysis = () => {
     const productData = analysisData.reduce((acc, item) => {
       const product = item.product || 'Unknown'
       const existing = acc.find(p => p.product === product)
-      const sales = parseFloat(item.actual) * parseInt(item.sold_qty)
+      const actual = parseFloat(item.actual) || 0
+      const soldQty = parseInt(item.sold_qty) || 0
+      const sales = actual * soldQty
       
       if (existing) {
         existing.sales += sales
-        existing.count += parseInt(item.sold_qty)
+        existing.count += soldQty
       } else {
         acc.push({
           product,
           sales,
-          count: parseInt(item.sold_qty)
+          count: soldQty
         })
       }
       return acc
@@ -183,20 +200,29 @@ const SalesAnalysis = () => {
     const brandData = analysisData.reduce((acc, item) => {
       const vendor = item.vendor || 'Unknown'
       const existing = acc.find(b => b.vendor === vendor)
-      const sales = parseFloat(item.actual) * parseInt(item.sold_qty)
+      const actual = parseFloat(item.actual) || 0
+      const soldQty = parseInt(item.sold_qty) || 0
+      const sales = actual * soldQty
       
       if (existing) {
         existing.sales += sales
-        existing.count += parseInt(item.sold_qty)
+        existing.count += soldQty
       } else {
         acc.push({
           vendor,
           sales,
-          count: parseInt(item.sold_qty)
+          count: soldQty
         })
       }
       return acc
     }, []).sort((a, b) => b.sales - a.sales).slice(0, 10)
+
+    console.log('Processed data:', {
+      dailyDataCount: dailyData.length,
+      storeDataCount: storeData.length,
+      productDataCount: productData.length,
+      brandDataCount: brandData.length
+    })
 
     return { dailyData, storeData, productData, brandData }
   }
