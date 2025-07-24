@@ -11,7 +11,8 @@ import {
   X,
   ChevronDown,
   User,
-  Upload
+  Upload,
+  TrendingUp
 } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { cn } from '../utils/cn'
@@ -70,7 +71,8 @@ const Header = () => {
     { name: 'Calendar', href: '/calendar', icon: Calendar },
     { name: 'Tasks', href: '/tasks', icon: CheckSquare },
     { name: 'Messages', href: '/messages', icon: MessageSquare },
-    { name: 'Sales Upload', href: '/admin/sales-upload', icon: Upload }
+    { name: 'Sales Upload', href: '/admin/sales-upload', icon: Upload },
+    { name: 'Sales Analysis', href: '/sales-analysis', icon: TrendingUp }
   ]
 
   return (
