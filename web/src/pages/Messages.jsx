@@ -30,13 +30,13 @@ const Messages = () => {
       setSelectedGroupId(messageGroups[0].id)
       setSelectedGroup(messageGroups[0])
     }
-  }, [usersData, messageGroups, currentUser, selectedGroupId, setCurrentUser, setSelectedGroup])
+  }, [usersData, messageGroups, currentUser, selectedGroupId])
 
   useEffect(() => {
-    if (selectedGroupId && loadMessages) {
+    if (selectedGroupId) {
       loadMessages(selectedGroupId)
     }
-  }, [selectedGroupId, loadMessages])
+  }, [selectedGroupId])
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useReducer, useEffect } from 'react'
 import supabaseAPI from '../services/supabaseAPI'
 import { transformSalesData, transformVenueData, transformStaffData, staffToDb } from '../utils/sheetMappings'
 
@@ -287,8 +287,39 @@ const AppContext = createContext()
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState)
 
-  // Simplified data loading functions
-  const loadSalesData = useCallback(async () => {
+  // Load initial data
+  useEffect(() => {
+    loadInitialData()
+  }, [])
+
+  // Load data when sheet changes
+  useEffect(() => {
+    loadSalesData()
+  }, [state.currentSheet])
+
+  const loadInitialData = async () => {
+    dispatch({ type: ACTIONS.SET_LOADING, payload: true })
+    
+    try {
+      const isInitialized = await supabaseAPI.init()
+      dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: isInitialized })
+      
+      if (isInitialized) {
+        await Promise.all([
+          loadSalesData(),
+          loadVenuesData(),
+          loadStaffData()
+        ])
+        
+        // Load team data separately (non-critical)
+        loadTeamData()
+      }
+    } catch (error) {
+      dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
+    }
+  }
+
+  const loadSalesData = async () => {
     try {
       const tableName = state.currentSheet === 'TRAILER_HISTORY' ? 'trailer_history' : 'camper_history'
       const result = await supabaseAPI.readTable(tableName)
@@ -298,39 +329,45 @@ export function AppProvider({ children }) {
         )
         dispatch({ type: ACTIONS.SET_SALES_DATA, payload: transformedData })
       } else {
-        console.error('Failed to load sales data:', result.error)
         dispatch({ type: ACTIONS.SET_ERROR, payload: result.error })
       }
     } catch (error) {
-      console.error('Error loading sales data:', error)
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     }
-  }, [state.currentSheet])
+  }
 
-  const loadVenuesData = useCallback(async () => {
+  const loadVenuesData = async () => {
     try {
+      console.log('[loadVenuesData] Fetching venues from backend...');
       const result = await supabaseAPI.readTable('venues')
+      console.log('[loadVenuesData] Raw API result:', result);
       if (result.success) {
-        const transformedData = result.data.map(row => transformVenueData(row))
+        console.log('[loadVenuesData] Venue rows from API:', result.data);
+        const transformedData = result.data.map(row => {
+          const transformed = transformVenueData(row);
+          console.log('[loadVenuesData] Transforming row:', row, '=>', transformed);
+          return transformed;
+        });
+        console.log('[loadVenuesData] Transformed venuesData:', transformedData);
         dispatch({ type: ACTIONS.SET_VENUES_DATA, payload: transformedData })
       } else {
-        console.error('Failed to load venues data:', result.error)
+        console.error('[loadVenuesData] API error:', result.error);
         dispatch({ type: ACTIONS.SET_ERROR, payload: result.error })
       }
     } catch (error) {
-      console.error('Error loading venues data:', error)
+      console.error('[loadVenuesData] Exception:', error);
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     }
-  }, [])
+  }
 
-  const loadStaffData = useCallback(async () => {
+  const loadStaffData = async () => {
     try {
       const result = await supabaseAPI.readTable('staff')
       if (result.success) {
         const transformedData = result.data.map(row => transformStaffData(row))
         dispatch({ type: ACTIONS.SET_STAFF_DATA, payload: transformedData })
       } else {
-        // Use default staff data if table doesn't exist
+        // If staff table doesn't exist, create default staff data
         const defaultStaff = [
           { id: 1, name: 'John Smith', email: 'john@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
           { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
@@ -339,7 +376,6 @@ export function AppProvider({ children }) {
         dispatch({ type: ACTIONS.SET_STAFF_DATA, payload: defaultStaff })
       }
     } catch (error) {
-      console.error('Error loading staff data:', error)
       const defaultStaff = [
         { id: 1, name: 'John Smith', email: 'john@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
         { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
@@ -347,9 +383,10 @@ export function AppProvider({ children }) {
       ]
       dispatch({ type: ACTIONS.SET_STAFF_DATA, payload: defaultStaff })
     }
-  }, [])
+  }
 
-  const loadTeamData = useCallback(async () => {
+  // Team data loading (non-critical)
+  const loadTeamData = async () => {
     try {
       const [usersResult, groupsResult] = await Promise.all([
         supabaseAPI.getUsers(),
@@ -367,58 +404,7 @@ export function AppProvider({ children }) {
       console.error('Failed to load team data:', error)
       // Don't set error for team data - it's non-critical
     }
-  }, [])
-
-  const loadMessages = useCallback(async (groupId) => {
-    try {
-      const result = await supabaseAPI.getMessages(groupId)
-      if (result.success) {
-        dispatch({ type: ACTIONS.SET_MESSAGES_DATA, payload: result.data })
-      }
-    } catch (error) {
-      console.error('Failed to load messages:', error)
-    }
-  }, [])
-
-  // Load initial data
-  useEffect(() => {
-    const initializeApp = async () => {
-      dispatch({ type: ACTIONS.SET_LOADING, payload: true })
-      
-      try {
-        const isInitialized = await supabaseAPI.init()
-        dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: isInitialized })
-        
-        if (isInitialized) {
-          // Load critical data first
-          await Promise.all([
-            loadSalesData(),
-            loadVenuesData(),
-            loadStaffData()
-          ])
-          
-          // Load team data separately (non-critical)
-          loadTeamData().catch(error => {
-            console.warn('Team data loading failed:', error)
-          })
-        }
-      } catch (error) {
-        console.error('Failed to initialize app:', error)
-        dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
-      } finally {
-        dispatch({ type: ACTIONS.SET_LOADING, payload: false })
-      }
-    }
-
-    initializeApp()
-  }, []) // Empty dependency array - only run once
-
-  // Load data when sheet changes
-  useEffect(() => {
-    if (state.isAuthenticated) {
-      loadSalesData()
-    }
-  }, [state.currentSheet, loadSalesData])
+  }
 
   const setCurrentSheet = (sheet) => {
     dispatch({ type: ACTIONS.SET_CURRENT_SHEET, payload: sheet })
@@ -454,10 +440,6 @@ export function AppProvider({ children }) {
 
   const updateSalesEntry = async (entryId, entryData) => {
     try {
-      console.log('=== UPDATE SALES ENTRY DEBUG ===')
-      console.log('Entry ID:', entryId)
-      console.log('Entry Data:', entryData)
-      
       const tableName = state.currentSheet === 'TRAILER_HISTORY' ? 'trailer_history' : 'camper_history'
       
       // Transform the entry data to match database schema
@@ -470,22 +452,16 @@ export function AppProvider({ children }) {
         common_venue_name: entryData.venue_id // Map venue_id to common_venue_name
       }
       
-      console.log('DB Data being sent:', dbData)
-      
       const result = await supabaseAPI.updateRow(tableName, entryId, dbData)
-      console.log('Update result:', result)
       
       if (result.success) {
-        // Use the returned data from the database to ensure consistency
         const updatedEntry = transformSalesData(result.data, state.currentSheet)
-        console.log('Transformed updated entry:', updatedEntry)
         dispatch({ type: ACTIONS.UPDATE_SALES_ENTRY, payload: updatedEntry })
         return { success: true }
       } else {
         return { success: false, error: result.error }
       }
     } catch (error) {
-      console.error('Update sales entry error:', error)
       return { success: false, error: error.message }
     }
   }
@@ -494,7 +470,7 @@ export function AppProvider({ children }) {
     try {
       const tableName = state.currentSheet === 'TRAILER_HISTORY' ? 'trailer_history' : 'camper_history'
       const result = await supabaseAPI.deleteRow(tableName, entryId)
-      
+
       if (result.success) {
         dispatch({ type: ACTIONS.DELETE_SALES_ENTRY, payload: entryId })
         return { success: true }
@@ -511,7 +487,7 @@ export function AppProvider({ children }) {
       // Transform venue data to the correct format for Google Sheets
       const sheetData = transformVenueData(venueData)
       const result = await supabaseAPI.addRow('venues', sheetData)
-      
+
       if (result.success) {
         const newVenue = transformVenueData(result.data)
         dispatch({ type: ACTIONS.ADD_VENUE_ENTRY, payload: newVenue })
@@ -529,7 +505,7 @@ export function AppProvider({ children }) {
       // Transform venue data to the correct format for Google Sheets
       const sheetData = transformVenueData(venueData)
       const result = await supabaseAPI.updateRow('venues', venueId, sheetData)
-      
+
       if (result.success) {
         const updatedVenue = { ...venueData, id: venueId }
         dispatch({ type: ACTIONS.UPDATE_VENUE_ENTRY, payload: updatedVenue })
@@ -545,7 +521,7 @@ export function AppProvider({ children }) {
   const deleteVenueEntry = async (venueId) => {
     try {
       const result = await supabaseAPI.deleteRow('venues', venueId)
-      
+
       if (result.success) {
         dispatch({ type: ACTIONS.DELETE_VENUE_ENTRY, payload: venueId })
         return { success: true }
@@ -594,7 +570,7 @@ export function AppProvider({ children }) {
   const deleteStaffEntry = async (staffId) => {
     try {
       const result = await supabaseAPI.deleteRow('staff', staffId)
-      
+
       if (result.success) {
         dispatch({ type: ACTIONS.DELETE_STAFF_ENTRY, payload: staffId })
         return { success: true }
@@ -623,31 +599,24 @@ export function AppProvider({ children }) {
   }
 
   const toggleSupabaseConnection = async (connect) => {
-    if (connect) {
-      // Connect to Supabase
-      try {
+    try {
+      if (connect) {
         const isInitialized = await supabaseAPI.init()
+        dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: isInitialized })
+        
         if (isInitialized) {
-          dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: true })
-          // Load data after successful connection
           await Promise.all([
             loadSalesData(),
             loadVenuesData(),
             loadStaffData()
           ])
-        } else {
-          dispatch({ type: ACTIONS.SET_ERROR, payload: 'Failed to connect to Supabase' })
         }
-      } catch (error) {
-        dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
+      } else {
+        dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: false })
       }
-    } else {
-      // Disconnect from Supabase
+    } catch (error) {
+      console.error('Failed to toggle Supabase connection:', error)
       dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: false })
-      // Clear data when disconnected
-      dispatch({ type: ACTIONS.SET_SALES_DATA, payload: [] })
-      dispatch({ type: ACTIONS.SET_VENUES_DATA, payload: [] })
-      dispatch({ type: ACTIONS.SET_STAFF_DATA, payload: [] })
     }
   }
 
@@ -658,7 +627,17 @@ export function AppProvider({ children }) {
 
   // ===== TEAM COMMUNICATION & TASK MANAGEMENT FUNCTIONS =====
 
-
+  // Load messages for a group
+  const loadMessages = async (groupId) => {
+    try {
+      const result = await supabaseAPI.getMessages(groupId)
+      if (result.success) {
+        dispatch({ type: ACTIONS.SET_MESSAGES_DATA, payload: result.data })
+      }
+    } catch (error) {
+      console.error('Failed to load messages:', error)
+    }
+  }
 
   // Send a message
   const sendMessage = async (messageData) => {
@@ -760,19 +739,19 @@ export function AppProvider({ children }) {
   }
 
   // Set current user
-  const setCurrentUser = useCallback((user) => {
+  const setCurrentUser = (user) => {
     dispatch({ type: ACTIONS.SET_CURRENT_USER, payload: user })
-  }, [])
+  }
 
   // Set selected group
-  const setSelectedGroup = useCallback((group) => {
+  const setSelectedGroup = (group) => {
     dispatch({ type: ACTIONS.SET_SELECTED_GROUP, payload: group })
-  }, [])
+  }
 
   // Set selected task
-  const setSelectedTask = useCallback((task) => {
+  const setSelectedTask = (task) => {
     dispatch({ type: ACTIONS.SET_SELECTED_TASK, payload: task })
-  }, [])
+  }
 
   const value = {
     ...state,
