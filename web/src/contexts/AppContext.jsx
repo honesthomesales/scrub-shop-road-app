@@ -18,7 +18,11 @@ const initialState = {
   messagesData: [],
   messageGroups: [],
   currentUser: null,
-  selectedGroup: null
+  selectedGroup: null,
+  // Tasks functionality
+  tasksData: [],
+  taskComments: [],
+  selectedTask: null
 }
 
 // Action types
@@ -47,7 +51,15 @@ const ACTIONS = {
   SET_MESSAGE_GROUPS: 'SET_MESSAGE_GROUPS',
   ADD_MESSAGE: 'ADD_MESSAGE',
   SET_CURRENT_USER: 'SET_CURRENT_USER',
-  SET_SELECTED_GROUP: 'SET_SELECTED_GROUP'
+  SET_SELECTED_GROUP: 'SET_SELECTED_GROUP',
+  // Tasks functionality
+  SET_TASKS_DATA: 'SET_TASKS_DATA',
+  ADD_TASK: 'ADD_TASK',
+  UPDATE_TASK: 'UPDATE_TASK',
+  DELETE_TASK: 'DELETE_TASK',
+  SET_TASK_COMMENTS: 'SET_TASK_COMMENTS',
+  ADD_TASK_COMMENT: 'ADD_TASK_COMMENT',
+  SET_SELECTED_TASK: 'SET_SELECTED_TASK'
 }
 
 // Reducer function
@@ -211,6 +223,51 @@ function appReducer(state, action) {
         selectedGroup: action.payload
       }
     
+    // Tasks functionality
+    case ACTIONS.SET_TASKS_DATA:
+      return {
+        ...state,
+        tasksData: action.payload
+      }
+    
+    case ACTIONS.ADD_TASK:
+      return {
+        ...state,
+        tasksData: [action.payload, ...state.tasksData]
+      }
+    
+    case ACTIONS.UPDATE_TASK:
+      return {
+        ...state,
+        tasksData: state.tasksData.map(task => 
+          task.id === action.payload.id ? action.payload : task
+        )
+      }
+    
+    case ACTIONS.DELETE_TASK:
+      return {
+        ...state,
+        tasksData: state.tasksData.filter(task => task.id !== action.payload)
+      }
+    
+    case ACTIONS.SET_TASK_COMMENTS:
+      return {
+        ...state,
+        taskComments: action.payload
+      }
+    
+    case ACTIONS.ADD_TASK_COMMENT:
+      return {
+        ...state,
+        taskComments: [action.payload, ...state.taskComments]
+      }
+    
+    case ACTIONS.SET_SELECTED_TASK:
+      return {
+        ...state,
+        selectedTask: action.payload
+      }
+    
     default:
       return state
   }
@@ -272,6 +329,9 @@ export function AppProvider({ children }) {
         
         // Load team data separately (non-critical)
         loadTeamData()
+        
+        // Load tasks separately (non-critical)
+        loadTasks()
       }
     } catch (error) {
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
@@ -281,16 +341,24 @@ export function AppProvider({ children }) {
   const loadSalesData = async () => {
     try {
       const tableName = state.currentSheet === 'TRAILER_HISTORY' ? 'trailer_history' : 'camper_history'
+      console.log('[loadSalesData] Fetching sales from backend...', tableName);
       const result = await supabaseAPI.readTable(tableName)
+      console.log('[loadSalesData] Raw API result:', result);
       if (result.success) {
-        const transformedData = result.data.map(row => 
-          transformSalesData(row, state.currentSheet)
-        )
+        console.log('[loadSalesData] Sales rows from API:', result.data);
+        const transformedData = result.data.map(row => {
+          const transformed = transformSalesData(row, state.currentSheet);
+          console.log('[loadSalesData] Transforming row:', row, '=>', transformed);
+          return transformed;
+        });
+        console.log('[loadSalesData] Transformed salesData:', transformedData);
         dispatch({ type: ACTIONS.SET_SALES_DATA, payload: transformedData })
       } else {
+        console.error('[loadSalesData] API error:', result.error);
         dispatch({ type: ACTIONS.SET_ERROR, payload: result.error })
       }
     } catch (error) {
+      console.error('[loadSalesData] Exception:', error);
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     }
   }
@@ -559,6 +627,89 @@ export function AppProvider({ children }) {
     dispatch({ type: ACTIONS.SET_SELECTED_GROUP, payload: group })
   }
 
+  // Tasks functionality
+  const loadTasks = async () => {
+    try {
+      const result = await supabaseAPI.getTasks()
+      if (result.success) {
+        dispatch({ type: ACTIONS.SET_TASKS_DATA, payload: result.data })
+      }
+    } catch (error) {
+      console.error('Failed to load tasks:', error)
+    }
+  }
+
+  const addTask = async (taskData) => {
+    try {
+      const result = await supabaseAPI.addTask(taskData)
+      if (result.success) {
+        dispatch({ type: ACTIONS.ADD_TASK, payload: result.data })
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  const updateTask = async (taskId, taskData) => {
+    try {
+      const result = await supabaseAPI.updateTask(taskId, taskData)
+      if (result.success) {
+        dispatch({ type: ACTIONS.UPDATE_TASK, payload: { id: taskId, ...taskData } })
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  const deleteTask = async (taskId) => {
+    try {
+      const result = await supabaseAPI.deleteTask(taskId)
+      if (result.success) {
+        dispatch({ type: ACTIONS.DELETE_TASK, payload: taskId })
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  const loadTaskComments = async (taskId) => {
+    try {
+      const result = await supabaseAPI.getTaskComments(taskId)
+      if (result.success) {
+        dispatch({ type: ACTIONS.SET_TASK_COMMENTS, payload: result.data })
+      }
+    } catch (error) {
+      console.error('Failed to load task comments:', error)
+    }
+  }
+
+  const addTaskComment = async (commentData) => {
+    try {
+      const result = await supabaseAPI.addTaskComment(commentData)
+      if (result.success) {
+        dispatch({ type: ACTIONS.ADD_TASK_COMMENT, payload: result.data })
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  const setSelectedTask = (task) => {
+    dispatch({ type: ACTIONS.SET_SELECTED_TASK, payload: task })
+  }
+
   const value = {
     ...state,
     workers: getActiveWorkers(), // Use real staff data instead of hardcoded workers
@@ -584,7 +735,14 @@ export function AppProvider({ children }) {
     loadMessages,
     sendMessage,
     setCurrentUser,
-    setSelectedGroup
+    setSelectedGroup,
+    loadTasks,
+    addTask,
+    updateTask,
+    deleteTask,
+    loadTaskComments,
+    addTaskComment,
+    setSelectedTask
   }
 
   return (
