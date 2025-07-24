@@ -287,38 +287,6 @@ const AppContext = createContext()
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState)
 
-  // Load initial data
-  useEffect(() => {
-    loadInitialData()
-  }, [])
-
-  // Load data when sheet changes
-  useEffect(() => {
-    loadSalesData()
-  }, [state.currentSheet])
-
-  const loadInitialData = async () => {
-    dispatch({ type: ACTIONS.SET_LOADING, payload: true })
-    
-    try {
-      const isInitialized = await supabaseAPI.init()
-      dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: isInitialized })
-      
-      if (isInitialized) {
-        await Promise.all([
-          loadSalesData(),
-          loadVenuesData(),
-          loadStaffData()
-        ])
-        
-        // Load team data separately (non-critical)
-        loadTeamData()
-      }
-    } catch (error) {
-      dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
-    }
-  }
-
   const loadSalesData = async () => {
     try {
       const tableName = state.currentSheet === 'TRAILER_HISTORY' ? 'trailer_history' : 'camper_history'
@@ -385,24 +353,37 @@ export function AppProvider({ children }) {
     }
   }
 
-  // Team data loading (non-critical)
-  const loadTeamData = async () => {
+
+
+  // Load initial data
+  useEffect(() => {
+    loadInitialData()
+  }, [])
+
+  // Load data when sheet changes
+  useEffect(() => {
+    loadSalesData()
+  }, [state.currentSheet])
+
+  const loadInitialData = async () => {
+    dispatch({ type: ACTIONS.SET_LOADING, payload: true })
+    
     try {
-      const [usersResult, groupsResult] = await Promise.all([
-        supabaseAPI.getUsers(),
-        supabaseAPI.getMessageGroups()
-      ])
-
-      if (usersResult.success) {
-        dispatch({ type: ACTIONS.SET_USERS_DATA, payload: usersResult.data })
-      }
-
-      if (groupsResult.success) {
-        dispatch({ type: ACTIONS.SET_MESSAGE_GROUPS, payload: groupsResult.data })
+      const isInitialized = await supabaseAPI.init()
+      dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: isInitialized })
+      
+      if (isInitialized) {
+        await Promise.all([
+          loadSalesData(),
+          loadVenuesData(),
+          loadStaffData()
+        ])
+        
+        // Load team data separately (non-critical)
+        loadTeamData()
       }
     } catch (error) {
-      console.error('Failed to load team data:', error)
-      // Don't set error for team data - it's non-critical
+      dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     }
   }
 
