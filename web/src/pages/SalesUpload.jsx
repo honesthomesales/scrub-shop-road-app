@@ -11,16 +11,7 @@ const SalesUpload = () => {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadResult, setUploadResult] = useState(null)
-  const [selectedStore, setSelectedStore] = useState('')
   const fileInputRef = useRef(null)
-
-  const stores = [
-    { id: 1, name: 'Store 1' },
-    { id: 2, name: 'Store 2' },
-    { id: 3, name: 'Store 3' },
-    { id: 4, name: 'Store 4' },
-    { id: 5, name: 'Store 5' }
-  ]
 
   const handleFileSelect = (event) => {
     const selectedFile = event.target.files[0]
@@ -49,14 +40,13 @@ const SalesUpload = () => {
   }
 
   const extractStoreFromInvoice = (invoiceNo) => {
-    if (!invoiceNo) return null
+    if (!invoiceNo) return 1 // Default to store 1 if no invoice number
     const match = invoiceNo.match(/-(\d+)/)
-    return match ? parseInt(match[1]) : null
+    return match ? parseInt(match[1]) : 1 // Default to store 1 if no match
   }
 
   const transformRow = (row) => {
-    const storeFromInvoice = extractStoreFromInvoice(row['Invoice No.'])
-    const storeId = selectedStore || storeFromInvoice || 1 // Default to store 1 if no match
+    const storeId = extractStoreFromInvoice(row['Invoice No.'])
 
     return {
       store_id: storeId,
@@ -80,8 +70,8 @@ const SalesUpload = () => {
   }
 
   const handleUpload = async () => {
-    if (!file || !selectedStore) {
-      alert('Please select a file and store')
+    if (!file) {
+      alert('Please select a file')
       return
     }
 
@@ -180,28 +170,8 @@ const SalesUpload = () => {
             Sales Data Upload
           </h1>
           <p className="mt-2 text-secondary-600">
-            Upload CSV files to import sales analysis data
+            Upload CSV files to import sales analysis data for all stores
           </p>
-        </div>
-
-        {/* Store Selection */}
-        <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6 mb-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Store Selection</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {stores.map(store => (
-              <button
-                key={store.id}
-                onClick={() => setSelectedStore(store.id)}
-                className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
-                  selectedStore === store.id
-                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-gray-300 text-gray-700 hover:border-gray-400'
-                }`}
-              >
-                {store.name}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* File Upload Area */}
@@ -236,7 +206,10 @@ const SalesUpload = () => {
                   </button>
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Supports CSV files with sales data
+                  Supports CSV files with sales data for all stores
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  Store will be automatically detected from invoice number (e.g., INV-001-123 = Store 123)
                 </p>
               </div>
             ) : (
@@ -302,7 +275,7 @@ const SalesUpload = () => {
         )}
 
         {/* Upload Button */}
-        {file && selectedStore && (
+        {file && (
           <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6 mb-6">
             <button
               onClick={handleUpload}
