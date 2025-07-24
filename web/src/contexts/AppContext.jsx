@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react'
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
 import supabaseAPI from '../services/supabaseAPI'
 import { transformSalesData, transformVenueData, transformStaffData, staffToDb } from '../utils/sheetMappings'
 
@@ -295,7 +295,7 @@ export function AppProvider({ children }) {
   // Load data when sheet changes
   useEffect(() => {
     loadSalesData()
-  }, [state.currentSheet])
+  }, [loadSalesData])
 
   const loadInitialData = async () => {
     dispatch({ type: ACTIONS.SET_LOADING, payload: true })
@@ -305,19 +305,26 @@ export function AppProvider({ children }) {
       dispatch({ type: ACTIONS.SET_AUTHENTICATED, payload: isInitialized })
       
       if (isInitialized) {
+        // Load main data first (critical for app functionality)
         await Promise.all([
           loadSalesData(),
           loadVenuesData(),
-          loadStaffData(),
-          loadTeamData()
+          loadStaffData()
         ])
+        
+        // Load team data separately (non-critical, can fail gracefully)
+        try {
+          await loadTeamData()
+        } catch (teamError) {
+          console.warn('Team data loading failed, but continuing with main app:', teamError)
+        }
       }
     } catch (error) {
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     }
   }
 
-  const loadSalesData = async () => {
+  const loadSalesData = useCallback(async () => {
     try {
       const tableName = state.currentSheet === 'TRAILER_HISTORY' ? 'trailer_history' : 'camper_history'
       const result = await supabaseAPI.readTable(tableName)
@@ -332,9 +339,9 @@ export function AppProvider({ children }) {
     } catch (error) {
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     }
-  }
+  }, [state.currentSheet])
 
-  const loadVenuesData = async () => {
+  const loadVenuesData = useCallback(async () => {
     try {
       console.log('[loadVenuesData] Fetching venues from backend...');
       const result = await supabaseAPI.readTable('venues')
@@ -356,9 +363,9 @@ export function AppProvider({ children }) {
       console.error('[loadVenuesData] Exception:', error);
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     }
-  }
+  }, [])
 
-  const loadStaffData = async () => {
+  const loadStaffData = useCallback(async () => {
     try {
       const result = await supabaseAPI.readTable('staff')
       if (result.success) {
@@ -381,7 +388,7 @@ export function AppProvider({ children }) {
       ]
       dispatch({ type: ACTIONS.SET_STAFF_DATA, payload: defaultStaff })
     }
-  }
+  }, [])
 
   const setCurrentSheet = (sheet) => {
     dispatch({ type: ACTIONS.SET_CURRENT_SHEET, payload: sheet })
@@ -622,7 +629,7 @@ export function AppProvider({ children }) {
   // ===== TEAM COMMUNICATION & TASK MANAGEMENT FUNCTIONS =====
 
   // Load team data
-  const loadTeamData = async () => {
+  const loadTeamData = useCallback(async () => {
     try {
       const [usersResult, groupsResult] = await Promise.all([
         supabaseAPI.getUsers(),
@@ -639,10 +646,10 @@ export function AppProvider({ children }) {
     } catch (error) {
       console.error('Failed to load team data:', error)
     }
-  }
+  }, [])
 
   // Load messages for a group
-  const loadMessages = async (groupId) => {
+  const loadMessages = useCallback(async (groupId) => {
     try {
       const result = await supabaseAPI.getMessages(groupId)
       if (result.success) {
@@ -651,7 +658,7 @@ export function AppProvider({ children }) {
     } catch (error) {
       console.error('Failed to load messages:', error)
     }
-  }
+  }, [])
 
   // Send a message
   const sendMessage = async (messageData) => {
@@ -753,19 +760,19 @@ export function AppProvider({ children }) {
   }
 
   // Set current user
-  const setCurrentUser = (user) => {
+  const setCurrentUser = useCallback((user) => {
     dispatch({ type: ACTIONS.SET_CURRENT_USER, payload: user })
-  }
+  }, [])
 
   // Set selected group
-  const setSelectedGroup = (group) => {
+  const setSelectedGroup = useCallback((group) => {
     dispatch({ type: ACTIONS.SET_SELECTED_GROUP, payload: group })
-  }
+  }, [])
 
   // Set selected task
-  const setSelectedTask = (task) => {
+  const setSelectedTask = useCallback((task) => {
     dispatch({ type: ACTIONS.SET_SELECTED_TASK, payload: task })
-  }
+  }, [])
 
   const value = {
     ...state,
