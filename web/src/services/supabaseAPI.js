@@ -1282,6 +1282,44 @@ class SupabaseAPI {
       return { success: false, error: error.message }
     }
   }
+
+  async importTrailerHistory(rows) {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return { success: false, error: 'No data to import', processed: 0, failed: 0 }
+    }
+    if (!supabase) {
+      // Mock mode: just return success
+      return { success: true, processed: rows.length, failed: 0 }
+    }
+    let processed = 0
+    let failed = 0
+    for (const row of rows) {
+      try {
+        // Upsert by date and store
+        const { error } = await supabase
+          .from('trailer_history')
+          .upsert([
+            {
+              date: row.date,
+              store: row.store,
+              sales_tax: row.sales_tax,
+              net_sales: row.net_sales,
+              gross_sales: row.gross_sales
+            }
+          ], { onConflict: ['date', 'store'] })
+        if (error) {
+          failed++
+          console.error('Upsert error:', error)
+        } else {
+          processed++
+        }
+      } catch (err) {
+        failed++
+        console.error('Exception during upsert:', err)
+      }
+    }
+    return { success: failed === 0, processed, failed }
+  }
 }
 
 // Create and export singleton instance
