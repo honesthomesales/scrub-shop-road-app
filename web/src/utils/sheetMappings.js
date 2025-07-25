@@ -7,7 +7,7 @@ export const transformSalesData = (rowData, sheetType) => {
     salesTax: parseFloat(rowData.sales_tax || 0) || 0,
     netSales: parseFloat(rowData.net_sales || 0) || 0,
     grossSales: parseFloat(rowData.gross_sales || 0) || 0,
-    venueId: rowData.common_venue_name || rowData.venue_id || '',
+    venueId: rowData.Store || rowData.common_venue_name || rowData.venue_id || '',
     sheetType
   }
 }

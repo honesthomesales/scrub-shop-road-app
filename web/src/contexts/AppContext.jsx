@@ -357,10 +357,13 @@ export function AppProvider({ children }) {
       const result = await supabaseAPI.readTable(tableName)
       console.log('[loadSalesData] Raw API result:', result);
       if (result.success) {
+        console.log('[loadSalesData] Sample raw data:', result.data.slice(0, 3));
         const transformedData = result.data.map(row => {
           const transformed = transformSalesData(row, state.currentSheet);
+          console.log('[loadSalesData] Raw row:', row, 'Transformed:', transformed);
           return transformed;
         });
+        console.log('[loadSalesData] Final transformed data sample:', transformedData.slice(0, 3));
         dispatch({ type: ACTIONS.SET_SALES_DATA, payload: transformedData })
       } else {
         console.error('[loadSalesData] API error:', result.error);
