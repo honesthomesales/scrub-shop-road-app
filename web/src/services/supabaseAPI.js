@@ -1295,18 +1295,18 @@ class SupabaseAPI {
     let failed = 0
     for (const row of rows) {
       try {
-        // Upsert by date and store
+        // Upsert by date and Store (capital S)
         const { error } = await supabase
           .from('trailer_history')
           .upsert([
             {
               date: row.date,
-              store: row.store,
+              Store: row.store, // Use capital S
               sales_tax: row.sales_tax,
               net_sales: row.net_sales,
               gross_sales: row.gross_sales
             }
-          ], { onConflict: ['date', 'store'] })
+          ], { onConflict: ['date', 'Store'] })
         if (error) {
           failed++
           console.error('Upsert error:', error)
