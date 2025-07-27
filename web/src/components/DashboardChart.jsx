@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { formatCurrency, getShortMonthName, parseDateString } from '../utils/dateUtils'
 
-const DashboardChart = ({ salesData, currentSheet }) => {
-  const [showTwoYearsAgo, setShowTwoYearsAgo] = useState(false)
+const DashboardChart = ({ salesData, currentSheet, selectedYears = [new Date().getFullYear()] }) => {
+  const [showAllYears, setShowAllYears] = useState(false)
+  
   // Generate chart data from actual sales data
   const generateChartData = () => {
     const months = [
@@ -11,48 +12,27 @@ const DashboardChart = ({ salesData, currentSheet }) => {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ]
     
-    const currentYear = new Date().getFullYear()
-    const lastYear = currentYear - 1
-    const twoYearsAgo = currentYear - 2
-    
     return months.map((month, index) => {
-      // Filter sales for this year, last year, and two years ago for this month
-      const thisYearSales = salesData.filter(sale => {
-        const saleDate = parseDateString(sale.date)
-        return saleDate && 
-               saleDate.getMonth() === index && 
-               saleDate.getFullYear() === currentYear
+      const monthData = { month }
+      
+      // Add data for each selected year
+      selectedYears.forEach(year => {
+        const yearSales = salesData.filter(sale => {
+          const saleDate = parseDateString(sale.date)
+          return saleDate && 
+                 saleDate.getMonth() === index && 
+                 saleDate.getFullYear() === year
+        })
+        
+        const yearTotal = yearSales.reduce((sum, sale) => sum + (sale.grossSales || 0), 0)
+        monthData[year] = yearTotal
       })
       
-      const lastYearSales = salesData.filter(sale => {
-        const saleDate = parseDateString(sale.date)
-        return saleDate && 
-               saleDate.getMonth() === index && 
-               saleDate.getFullYear() === lastYear
-      })
-      
-      const twoYearsAgoSales = salesData.filter(sale => {
-        const saleDate = parseDateString(sale.date)
-        return saleDate && 
-               saleDate.getMonth() === index && 
-               saleDate.getFullYear() === twoYearsAgo
-      })
-      
-      // Calculate totals
-      const thisYearTotal = thisYearSales.reduce((sum, sale) => sum + (sale.grossSales || 0), 0)
-      const lastYearTotal = lastYearSales.reduce((sum, sale) => sum + (sale.grossSales || 0), 0)
-      const twoYearsAgoTotal = twoYearsAgoSales.reduce((sum, sale) => sum + (sale.grossSales || 0), 0)
-      
-      return {
-        month,
-        thisYear: thisYearTotal,
-        lastYear: lastYearTotal,
-        twoYearsAgo: twoYearsAgoTotal
-      }
+      return monthData
     })
   }
 
-  const chartData = generateChartData()
+  const chartData = useMemo(() => generateChartData(), [salesData, selectedYears])
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -74,17 +54,19 @@ const DashboardChart = ({ salesData, currentSheet }) => {
     <div className="card">
       <div className="card-header flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-semibold text-secondary-900">
-          Gross Sales: This Year vs Last Year{showTwoYearsAgo ? ' vs 2 Years Ago' : ''} ({currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'})
+          Gross Sales: {selectedYears.length > 1 ? `${selectedYears.length} Years` : selectedYears[0]} ({currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'})
         </h3>
-        <button
-          className={`mt-2 sm:mt-0 px-3 py-1 rounded border text-xs font-semibold transition ${showTwoYearsAgo ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-primary-600 border-primary-200 hover:bg-primary-50'}`}
-          onClick={() => setShowTwoYearsAgo(v => !v)}
-        >
-          {showTwoYearsAgo ? 'Hide' : 'Show'} 2 Years Ago
-        </button>
+        {selectedYears.length > 1 && (
+          <button
+            className={`mt-2 sm:mt-0 px-3 py-1 rounded border text-xs font-semibold transition ${showAllYears ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-primary-600 border-primary-200 hover:bg-primary-50'}`}
+            onClick={() => setShowAllYears(v => !v)}
+          >
+            {showAllYears ? 'Hide' : 'Show'} All Years
+          </button>
+        )}
       </div>
       <div className="card-body">
-        <div className="h-80">
+        <div className="h-96">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -97,38 +79,29 @@ const DashboardChart = ({ salesData, currentSheet }) => {
                 stroke="#64748b"
                 fontSize={12}
                 tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                domain={[0, 500000]}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="thisYear" 
-                stroke="#3b82f6" 
-                strokeWidth={3}
-                name="This Year"
-                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="lastYear" 
-                stroke="#94a3b8" 
-                strokeWidth={2}
-                name="Last Year"
-                dot={{ fill: '#94a3b8', strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: '#94a3b8', strokeWidth: 2 }}
-              />
-              {showTwoYearsAgo && (
-                <Line
-                  type="monotone"
-                  dataKey="twoYearsAgo"
-                  stroke="#f59e42"
-                  strokeWidth={2}
-                  name="2 Years Ago"
-                  dot={{ fill: '#f59e42', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#f59e42', strokeWidth: 2 }}
-                />
-              )}
+              
+              {/* Render lines for each selected year */}
+              {selectedYears.map((year, index) => {
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6']
+                const color = colors[index % colors.length]
+                
+                return (
+                  <Line
+                    key={year}
+                    type="monotone"
+                    dataKey={year}
+                    stroke={color}
+                    strokeWidth={2}
+                    dot={{ fill: color, strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: '#94a3b8', strokeWidth: 2 }}
+                    name={`${year}`}
+                  />
+                )
+              })}
             </LineChart>
           </ResponsiveContainer>
         </div>

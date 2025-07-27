@@ -37,6 +37,135 @@
   @apply bg-primary-100;
 }
 
+/* Print styles for calendar */
+@media print {
+  /* Reset page margins and ensure full width */
+  @page {
+    margin: 0.5in;
+    size: landscape;
+  }
+  
+  /* Hide non-essential elements during print */
+  .btn,
+  button,
+  .hover\:bg-gray-50,
+  .hover\:bg-primary-200,
+  .hover\:bg-secondary-50,
+  .hover\:bg-primary-100 {
+    display: none !important;
+  }
+  
+  /* Ensure calendar takes full width */
+  .max-w-7xl {
+    max-width: none !important;
+  }
+  
+  /* Remove horizontal padding that causes cutoff */
+  .px-4,
+  .sm\:px-6,
+  .lg\:px-8 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  /* Ensure calendar container uses full width */
+  .card,
+  .print-calendar-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+  
+  /* FullCalendar print optimizations */
+  .fc {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  
+  .fc .fc-daygrid-day {
+    min-height: 80px !important;
+  }
+  
+  .fc .fc-daygrid-day-frame {
+    min-height: 80px !important;
+  }
+  
+  /* Ensure events are visible in print */
+  .fc .fc-event {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: 1px solid #000 !important;
+    font-size: 10px !important;
+    padding: 1px 2px !important;
+  }
+  
+  /* Hide hover popup during print */
+  .fixed.z-50 {
+    display: none !important;
+  }
+  
+  /* Ensure text is readable in print */
+  body {
+    color: #000 !important;
+    background: #fff !important;
+  }
+  
+  /* Optimize spacing for print */
+  .space-y-6 > * + * {
+    margin-top: 1rem !important;
+  }
+  
+  /* Ensure page header is visible but compact */
+  .mb-8 {
+    margin-bottom: 1rem !important;
+  }
+  
+  /* Make sure the calendar view uses available space */
+  .fc-view-harness {
+    height: auto !important;
+  }
+  
+  /* Print-specific calendar container */
+  .print-calendar {
+    min-height: auto !important;
+    background: #fff !important;
+  }
+  
+  /* Compact header for print */
+  .print-header h1 {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .print-header p {
+    font-size: 0.875rem !important;
+    margin-top: 0.25rem !important;
+  }
+  
+  /* Ensure calendar controls are hidden but calendar is visible */
+  .space-y-6 > div:first-child {
+    display: none !important;
+  }
+  
+  /* Force calendar to use full available width */
+  .fc .fc-view {
+    width: 100% !important;
+  }
+  
+  /* Ensure day cells are properly sized for print */
+  .fc .fc-daygrid-day-frame {
+    padding: 2px !important;
+  }
+  
+  /* Make event text more readable in print */
+  .fc .fc-event-title {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+}
+
 @layer base {
   html {
     font-family: 'Inter', system-ui, sans-serif;

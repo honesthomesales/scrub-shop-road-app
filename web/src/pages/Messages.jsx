@@ -40,7 +40,7 @@ const Messages = () => {
 
   const handleSendMessage = async (messageText) => {
     if (!currentUser || !selectedGroupId) {
-      console.error('Cannot send message: currentUser or selectedGroupId is missing', { currentUser, selectedGroupId })
+
       return
     }
 
@@ -51,7 +51,7 @@ const Messages = () => {
       message_type: 'text'
     }
 
-    console.log('Sending message:', messageData)
+
     await sendMessage(messageData)
   }
 

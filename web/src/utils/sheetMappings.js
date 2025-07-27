@@ -1,15 +1,96 @@
 // Data transformation functions for Supabase
 export const transformSalesData = (rowData, sheetType) => {
-  return {
+  // Map store numbers to store names
+  const getStoreName = (storeNumber) => {
+    const storeMap = {
+      '1': 'Spartanburg',
+      '3': 'Greenville', 
+      '4': 'Columbia',
+      '5': 'Trailer',
+      '7': 'Camper'
+    }
+    return storeMap[storeNumber] || `Store ${storeNumber}`
+  }
+
+  // Get the store value from the database and map it to a name
+  const rawStore = rowData.Store || rowData.store || null
+  const storeName = rawStore ? getStoreName(String(rawStore)) : (sheetType === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper')
+
+  const transformed = {
     id: rowData.id || null,
     date: rowData.date || '',
     status: rowData.status || '',
     salesTax: parseFloat(rowData.sales_tax || 0) || 0,
     netSales: parseFloat(rowData.net_sales || 0) || 0,
     grossSales: parseFloat(rowData.gross_sales || 0) || 0,
-    venueId: rowData.Store || rowData.common_venue_name || rowData.venue_id || '',
+    // Store is where we're selling FROM - use the mapped store name
+    store: storeName,
+    // Venue is where we're selling AT (the place name)
+    venue: rowData.common_venue_name || rowData.venue_name || '',
     sheetType
   }
+
+  return transformed
+}
+
+// Aggregate sales data by store and date (store = where we're selling FROM)
+export const aggregateSalesByStoreAndDate = (salesData) => {
+  const aggregated = {}
+  
+  salesData.forEach((sale, index) => {
+    // Use store (where we're selling FROM) for aggregation
+    const store = String(sale.store || 'Unknown Store')
+    const date = sale.date || ''
+    
+    if (!date) {
+      return // Skip entries without dates
+    }
+    
+    // Normalize date to YYYY-MM-DD format for proper aggregation
+    let normalizedDate = date
+    if (date.includes(' ')) {
+      // Handle datetime format like "2022-01-28 05:00:00+00"
+      normalizedDate = date.split(' ')[0]
+    }
+    
+    const key = `${store}_${normalizedDate}`
+    
+    if (!aggregated[key]) {
+      aggregated[key] = {
+        store: store,
+        venue: sale.venue || '', // Keep venue field for reference
+        date: normalizedDate,
+        salesTax: 0,
+        netSales: 0,
+        grossSales: 0,
+        count: 0
+      }
+    }
+    
+    // Sum the numeric fields
+    const salesTax = parseFloat(sale.salesTax || 0) || 0
+    const netSales = parseFloat(sale.netSales || 0) || 0
+    const grossSales = parseFloat(sale.grossSales || 0) || 0
+    
+    aggregated[key].salesTax += salesTax
+    aggregated[key].netSales += netSales
+    aggregated[key].grossSales += grossSales
+    aggregated[key].count += 1
+  })
+  
+  // Convert back to array and sort by date, then store
+  const result = Object.values(aggregated).sort((a, b) => {
+    // First sort by date
+    const dateA = new Date(a.date)
+    const dateB = new Date(b.date)
+    if (dateA.getTime() !== dateB.getTime()) {
+      return dateA - dateB
+    }
+    // Then sort by store name
+    return String(a.store).localeCompare(String(b.store))
+  })
+  
+  return result
 }
 
 export const transformVenueData = (rowData) => {

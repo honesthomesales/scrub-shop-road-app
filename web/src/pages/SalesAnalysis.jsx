@@ -72,32 +72,13 @@ const SalesAnalysis = () => {
         storeIds: selectedStores.length > 0 ? selectedStores : undefined
       }
 
-      console.log('Loading analysis data with options:', options)
-      console.log('Selected stores:', selectedStores)
+      
 
       const result = await supabaseAPI.getSalesAnalysis(options)
-      console.log('API result:', result)
       
       if (result.success) {
-        console.log('Analysis data loaded:', result.data.length, 'records')
-        console.log('Sample data:', result.data.slice(0, 3))
-        console.log('Store IDs in data:', [...new Set(result.data.map(item => item.store_id))])
-        console.log('Requested store IDs:', options.storeIds)
-        console.log('Date range:', options.startDate, 'to', options.endDate)
         
-        // Debug store selection vs data availability
-        if (selectedStores.length > 0) {
-          const storesWithData = [...new Set(result.data.map(item => item.store_id))]
-          const storesWithoutData = selectedStores.filter(id => !storesWithData.includes(id))
-          if (storesWithoutData.length > 0) {
-            console.log('⚠️ Selected stores with no data in date range:', storesWithoutData.map(id => getStoreName(id)))
-          }
-        }
-        
-        // Check if we're getting the expected number of records
-        if (result.data.length >= 1000) {
-          console.warn('⚠️ Data may be limited to 1000 records. Consider implementing pagination.')
-        }
+
         
         setAnalysisData(result.data)
       } else {
@@ -139,7 +120,7 @@ const SalesAnalysis = () => {
   const processChartData = () => {
     if (!analysisData.length) return { dailyData: [], storeData: [], productData: [], brandData: [] }
 
-    console.log('Processing chart data for', analysisData.length, 'records')
+
 
     // Daily sales data
     const dailyData = analysisData.reduce((acc, item) => {
@@ -269,12 +250,7 @@ const SalesAnalysis = () => {
       return acc
     }, []).sort((a, b) => b.sales - a.sales).slice(0, 10)
 
-    console.log('Processed data:', {
-      dailyDataCount: dailyData.length,
-      storeDataCount: storeData.length,
-      productDataCount: productData.length,
-      brandDataCount: brandData.length
-    })
+    return { dailyData, storeData, productData, brandData }
 
     return { dailyData, storeData, productData, brandData }
   }

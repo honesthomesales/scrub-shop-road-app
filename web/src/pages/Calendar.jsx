@@ -17,15 +17,15 @@ const Calendar = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 print-calendar">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
-        <div className="mb-8">
+        <div className="mb-8 print-header">
           <h1 className="text-3xl font-bold text-secondary-900">
             Calendar
           </h1>
           <p className="mt-2 text-secondary-600">
-            Schedule and manage events, venues, and worker assignments for {currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'} operations
+            Schedule and manage events, venues, and worker assignments for Trailer and Camper operations
           </p>
         </div>
 

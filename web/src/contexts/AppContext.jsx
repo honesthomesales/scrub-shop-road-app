@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react'
 import supabaseAPI from '../services/supabaseAPI'
-import { transformSalesData, transformVenueData, transformStaffData, staffToDb } from '../utils/sheetMappings'
+import { transformSalesData, transformVenueData, transformStaffData, staffToDb, aggregateSalesByStoreAndDate } from '../utils/sheetMappings'
 
 // Initial state
 const initialState = {
@@ -352,34 +352,29 @@ export function AppProvider({ children }) {
 
   const loadSalesData = async () => {
     try {
-      const tableName = state.currentSheet === 'TRAILER_HISTORY' ? 'trailer_history' : 'camper_history'
-      console.log('[loadSalesData] Fetching sales from backend...', tableName);
+      const tableName = 'trailer_history' // Always use trailer_history table
       const result = await supabaseAPI.readTable(tableName)
-      console.log('[loadSalesData] Raw API result:', result);
       if (result.success) {
-        console.log('[loadSalesData] Sample raw data:', result.data.slice(0, 3));
         const transformedData = result.data.map(row => {
           const transformed = transformSalesData(row, state.currentSheet);
-          console.log('[loadSalesData] Raw row:', row, 'Transformed:', transformed);
           return transformed;
         });
-        console.log('[loadSalesData] Final transformed data sample:', transformedData.slice(0, 3));
-        dispatch({ type: ACTIONS.SET_SALES_DATA, payload: transformedData })
+        
+        // Apply aggregation by store and date
+        const aggregatedData = aggregateSalesByStoreAndDate(transformedData);
+        
+        dispatch({ type: ACTIONS.SET_SALES_DATA, payload: aggregatedData })
       } else {
-        console.error('[loadSalesData] API error:', result.error);
         dispatch({ type: ACTIONS.SET_ERROR, payload: result.error })
       }
     } catch (error) {
-      console.error('[loadSalesData] Exception:', error);
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     }
   }
 
   const loadVenuesData = async () => {
     try {
-      console.log('[loadVenuesData] Fetching venues from backend...');
       const result = await supabaseAPI.readTable('venues')
-      console.log('[loadVenuesData] Raw API result:', result);
       if (result.success) {
         const transformedData = result.data.map(row => {
           const transformed = transformVenueData(row);
@@ -387,11 +382,9 @@ export function AppProvider({ children }) {
         });
         dispatch({ type: ACTIONS.SET_VENUES_DATA, payload: transformedData })
       } else {
-        console.error('[loadVenuesData] API error:', result.error);
         dispatch({ type: ACTIONS.SET_ERROR, payload: result.error })
       }
     } catch (error) {
-      console.error('[loadVenuesData] Exception:', error);
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     }
   }
@@ -429,7 +422,7 @@ export function AppProvider({ children }) {
 
   const addSalesEntry = async (entryData) => {
     try {
-      const tableName = state.currentSheet === 'TRAILER_HISTORY' ? 'trailer_history' : 'camper_history'
+      const tableName = 'trailer_history' // Always use trailer_history table
       // Transform sales data to the correct format for Google Sheets
       const sheetData = transformSalesData(entryData, state.currentSheet)
       const result = await supabaseAPI.addRow(tableName, sheetData)
@@ -744,6 +737,173 @@ export function AppProvider({ children }) {
     }
   }
 
+  // ===== CALENDAR EVENTS FUNCTIONALITY =====
+
+  const addCalendarEvent = React.useCallback(async (eventData) => {
+    try {
+      // For Work Day events, store additional info in common_venue_name
+      let venueName = eventData.isWorkDay ? 'WORK DAY' : eventData.venue || ''
+      
+      // For Work Day events, append worker and hours info to the venue name
+      if (eventData.isWorkDay && eventData.workers && eventData.workers.length > 0) {
+        const workersStr = eventData.workers.join(',')
+        const hoursStr = eventData.hours || '0'
+        venueName = `WORK DAY|${workersStr}|${hoursStr}`
+      }
+      
+      const sheetData = {
+        date: eventData.date,
+        status: 'Confirmed', // Default status for calendar events
+        sales_tax: 0,
+        net_sales: 0,
+        gross_sales: 0,
+        common_venue_name: venueName,
+        // Use Store field to identify the store (99 = Work Day, 5 = Trailer, 7 = Camper)
+        Store: eventData.isWorkDay ? 99 : (state.currentSheet === 'TRAILER_HISTORY' ? 5 : 7)
+      }
+      
+      const result = await supabaseAPI.addRow('trailer_history', sheetData)
+      
+      if (result.success) {
+        // Transform the saved data back to calendar event format
+        const savedEvent = {
+          id: result.data.id,
+          title: eventData.title,
+          date: eventData.date,
+          backgroundColor: eventData.isWorkDay ? '#fefce8' : '#dcfce7',
+          borderColor: eventData.isWorkDay ? '#fde047' : '#22c55e',
+          extendedProps: {
+            type: eventData.isWorkDay ? 'workday' : 'sale',
+            workers: eventData.workers,
+            worker: eventData.workers.join(', '),
+            hours: eventData.hours,
+            venueId: eventData.venueId,
+            venue: state.venuesData.find(v => v.id === eventData.venueId)
+          }
+        }
+        
+        return { success: true, data: savedEvent }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }, [state.currentSheet, state.venuesData])
+
+  const updateCalendarEvent = React.useCallback(async (eventId, eventData) => {
+    try {
+      // For Work Day events, store additional info in common_venue_name
+      let venueName = eventData.isWorkDay ? 'WORK DAY' : eventData.venue || ''
+      
+      // For Work Day events, append worker and hours info to the venue name
+      if (eventData.isWorkDay && eventData.workers && eventData.workers.length > 0) {
+        const workersStr = eventData.workers.join(',')
+        const hoursStr = eventData.hours || '0'
+        venueName = `WORK DAY|${workersStr}|${hoursStr}`
+      }
+      
+      const sheetData = {
+        date: eventData.date,
+        status: 'Confirmed', // Default status for calendar events
+        sales_tax: 0,
+        net_sales: 0,
+        gross_sales: 0,
+        common_venue_name: venueName,
+        // Use Store field to identify the store (99 = Work Day, 5 = Trailer, 7 = Camper)
+        Store: eventData.isWorkDay ? 99 : (state.currentSheet === 'TRAILER_HISTORY' ? 5 : 7)
+      }
+      
+      const result = await supabaseAPI.updateRow('trailer_history', eventId, sheetData)
+      
+      if (result.success) {
+        // Transform the saved data back to calendar event format
+        const updatedEvent = {
+          id: eventId,
+          title: eventData.title,
+          date: eventData.date,
+          backgroundColor: eventData.isWorkDay ? '#fefce8' : '#dcfce7',
+          borderColor: eventData.isWorkDay ? '#fde047' : '#22c55e',
+          extendedProps: {
+            type: eventData.isWorkDay ? 'workday' : 'sale',
+            workers: eventData.workers,
+            worker: eventData.workers.join(', '),
+            hours: eventData.hours,
+            venueId: eventData.venueId,
+            venue: state.venuesData.find(v => v.id === eventData.venueId)
+          }
+        }
+        
+        return { success: true, data: updatedEvent }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }, [state.currentSheet, state.venuesData])
+
+  const deleteCalendarEvent = React.useCallback(async (eventId) => {
+    try {
+      const result = await supabaseAPI.deleteRow('trailer_history', eventId)
+      
+      if (result.success) {
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }, [])
+
+  const loadCalendarEvents = React.useCallback(async () => {
+    try {
+      // Optimized: Only load Work Day events (Store = 99) instead of entire table
+      const result = await supabaseAPI.readTable('trailer_history', {
+        filters: { Store: 99 }
+      })
+      
+      if (result.success) {
+        const calendarEvents = result.data.map(record => {
+          // Parse worker and hours info from common_venue_name for Work Day events
+          let workers = []
+          let hours = ''
+          
+          if (record.common_venue_name.startsWith('WORK DAY|')) {
+            const parts = record.common_venue_name.split('|')
+            if (parts.length >= 3) {
+              workers = parts[1].split(',').filter(w => w.trim() !== '')
+              hours = parts[2] || ''
+            }
+          }
+          
+          return {
+            id: record.id,
+            title: 'Work Day',
+            date: record.date,
+            backgroundColor: '#fefce8',
+            borderColor: '#fde047',
+            extendedProps: {
+              type: 'workday',
+              workers: workers,
+              worker: workers.join(', '),
+              hours: hours,
+              venueId: null,
+              venue: null
+            }
+          }
+        })
+        
+        return { success: true, data: calendarEvents }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }, [])
+
   const value = {
     ...state,
     workers: getActiveWorkers(), // Use real staff data instead of hardcoded workers
@@ -778,7 +938,11 @@ export function AppProvider({ children }) {
     addTaskComment,
     setSelectedTask,
     loadSalesAnalysisData,
-    loadSalesAnalysisStats
+    loadSalesAnalysisStats,
+    addCalendarEvent,
+    updateCalendarEvent,
+    deleteCalendarEvent,
+    loadCalendarEvents
   }
 
   return (

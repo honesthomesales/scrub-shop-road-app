@@ -1,4 +1,4 @@
-import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns'
+import { format, parseISO, addMonths, subMonths } from 'date-fns'
 
 export const formatDate = (date, formatString = 'MM/dd/yy') => {
   if (!date) return 'N/A'
@@ -25,24 +25,7 @@ export const formatCurrency = (amount) => {
   }).format(amount || 0)
 }
 
-export const getMonthRange = (date) => {
-  const start = startOfMonth(date)
-  const end = endOfMonth(date)
-  return { start, end }
-}
 
-export const getDaysInMonth = (date) => {
-  const { start, end } = getMonthRange(date)
-  return eachDayOfInterval({ start, end })
-}
-
-export const isCurrentMonth = (date) => {
-  return isSameMonth(date, new Date())
-}
-
-export const isToday = (date) => {
-  return isSameDay(date, new Date())
-}
 
 export const getNextMonth = (date) => {
   return addMonths(date, 1)
@@ -60,13 +43,7 @@ export const getShortMonthName = (date) => {
   return format(date, 'MMM')
 }
 
-export const getDayName = (date) => {
-  return format(date, 'EEE')
-}
 
-export const getDayNumber = (date) => {
-  return format(date, 'd')
-}
 
 export const parseDateString = (dateString) => {
   if (!dateString) return null
@@ -128,24 +105,19 @@ export const formatDateInput = (date) => {
  * @returns {Array} Array of venues with average sales data
  */
 export const calculateVenueAverageSales = (salesData, venuesData) => {
-  // Group sales by venue
-  const salesByVenue = {}
-  
-  salesData.forEach(sale => {
-    if (sale.venueId && sale.grossSales > 0) {
-      if (!salesByVenue[sale.venueId]) {
-        salesByVenue[sale.venueId] = []
-      }
-      salesByVenue[sale.venueId].push({
-        ...sale,
-        date: new Date(sale.date)
-      })
-    }
-  })
-  
   // Calculate average for each venue
   const venueAverages = venuesData.map(venue => {
-    const venueSales = salesByVenue[venue.promo] || []
+    // Find sales for this venue by matching venue.promo with sale.venue
+    const venueSales = salesData
+      .filter(sale => {
+        const saleVenueName = sale.venue ? sale.venue.trim().toLowerCase() : null
+        const venuePromoName = venue.promo ? venue.promo.trim().toLowerCase() : null
+        return saleVenueName && venuePromoName && saleVenueName === venuePromoName && sale.grossSales > 0
+      })
+      .map(sale => ({
+        ...sale,
+        date: new Date(sale.date)
+      }))
     
     // Sort by date (most recent first) and take last 5
     const recentSales = venueSales
@@ -160,8 +132,6 @@ export const calculateVenueAverageSales = (salesData, venuesData) => {
       // Round to nearest hundred
       averageSales = Math.round(averageSales / 100) * 100
     }
-    
-
     
     return {
       ...venue,
@@ -182,7 +152,12 @@ export const calculateVenueAverageSales = (salesData, venuesData) => {
  */
 export const getLastFiveSalesForVenue = (salesData, venueName) => {
   const venueSales = salesData
-    .filter(sale => sale.venueId === venueName && sale.grossSales > 0)
+    .filter(sale => {
+      // Match venue.promo with sale.venue (which comes from common_venue_name)
+      const saleVenueName = sale.venue ? sale.venue.trim().toLowerCase() : null
+      const venuePromoName = venueName ? venueName.trim().toLowerCase() : null
+      return saleVenueName && venuePromoName && saleVenueName === venuePromoName && sale.grossSales > 0
+    })
     .map(sale => ({
       ...sale,
       date: new Date(sale.date)

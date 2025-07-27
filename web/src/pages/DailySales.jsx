@@ -28,8 +28,7 @@ const DailySales = () => {
   }
 
   const handleEditSale = (sale) => {
-    console.log('DEBUG SALE:', sale);
-    console.log('DEBUG DATE INPUT VALUE:', formatDateInput(sale.date));
+    
     // Map venue name to venue name for select (since we're using venue.promo as value)
     const venueName = sale.venueId || sale.venue_id || sale.venue || '';
     setEditingSale(sale)

@@ -3,11 +3,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-console.log('VITE_TEST_VAR:', import.meta.env.VITE_TEST_VAR);
-console.log('All import.meta.env:', import.meta.env);
 
-console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
-console.log('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 // Hardcode the Supabase credentials since .env file isn't being read in production
 const SUPABASE_URL = 'https://kvsbrrmzedadyffqtcdq.supabase.co'
@@ -19,7 +15,7 @@ try {
   if (SUPABASE_URL && SUPABASE_URL !== 'https://placeholder.supabase.co' && 
       SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'placeholder-key') {
     supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    console.log('Supabase client created successfully with hardcoded credentials')
+
   } else {
     console.warn('Supabase credentials not configured. Using mock data mode.')
   }
@@ -36,7 +32,7 @@ class SupabaseAPI {
   async init() {
     try {
       if (!supabase) {
-        console.log('Supabase API initialized in mock mode')
+  
         return true
       }
       
@@ -51,7 +47,7 @@ class SupabaseAPI {
         return false
       }
       
-      console.log('Supabase API initialized successfully')
+
       return true
     } catch (error) {
       console.error('Failed to initialize Supabase API:', error)
@@ -158,43 +154,87 @@ class SupabaseAPI {
       if (!supabase) {
         // Return mock data when Supabase is not configured
         const mockData = this.getMockData(tableName)
-        console.log(`Using mock data for ${tableName}:`, mockData)
+
         return {
           success: true,
           data: mockData
         }
       }
       
-      let query = supabase.from(tableName).select('*')
-      
-      // Add filters if provided
-      if (options.filters) {
-        Object.entries(options.filters).forEach(([key, value]) => {
-          query = query.eq(key, value)
-        })
+      // Use pagination to fetch all data beyond the 1000 limit
+      let allData = []
+      let page = 0
+      const pageSize = 1000
+      let hasMore = true
+
+
+
+      while (hasMore) {
+
+        
+        let query = supabase.from(tableName).select('*')
+        
+        // Add filters if provided
+        if (options.filters) {
+          Object.entries(options.filters).forEach(([key, value]) => {
+            query = query.eq(key, value)
+          })
+        }
+        
+        // Add date range filter if provided
+        if (options.dateFrom && options.dateTo) {
+          query = query.gte('date', options.dateFrom).lte('date', options.dateTo)
+        }
+        
+        // Add ordering
+        if (options.orderBy) {
+          query = query.order(options.orderBy.column, { ascending: options.orderBy.ascending !== false })
+        } else {
+          // Default ordering by date if available, otherwise by id
+          if (tableName.includes('history')) {
+            query = query.order('date', { ascending: false })
+          } else {
+            query = query.order('id', { ascending: false })
+          }
+        }
+        
+        // Add pagination
+        query = query.range(page * pageSize, (page + 1) * pageSize - 1)
+        
+        const { data, error } = await query
+        
+        if (error) {
+          throw new Error(error.message)
+        }
+        
+
+        
+        if (data && data.length > 0) {
+          allData = allData.concat(data)
+          page++
+          
+          // Stop if we got less than pageSize (means we're at the end)
+          if (data.length < pageSize) {
+
+            hasMore = false
+          }
+          
+          // Safety check to prevent infinite loops
+          if (page > 50) {
+            console.warn(`[readTable] Stopping pagination after 50 pages to prevent infinite loop for ${tableName}`)
+            hasMore = false
+          }
+        } else {
+          
+          hasMore = false
+        }
       }
       
-      // Add date range filter if provided
-      if (options.dateFrom && options.dateTo) {
-        query = query.gte('date', options.dateFrom).lte('date', options.dateTo)
-      }
-      
-      // Add ordering
-      if (options.orderBy) {
-        query = query.order(options.orderBy.column, { ascending: options.orderBy.ascending !== false })
-      } else {
-        query = query.order('created_at', { ascending: false })
-      }
-      
-      const { data, error } = await query
-      
-      if (error) {
-        throw new Error(error.message)
-      }
+
       
       return {
         success: true,
-        data: data || []
+        data: allData
       }
     } catch (error) {
       console.error(`Failed to read from ${tableName}:`, error)
@@ -210,7 +250,7 @@ class SupabaseAPI {
   async addRow(tableName, rowData) {
     try {
       if (!supabase) {
-        console.log(`Mock: Adding row to ${tableName}:`, rowData)
+
         return {
           success: true,
           data: { ...rowData, id: Date.now() },
@@ -245,7 +285,7 @@ class SupabaseAPI {
   async updateRow(tableName, rowId, rowData) {
     try {
       if (!supabase) {
-        console.log(`Mock: Updating row ${rowId} in ${tableName}:`, rowData)
+
         return {
           success: true,
           data: { id: rowId, ...rowData },
@@ -281,7 +321,7 @@ class SupabaseAPI {
   async deleteRow(tableName, rowId) {
     try {
       if (!supabase) {
-        console.log(`Mock: Deleting row ${rowId} from ${tableName}`)
+
         return {
           success: true,
           message: 'Row deleted successfully (mock mode)'
@@ -493,7 +533,7 @@ class SupabaseAPI {
           venueCount: mockVenues.length,
           staffCount: mockStaff.length
         }
-        console.log('Using mock dashboard stats:', mockStats)
+
         return {
           success: true,
           data: mockStats
@@ -801,11 +841,7 @@ class SupabaseAPI {
 
       let query = supabase
         .from('tasks')
-        .select(`
-          *,
-          assigned_by_user:staff!tasks_assigned_by_fkey (id, name, email),
-          assigned_to_user:staff!tasks_assigned_to_fkey (id, name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
 
       if (assignedTo) {
@@ -842,11 +878,7 @@ class SupabaseAPI {
       const { data, error } = await supabase
         .from('tasks')
         .insert([taskData])
-        .select(`
-          *,
-          assigned_by_user:staff!tasks_assigned_by_fkey (id, name, email),
-          assigned_to_user:staff!tasks_assigned_to_fkey (id, name, email)
-        `)
+        .select('*')
         .single()
 
       if (error) throw new Error(error.message)
@@ -868,11 +900,7 @@ class SupabaseAPI {
         .from('tasks')
         .update({ ...taskData, updated_at: new Date().toISOString() })
         .eq('id', taskId)
-        .select(`
-          *,
-          assigned_by_user:staff!tasks_assigned_by_fkey (id, name, email),
-          assigned_to_user:staff!tasks_assigned_to_fkey (id, name, email)
-        `)
+        .select('*')
         .single()
 
       if (error) throw new Error(error.message)
@@ -907,31 +935,8 @@ class SupabaseAPI {
   // Task Comments Management
   async getTaskComments(taskId) {
     try {
-      if (!supabase) {
-        const mockComments = [
-          {
-            id: 1,
-            task_id: 1,
-            user_id: 2,
-            comment_text: 'Started working on this task',
-            created_at: new Date().toISOString()
-          }
-        ]
-        return { success: true, data: mockComments }
-      }
-
-      const { data, error } = await supabase
-        .from('task_comments')
-        .select(`
-          *,
-          user:staff (id, name, email)
-        `)
-        .eq('task_id', taskId)
-        .order('created_at', { ascending: true })
-
-      if (error) throw new Error(error.message)
-
-      return { success: true, data: data || [] }
+      // Task comments table doesn't exist yet, return empty array
+      return { success: true, data: [] }
     } catch (error) {
       console.error('Failed to get task comments:', error)
       return { success: false, error: error.message, data: [] }
@@ -940,27 +945,13 @@ class SupabaseAPI {
 
   async addTaskComment(commentData) {
     try {
-      if (!supabase) {
-        const newComment = {
-          id: Date.now(),
-          ...commentData,
-          created_at: new Date().toISOString()
-        }
-        return { success: true, data: newComment }
+      // Task comments table doesn't exist yet, return mock success
+      const newComment = {
+        id: Date.now(),
+        ...commentData,
+        created_at: new Date().toISOString()
       }
-
-      const { data, error } = await supabase
-        .from('task_comments')
-        .insert([commentData])
-        .select(`
-          *,
-          user:staff (id, name, email)
-        `)
-        .single()
-
-      if (error) throw new Error(error.message)
-
-      return { success: true, data }
+      return { success: true, data: newComment }
     } catch (error) {
       console.error('Failed to add task comment:', error)
       return { success: false, error: error.message }
@@ -972,7 +963,7 @@ class SupabaseAPI {
     try {
       if (!supabase) {
         // Mock implementation for development
-        console.log('Mock: Adding sales analysis batch:', salesData.length, 'records')
+
         return { success: true, data: salesData.map((item, index) => ({ ...item, id: Date.now() + index })) }
       }
 
@@ -992,10 +983,10 @@ class SupabaseAPI {
 
   async getSalesAnalysis(options = {}) {
     try {
-      console.log('🔍 [getSalesAnalysis] Starting with options:', options)
+
       
       if (!supabase) {
-        console.log('🔍 [getSalesAnalysis] Using mock data (no supabase client)')
+
         // Mock data for development
         const mockData = [
           {
@@ -1022,7 +1013,7 @@ class SupabaseAPI {
         return { success: true, data: mockData }
       }
 
-      console.log('🔍 [getSalesAnalysis] Using pagination to fetch all data')
+
       // Use pagination to get all data beyond the 1000 limit
       let allData = []
       let page = 0
@@ -1030,7 +1021,7 @@ class SupabaseAPI {
       let hasMore = true
 
       while (hasMore) {
-        console.log(`🔍 [getSalesAnalysis] Fetching page ${page + 1}...`)
+
         
         let query = supabase
           .from('sales_analysis')
@@ -1040,20 +1031,14 @@ class SupabaseAPI {
 
         // Apply filters
         if (options.storeIds && options.storeIds.length > 0) {
-          console.log(`🔍 [getSalesAnalysis] Filtering by store IDs:`, options.storeIds)
           query = query.in('store_id', options.storeIds)
         } else if (options.storeId) {
-          console.log(`🔍 [getSalesAnalysis] Filtering by single store ID:`, options.storeId)
           query = query.eq('store_id', options.storeId)
-        } else {
-          console.log(`🔍 [getSalesAnalysis] No store filtering applied - showing all stores`)
         }
         if (options.startDate) {
-          console.log(`🔍 [getSalesAnalysis] Filtering by start date:`, options.startDate)
           query = query.gte('invoice_date', options.startDate)
         }
         if (options.endDate) {
-          console.log(`🔍 [getSalesAnalysis] Filtering by end date:`, options.endDate)
           query = query.lte('invoice_date', options.endDate)
         }
         if (options.vendor) {
@@ -1070,7 +1055,7 @@ class SupabaseAPI {
           throw new Error(error.message)
         }
 
-        console.log(`🔍 [getSalesAnalysis] Page ${page + 1} returned ${data?.length || 0} records`)
+
 
         if (data && data.length > 0) {
           allData = allData.concat(data)
@@ -1078,7 +1063,7 @@ class SupabaseAPI {
           
           // Stop if we got less than pageSize (means we're at the end)
           if (data.length < pageSize) {
-            console.log(`🔍 [getSalesAnalysis] Got ${data.length} records (less than pageSize), stopping pagination`)
+
             hasMore = false
           }
           
@@ -1088,12 +1073,12 @@ class SupabaseAPI {
             hasMore = false
           }
         } else {
-          console.log(`🔍 [getSalesAnalysis] No data returned for page ${page + 1}, stopping pagination`)
+          
           hasMore = false
         }
       }
 
-      console.log(`🔍 [getSalesAnalysis] Final result: Retrieved ${allData.length} records through pagination`)
+
       return { success: true, data: allData }
     } catch (error) {
       console.error('🔍 [getSalesAnalysis] Failed to get sales analysis:', error)
@@ -1103,10 +1088,10 @@ class SupabaseAPI {
 
   async getSalesAnalysisStats(options = {}) {
     try {
-      console.log('📊 [getSalesAnalysisStats] Starting with options:', options)
+
       
       if (!supabase) {
-        console.log('📊 [getSalesAnalysisStats] Using mock stats (no supabase client)')
+
         // Mock stats for development
         return {
           success: true,
@@ -1128,7 +1113,7 @@ class SupabaseAPI {
         }
       }
 
-      console.log('📊 [getSalesAnalysisStats] Using pagination to fetch all data for stats')
+
       // Get basic stats with pagination to handle large datasets
       let allSalesData = []
       let page = 0
@@ -1136,7 +1121,7 @@ class SupabaseAPI {
       let hasMore = true
 
       while (hasMore) {
-        console.log(`📊 [getSalesAnalysisStats] Fetching page ${page + 1}...`)
+
         
         const { data, error } = await supabase
           .from('sales_analysis')
@@ -1148,7 +1133,7 @@ class SupabaseAPI {
           throw new Error(error.message)
         }
 
-        console.log(`📊 [getSalesAnalysisStats] Page ${page + 1} returned ${data?.length || 0} records`)
+
 
         if (data && data.length > 0) {
           allSalesData = allSalesData.concat(data)
@@ -1156,7 +1141,7 @@ class SupabaseAPI {
           
           // Stop if we got less than pageSize (means we're at the end)
           if (data.length < pageSize) {
-            console.log(`📊 [getSalesAnalysisStats] Got ${data.length} records (less than pageSize), stopping pagination`)
+
             hasMore = false
           }
           
@@ -1166,12 +1151,12 @@ class SupabaseAPI {
             hasMore = false
           }
         } else {
-          console.log(`📊 [getSalesAnalysisStats] No data returned for page ${page + 1}, stopping pagination`)
+          
           hasMore = false
         }
       }
 
-      console.log(`📊 [getSalesAnalysisStats] Final result: Retrieved ${allSalesData.length} records for stats through pagination`)
+
       const salesData = allSalesData
 
       // Calculate stats
@@ -1291,22 +1276,42 @@ class SupabaseAPI {
       // Mock mode: just return success
       return { success: true, processed: rows.length, failed: 0 }
     }
+
+    // Aggregate data by date and store
+    const aggregatedData = {}
+    
+    for (const row of rows) {
+      const key = `${row.date}_${row.store}`
+      
+      if (!aggregatedData[key]) {
+        aggregatedData[key] = {
+          date: row.date,
+          Store: row.store,
+          sales_tax: 0,
+          net_sales: 0,
+          gross_sales: 0
+        }
+      }
+      
+      // Sum the numeric fields
+      aggregatedData[key].sales_tax += parseFloat(row.sales_tax || 0)
+      aggregatedData[key].net_sales += parseFloat(row.net_sales || 0)
+      aggregatedData[key].gross_sales += parseFloat(row.gross_sales || 0)
+    }
+
+
+
     let processed = 0
     let failed = 0
-    for (const row of rows) {
+    
+    // Process each aggregated record
+    for (const record of Object.values(aggregatedData)) {
       try {
         // Upsert by date and Store (capital S)
         const { error } = await supabase
           .from('trailer_history')
-          .upsert([
-            {
-              date: row.date,
-              Store: row.store, // Use capital S
-              sales_tax: row.sales_tax,
-              net_sales: row.net_sales,
-              gross_sales: row.gross_sales
-            }
-          ], { onConflict: ['date', 'Store'] })
+          .upsert([record], { onConflict: ['date', 'Store'] })
+        
         if (error) {
           failed++
           console.error('Upsert error:', error)
@@ -1318,6 +1323,7 @@ class SupabaseAPI {
         console.error('Exception during upsert:', err)
       }
     }
+    
     return { success: failed === 0, processed, failed }
   }
 }

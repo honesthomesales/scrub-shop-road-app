@@ -30,10 +30,9 @@ const SalesUpload = () => {
       complete: (results) => {
         const preview = results.data.slice(0, 10) // Show first 10 rows
         setPreviewData(preview)
-        console.log('CSV Preview:', preview)
+  
       },
       error: (error) => {
-        console.error('CSV Parse Error:', error)
         alert('Error parsing CSV file')
       }
     })
@@ -101,12 +100,10 @@ const SalesUpload = () => {
                 uploaded += batch.length
               } else {
                 failed += batch.length
-                console.error('Batch upload failed:', result.error)
               }
               
               setUploadProgress((uploaded / transformedData.length) * 100)
             } catch (error) {
-              console.error('Batch upload error:', error)
               failed += batch.length
             }
           }
@@ -120,7 +117,6 @@ const SalesUpload = () => {
           setIsUploading(false)
         },
         error: (error) => {
-          console.error('Upload error:', error)
           setUploadResult({
             success: false,
             error: error.message
@@ -184,12 +180,34 @@ const SalesUpload = () => {
       skipEmptyLines: true,
       delimiter: file.name.endsWith('.tsv') ? '\t' : ',',
       complete: (results) => {
-        const preview = results.data.slice(0, 10)
+        // Transform and aggregate the data for preview
+        const transformedData = results.data.map(transformTrailerRow).filter(row => row.date && row.store)
+        
+        // Aggregate data by date and store for preview
+        const aggregatedData = {}
+        for (const row of transformedData) {
+          const key = `${row.date}_${row.store}`
+          if (!aggregatedData[key]) {
+            aggregatedData[key] = {
+              date: row.date,
+              store: row.store,
+              sales_tax: 0,
+              net_sales: 0,
+              gross_sales: 0,
+              record_count: 0
+            }
+          }
+          aggregatedData[key].sales_tax += parseFloat(row.sales_tax || 0)
+          aggregatedData[key].net_sales += parseFloat(row.net_sales || 0)
+          aggregatedData[key].gross_sales += parseFloat(row.gross_sales || 0)
+          aggregatedData[key].record_count += 1
+        }
+        
+        const preview = Object.values(aggregatedData).slice(0, 10)
         setTrailerPreview(preview)
-        console.log('Trailer History Preview:', preview)
+  
       },
       error: (error) => {
-        console.error('Trailer Parse Error:', error)
         alert('Error parsing Trailer History file')
       }
     })
@@ -460,31 +478,42 @@ const SalesUpload = () => {
         {trailerPreview.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900">Trailer History Preview</h2>
-              <span className="text-sm text-gray-500">Showing first {trailerPreview.length} rows</span>
+              <h2 className="text-lg font-medium text-gray-900">Trailer History Preview (Aggregated by Store & Date)</h2>
+              <span className="text-sm text-gray-500">Showing first {trailerPreview.length} aggregated records</span>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    {Object.keys(trailerPreview[0] || {}).map(header => (
-              <th key={header} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{header}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {trailerPreview.map((row, index) => (
-            <tr key={index}>
-              {Object.values(row).map((value, cellIndex) => (
-                <td key={cellIndex} className="px-3 py-2 text-sm text-gray-900 max-w-xs truncate" title={String(value)}>{String(value)}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Store</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales Tax</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net Sales</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gross Sales</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Records</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {trailerPreview.map((row, index) => (
+                    <tr key={index}>
+                      <td className="px-3 py-2 text-sm text-gray-900">{new Date(row.date).toLocaleDateString()}</td>
+                      <td className="px-3 py-2 text-sm text-gray-900">{row.store}</td>
+                      <td className="px-3 py-2 text-sm text-gray-900">${row.sales_tax.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-sm text-gray-900">${row.net_sales.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-sm text-gray-900">${row.gross_sales.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-sm text-gray-900">{row.record_count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> Data is automatically aggregated by store and date. Multiple records for the same store on the same date will be summed together.
+              </p>
+            </div>
+          </div>
+        )}
 
 {/* Trailer Upload Button */}
 {trailerFile && (

@@ -68,7 +68,7 @@ const Tasks = () => {
 
   const handleViewComments = (taskId) => {
     // TODO: Implement task comments view
-    console.log('View comments for task:', taskId)
+
   }
 
   const filteredTasks = tasksData.filter(task => {

@@ -8,9 +8,7 @@ const UserSelectionModal = () => {
 
   useEffect(() => {
     // Debug logging
-    console.log('UserSelectionModal - staffData length:', staffData.length)
-    console.log('UserSelectionModal - currentUser:', currentUser)
-    console.log('UserSelectionModal - loading:', loading)
+    
     
     // Only show modal if:
     // 1. Not currently loading
@@ -18,14 +16,10 @@ const UserSelectionModal = () => {
     // 3. No current user is selected
     // 4. Staff data has actual users (not empty)
     if (!loading && staffData.length > 0 && !currentUser) {
-      console.log('UserSelectionModal - Showing modal')
+  
       setShowModal(true)
     } else {
-      console.log('UserSelectionModal - Not showing modal:', {
-        loading,
-        staffDataLength: staffData.length,
-        hasCurrentUser: !!currentUser
-      })
+
     }
   }, [staffData, currentUser, loading])
 
@@ -33,7 +27,7 @@ const UserSelectionModal = () => {
     if (selectedUserId) {
       const selectedUser = staffData.find(user => user.id === parseInt(selectedUserId))
       if (selectedUser) {
-        console.log('UserSelectionModal - Setting current user:', selectedUser)
+
         setCurrentUser(selectedUser)
         setShowModal(false)
       }
@@ -42,7 +36,7 @@ const UserSelectionModal = () => {
 
   const handleSkip = () => {
     // Allow user to skip selection for now, but they'll need to select later for messaging
-    console.log('UserSelectionModal - User skipped selection')
+
     setShowModal(false)
   }
 

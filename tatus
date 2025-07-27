@@ -1,8 +1,0 @@
-[33mcommit 66fe17bc60e992b59154bb476ed0b22b47d8d530[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
-Author: Billy Rochester <honesthomesales@gmail.com>
-Date:   Thu Jul 24 10:03:04 2025 -0400
-
-    Fix Supabase connection by hardcoding credentials
-
- web/src/services/supabaseAPI.js | 6 [32m++++[m[31m--[m
- 1 file changed, 4 insertions(+), 2 deletions(-)

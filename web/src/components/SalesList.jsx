@@ -13,25 +13,17 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
 
   // Filter sales by current month
   useEffect(() => {
-    console.log('=== SALES LIST DEBUG ===')
-    console.log('Current month:', currentMonth)
-    console.log('Total sales data:', salesData.length)
-    console.log('All sales dates:', salesData.map(s => ({ date: s.date, parsed: parseDateString(s.date) })))
-    
     const filtered = salesData.filter(sale => {
       // Use the parseDateString function for consistent date parsing
       const saleDate = parseDateString(sale.date)
       
       // Skip entries with invalid dates
       if (!saleDate) {
-        console.warn('Invalid date:', sale.date)
         return false
       }
       
       const matchesMonth = saleDate.getMonth() === currentMonth.getMonth() && 
                           saleDate.getFullYear() === currentMonth.getFullYear()
-      
-      console.log(`Sale date: ${sale.date} -> ${saleDate}, matches current month (${currentMonth.getMonth()}/${currentMonth.getFullYear()}): ${matchesMonth}`)
       
       return matchesMonth
     }).sort((a, b) => {
@@ -40,15 +32,12 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
       return dateB - dateA
     })
     
-    console.log('Filtered sales count:', filtered.length)
-    console.log('Filtered sales:', filtered)
-    
     setFilteredSales(filtered)
   }, [salesData, currentMonth])
 
-  const getVenueName = (venueId) => {
-    // venueId is actually the venue name (common_venue_name) from the database
-    return venueId || 'N/A'
+  const getVenueName = (sale) => {
+    // For aggregated data, use the store field, fallback to venueId for backward compatibility
+    return sale.store || sale.venueId || 'N/A'
   }
 
   const getStatusColor = (status) => {
@@ -136,11 +125,11 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
               <thead className="table-header">
                 <tr>
                   <th className="table-header-cell">Date</th>
-                  <th className="table-header-cell">Status</th>
-                  <th className="table-header-cell">Actual Sales</th>
+                  <th className="table-header-cell">Store</th>
+                  <th className="table-header-cell">Gross Sales</th>
                   <th className="table-header-cell">Net Sales</th>
                   <th className="table-header-cell">Sales Tax</th>
-                  <th className="table-header-cell">Venue</th>
+                  <th className="table-header-cell">Entries</th>
                   <th className="table-header-cell">Details</th>
                 </tr>
               </thead>
@@ -163,12 +152,7 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
                         {formatDate(sale.date)}
                       </td>
                       <td className="table-cell">
-                        <span className={cn(
-                          'inline-flex px-2 py-1 text-xs font-medium rounded-full',
-                          getStatusColor(sale.status)
-                        )}>
-                          {sale.status}
-                        </span>
+                        {getVenueName(sale)}
                       </td>
                       <td className="table-cell font-semibold">
                         {formatCurrency(sale.grossSales)}
@@ -180,7 +164,7 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
                         {formatCurrency(sale.salesTax)}
                       </td>
                       <td className="table-cell">
-                        {getVenueName(sale.venueId)}
+                        {sale.count || 1}
                       </td>
                       <td className="table-cell">
                         <div className="flex items-center space-x-2">
@@ -239,28 +223,28 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
               </div>
               
               <div>
-                <label className="text-sm font-medium text-secondary-600">Status</label>
-                <p className="text-secondary-900">{selectedSale.status}</p>
+                <label className="text-sm font-medium text-secondary-600">Store</label>
+                <p className="text-secondary-900">{getVenueName(selectedSale)}</p>
               </div>
               
               <div>
-                <label className="text-sm font-medium text-secondary-600">Actual Sales</label>
+                <label className="text-sm font-medium text-secondary-600">Gross Sales (Total)</label>
                 <p className="text-secondary-900 font-semibold">{formatCurrency(selectedSale.grossSales)}</p>
               </div>
               
               <div>
-                <label className="text-sm font-medium text-secondary-600">Net Sales</label>
+                <label className="text-sm font-medium text-secondary-600">Net Sales (Total)</label>
                 <p className="text-secondary-900">{formatCurrency(selectedSale.netSales)}</p>
               </div>
               
               <div>
-                <label className="text-sm font-medium text-secondary-600">Sales Tax</label>
+                <label className="text-sm font-medium text-secondary-600">Sales Tax (Total)</label>
                 <p className="text-secondary-900">{formatCurrency(selectedSale.salesTax)}</p>
               </div>
               
               <div>
-                <label className="text-sm font-medium text-secondary-600">Venue</label>
-                <p className="text-secondary-900">{getVenueName(selectedSale.venueId)}</p>
+                <label className="text-sm font-medium text-secondary-600">Number of Entries</label>
+                <p className="text-secondary-900">{selectedSale.count || 1}</p>
               </div>
             </div>
             

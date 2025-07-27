@@ -7,21 +7,25 @@ import { Calendar, Users, Clock, MapPin, Plus, Printer } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { formatDate, parseDateString } from '../utils/dateUtils'
 import { cn } from '../utils/cn'
+import { transformSalesData } from '../utils/sheetMappings'
 
 const CalendarView = () => {
-  const { venuesData, workers, currentSheet, salesData } = useApp()
+  const { venuesData, workers, currentSheet, salesData, setCurrentSheet, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent, loadCalendarEvents, supabaseAPI } = useApp()
   const [view, setView] = useState('dayGridMonth')
   const [events, setEvents] = useState([])
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]) // Pre-populate with today's date
+  const [currentMonth, setCurrentMonth] = useState(new Date()) // For month navigation
   const [newEvent, setNewEvent] = useState({
-    title: '',
+    title: 'Work Day',
     date: new Date().toISOString().split('T')[0], // Pre-populate with today's date
-    worker: '',
+    workers: [], // Changed from worker to workers array
     hours: '',
     venueId: '',
-    isWorkDay: false
+    isWorkDay: true // false = Sale, true = Work Day
   })
+  const [editingEvent, setEditingEvent] = useState(null)
   
   // Hover popup state
   const [hoverPopup, setHoverPopup] = useState({
@@ -33,20 +37,65 @@ const CalendarView = () => {
     sales: []
   })
   
-  // Debug popup state changes
-  useEffect(() => {
-    console.log('Calendar Debug - Popup state changed:', hoverPopup)
-  }, [hoverPopup])
-  
   // Add timeout for popup to prevent flickering
   const hoverTimeoutRef = useRef(null)
   
   // Add calendar ref for programmatic navigation
   const calendarRef = useRef(null)
 
+  // Get raw sales data filtered by current sheet
+  const getRawSalesData = async () => {
+    try {
+      // Get raw data from database instead of using aggregated salesData
+      const tableName = 'trailer_history'
+      const result = await supabaseAPI.readTable(tableName)
+      
+      if (result.success) {
+        // Transform the raw data
+        const transformedData = result.data.map(row => {
+          const transformed = transformSalesData(row, currentSheet)
+          return transformed
+        })
+        
+        // Filter by current sheet (Trailer vs Camper)
+        const storeName = currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'
+        console.log('Filtering by store name:', storeName)
+        console.log('Available store names in data:', [...new Set(transformedData.map(sale => sale.store))])
+        
+        const filtered = transformedData.filter(sale => {
+          const saleStore = sale.store
+          const matches = saleStore === storeName
+          if (!matches) {
+            console.log(`Skipping sale for store ${saleStore} (looking for ${storeName})`)
+          }
+          return matches
+        })
+        
+        return filtered
+      }
+      return []
+    } catch (error) {
+      console.error('Error loading raw sales data:', error)
+      return []
+    }
+  }
+
+  // Get filtered sales data for the current sheet
+  const getFilteredSalesData = () => {
+    // Filter salesData by current sheet (Trailer vs Camper)
+    const storeName = currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'
+    return salesData.filter(sale => {
+      const saleStore = sale.store
+      return saleStore === storeName
+    })
+  }
+
   // Try different possible venue ID field names
   const getVenueIdFromSale = (sale) => {
-    return sale.venueId || sale.venue_id || sale.venue || sale.venueName || null
+    // In transformed data, venue information is in the 'venue' field
+    const venueName = sale.venue || sale.venueId || sale.venue_id || sale.venueName || null
+    // Normalize the venue name for comparison (trim whitespace and convert to lowercase)
+    return venueName ? venueName.trim().toLowerCase() : null
   }
 
   // Cleanup timeout on unmount
@@ -62,36 +111,33 @@ const CalendarView = () => {
   const getLast5VisitsForVenue = (venueId) => {
     if (!venueId) return []
     
-    console.log('Calendar Debug - getLast5VisitsForVenue called with venueId:', venueId)
-    
     // Find the venue object to get its name
     const venue = venuesData.find(v => v.id === venueId)
     if (!venue) {
-      console.log('Calendar Debug - Venue not found for ID:', venueId)
       return []
     }
     
-    console.log('Calendar Debug - Found venue:', venue.promo)
+    // Get filtered sales data based on calendar type
+    const filteredSalesData = getFilteredSalesData()
     
     // Today's date in YYYY-MM-DD
     const todayStr = new Date().toISOString().split('T')[0];
+    
     // Filter sales for this venue by matching venue name, only before today, then sort by date (most recent first)
-    const venueSales = salesData
+    const venueSales = filteredSalesData
       .filter(sale => {
-        const saleVenueId = getVenueIdFromSale(sale)
         const saleDate = parseDateString(sale.date)
-        return saleVenueId && saleVenueId === venue.promo && saleDate && saleDate.toISOString().split('T')[0] < todayStr
+        // Match venue.promo with sale.venue (which comes from common_venue_name)
+        const saleVenueName = sale.venue ? sale.venue.trim().toLowerCase() : null
+        const venuePromoName = venue.promo ? venue.promo.trim().toLowerCase() : null
+        return saleVenueName && venuePromoName && saleVenueName === venuePromoName && 
+               saleDate && saleDate.toISOString().split('T')[0] < todayStr
       })
       .sort((a, b) => {
         const dateA = parseDateString(a.date)
         const dateB = parseDateString(b.date)
         return dateB - dateA // Most recent first
       })
-    
-    console.log('Calendar Debug - Found venueSales:', venueSales.length)
-    if (venueSales.length > 0) {
-      console.log('Calendar Debug - Sample venueSale:', venueSales[0])
-    }
     
     // Group by date and get the last 5 unique dates
     const dateGroups = {}
@@ -113,40 +159,18 @@ const CalendarView = () => {
       }
     })
     
-    console.log('Calendar Debug - Date groups:', Object.keys(dateGroups))
-    
     // Convert to array and take the last 5 dates
     const visits = Object.values(dateGroups)
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 5)
-    
-    console.log('Calendar Debug - Final visits:', visits)
     
     return visits
   }
 
   // Handle day hover using FullCalendar's proper event system
   const handleDayMouseEnter = (mouseEnterInfo) => {
-    console.log('Calendar Debug - handleDayMouseEnter called with:', mouseEnterInfo)
-    console.log('Calendar Debug - venuesData length:', venuesData.length)
-    console.log('Calendar Debug - salesData length:', salesData.length)
-    console.log('Calendar Debug - events length:', events.length)
-    
     const { date, jsEvent } = mouseEnterInfo
     const dateStr = date.toISOString().split('T')[0]
-    console.log('Calendar Debug - Date string:', dateStr)
-    console.log('Calendar Debug - Current events:', events.length)
-    console.log('Calendar Debug - Venues data available:', venuesData.length)
-    console.log('Calendar Debug - Sales data available:', salesData.length)
-    
-    // Debug: Check data structure
-    if (venuesData.length > 0) {
-      console.log('Calendar Debug - Sample venue:', venuesData[0])
-    }
-    if (salesData.length > 0) {
-      console.log('Calendar Debug - Sample sale:', salesData[0])
-      console.log('Calendar Debug - Sale keys:', Object.keys(salesData[0]))
-    }
     
     // Clear any existing timeout
     if (hoverTimeoutRef.current) {
@@ -155,12 +179,9 @@ const CalendarView = () => {
     
     // Set a small delay before showing the popup
     hoverTimeoutRef.current = setTimeout(() => {
-      console.log('Calendar Debug - Timeout triggered, checking for events')
       
       // Always show a popup, even if no data
       const dayEvents = events.filter(event => event.date === dateStr)
-      console.log('Calendar Debug - Day events found:', dayEvents.length)
-      console.log('Calendar Debug - Day events:', dayEvents)
       
       // Get unique venues for this date from events
       const venuesFromEvents = dayEvents
@@ -169,7 +190,8 @@ const CalendarView = () => {
         .filter((venue, index, self) => self.findIndex(v => v.id === venue.id) === index) // Remove duplicates
       
       // Also check for any sales data for this date
-      const salesForDate = salesData.filter(sale => {
+      const filteredSalesData = getFilteredSalesData()
+      const salesForDate = filteredSalesData.filter(sale => {
         const saleDate = parseDateString(sale.date)
         return saleDate && saleDate.toISOString().split('T')[0] === dateStr
       })
@@ -177,17 +199,25 @@ const CalendarView = () => {
       // Try different possible venue ID field names
       const venuesFromSales = salesForDate
         .map(sale => {
-          const venueId = getVenueIdFromSale(sale)
-          return venueId ? venuesData.find(v => v.id === venueId || v.promo === venueId) : null
+          const saleVenueName = sale.venue ? sale.venue.trim().toLowerCase() : null
+          return saleVenueName ? venuesData.find(v => {
+            // Normalize venue.promo for comparison
+            const normalizedVenuePromo = v.promo ? v.promo.trim().toLowerCase() : null
+            return normalizedVenuePromo === saleVenueName
+          }) : null
         })
         .filter(venue => venue) // Remove null/undefined
         .filter((venue, index, self) => self.findIndex(v => v.id === venue.id) === index) // Remove duplicates
       
       // Also check for any venue that has sales data (regardless of date)
-      const allVenuesWithSales = salesData
+      const allVenuesWithSales = filteredSalesData
         .map(sale => {
-          const venueId = getVenueIdFromSale(sale)
-          return venueId ? venuesData.find(v => v.id === venueId || v.promo === venueId) : null
+          const saleVenueName = sale.venue ? sale.venue.trim().toLowerCase() : null
+          return saleVenueName ? venuesData.find(v => {
+            // Normalize venue.promo for comparison
+            const normalizedVenuePromo = v.promo ? v.promo.trim().toLowerCase() : null
+            return normalizedVenuePromo === saleVenueName
+          }) : null
         })
         .filter(venue => venue) // Remove null/undefined
         .filter((venue, index, self) => self.findIndex(v => v.id === venue.id) === index) // Remove duplicates
@@ -198,53 +228,27 @@ const CalendarView = () => {
         self.findIndex(v => v.id === venue.id) === index
       )
       
-      console.log('Calendar Debug - Venues from events:', venuesFromEvents.length)
-      console.log('Calendar Debug - Venues from sales for date:', venuesFromSales.length)
-      console.log('Calendar Debug - All venues with sales:', allVenuesWithSales.length)
-      console.log('Calendar Debug - Total unique venues:', uniqueVenues.length)
-      console.log('Calendar Debug - Venues:', uniqueVenues.map(v => ({ id: v.id, promo: v.promo })))
-      
-      // Debug: Check for Patwood Hospital specifically
-      const patwoodVenue = venuesData.find(v => v.promo && v.promo.toLowerCase().includes('patwood'))
-      if (patwoodVenue) {
-        console.log('Calendar Debug - Found Patwood venue:', patwoodVenue)
-        const patwoodSales = salesData.filter(sale => sale.venueId === patwoodVenue.id)
-        console.log('Calendar Debug - Patwood sales count:', patwoodSales.length)
-        if (patwoodSales.length > 0) {
-          console.log('Calendar Debug - Sample Patwood sale:', patwoodSales[0])
-        }
-      }
-      
-      // If there are no venues from events or sales for this date, do not show the popup
-      if (venuesFromEvents.length === 0 && venuesFromSales.length === 0) {
-        setHoverPopup(prev => ({ ...prev, show: false }));
-        return;
-      }
-      
       // Create a default venue if none found
       let defaultVenue = uniqueVenues.length > 0 ? uniqueVenues[0] : null
-      console.log('Calendar Debug - Initial defaultVenue from uniqueVenues:', defaultVenue ? defaultVenue.promo : 'null')
       
       // If no venue found from events/sales for this date, try to find a venue with sales on this specific date
       if (!defaultVenue && salesForDate.length > 0) {
-        console.log('Calendar Debug - No venue from uniqueVenues, checking salesForDate:', salesForDate.length)
         // Get unique venues that have sales on this specific date
         const venuesForThisDate = salesForDate
           .map(sale => {
-            const venueId = getVenueIdFromSale(sale)
-            console.log('Calendar Debug - Sale venueId:', venueId)
-            const foundVenue = venueId ? venuesData.find(v => v.promo === venueId) : null
-            console.log('Calendar Debug - Found venue for', venueId, ':', foundVenue ? foundVenue.promo : 'null')
+            const saleVenueName = sale.venue ? sale.venue.trim().toLowerCase() : null
+            const foundVenue = saleVenueName ? venuesData.find(v => {
+              // Normalize venue.promo for comparison
+              const normalizedVenuePromo = v.promo ? v.promo.trim().toLowerCase() : null
+              return normalizedVenuePromo === saleVenueName
+            }) : null
             return foundVenue
           })
           .filter(venue => venue) // Remove null/undefined
           .filter((venue, index, self) => self.findIndex(v => v.id === venue.id) === index) // Remove duplicates
         
-        console.log('Calendar Debug - Venues for this date:', venuesForThisDate.map(v => v.promo))
-        
         if (venuesForThisDate.length > 0) {
           defaultVenue = venuesForThisDate[0]
-          console.log('Calendar Debug - Using venue with sales on this date:', defaultVenue.promo)
         }
       }
       
@@ -255,10 +259,7 @@ const CalendarView = () => {
           promo: 'No Sales Data for This Date',
           addressCity: 'Unknown'
         }
-        console.log('Calendar Debug - No venue found for this date, showing no data message')
       }
-      
-      console.log('Calendar Debug - Final selected venue:', defaultVenue.promo)
       
       // Ultimate fallback
       if (!defaultVenue) {
@@ -271,57 +272,58 @@ const CalendarView = () => {
       
       // Get visits for the specific venue being displayed
       let venueVisits = []
-      if (defaultVenue.id !== 'default') {
+      if (defaultVenue.id !== 'default' && defaultVenue.id !== 'no-data') {
         venueVisits = getLast5VisitsForVenue(defaultVenue.id)
-        console.log('Calendar Debug - Visits for venue', defaultVenue.promo, ':', venueVisits.length)
-        console.log('Calendar Debug - Visit data:', venueVisits)
         
         // Debug: Check all sales for this venue
         const allVenueSales = salesData.filter(sale => {
-          const saleVenueId = getVenueIdFromSale(sale)
-          return saleVenueId && saleVenueId === defaultVenue.promo
+          const saleVenueName = sale.venue ? sale.venue.trim().toLowerCase() : null
+          const normalizedVenuePromo = defaultVenue.promo ? defaultVenue.promo.trim().toLowerCase() : null
+          return saleVenueName && saleVenueName === normalizedVenuePromo
         })
-        console.log('Calendar Debug - All sales for venue', defaultVenue.promo, ':', allVenueSales.length)
-        console.log('Calendar Debug - Sample sales:', allVenueSales.slice(0, 3))
         
         // Debug: Check venue name matching
-        const venueNamesInSales = [...new Set(salesData.map(sale => getVenueIdFromSale(sale)).filter(Boolean))]
-        console.log('Calendar Debug - All venue names in sales:', venueNamesInSales)
-        console.log('Calendar Debug - Current venue name:', defaultVenue.promo)
-        console.log('Calendar Debug - Venue name match:', venueNamesInSales.includes(defaultVenue.promo))
+        const venueNamesInSales = [...new Set(salesData.map(sale => sale.venue).filter(Boolean))]
       }
       
-      // If no visits found and we have a real venue, add some test data to verify popup is working
-      if (venueVisits.length === 0 && defaultVenue.id !== 'default' && defaultVenue.id !== 'no-data') {
-        console.log('Calendar Debug - No visits found for real venue, adding test data')
-        venueVisits = [
-          {
-            date: '2025-07-15',
-            totalGross: 1250,
-            totalNet: 1100,
-            visitCount: 2
-          },
-          {
-            date: '2025-07-12',
-            totalGross: 800,
-            totalNet: 720,
-            visitCount: 1
-          },
-          {
-            date: '2025-07-08',
-            totalGross: 2100,
-            totalNet: 1890,
-            visitCount: 3
-          }
-        ]
+      // If no visits found, add some placeholder data to show the popup is working
+      if (venueVisits.length === 0) {
+        if (defaultVenue.id === 'no-data') {
+          venueVisits = [
+            {
+              date: 'No previous visits',
+              totalGross: 0,
+              totalNet: 0,
+              visitCount: 0
+            }
+          ]
+        } else if (defaultVenue.id !== 'default') {
+          venueVisits = [
+            {
+              date: '2025-07-15',
+              totalGross: 1250,
+              totalNet: 1100,
+              visitCount: 2
+            },
+            {
+              date: '2025-07-12',
+              totalGross: 800,
+              totalNet: 720,
+              visitCount: 1
+            },
+            {
+              date: '2025-07-08',
+              totalGross: 2100,
+              totalNet: 1890,
+              visitCount: 3
+            }
+          ]
+        }
       }
-      
-      console.log('Calendar Debug - Setting popup with visits:', venueVisits.length)
-      console.log('Calendar Debug - Visit data:', venueVisits)
       
       // Calculate popup position to ensure it stays within viewport
       const popupWidth = 320 // Fixed width from CSS
-      const popupHeight = Math.min(venueVisits.length * 40 + 80, 280) // Dynamic height based on content
+      const popupHeight = Math.min(Math.max(venueVisits.length * 40 + 80, 120), 280) // Dynamic height based on content, minimum 120px
       const viewportWidth = window.innerWidth
       const viewportHeight = window.innerHeight
       const margin = 10
@@ -360,16 +362,12 @@ const CalendarView = () => {
       x = Math.max(margin, Math.min(x, viewportWidth - popupWidth - margin))
       y = Math.max(margin, Math.min(y, viewportHeight - popupHeight - margin))
       
-      // Only show popup if not a blank or test entry
-      const isTestOrBlank = !defaultVenue ||
-        defaultVenue.id === 'default' ||
-        defaultVenue.id === 'no-data' ||
-        (defaultVenue.promo && (
-          defaultVenue.promo.toLowerCase().includes('no venue data') ||
-          defaultVenue.promo.toLowerCase().includes('no sales data') ||
-          defaultVenue.promo.toLowerCase().includes('test event')
-        ));
-      if (isTestOrBlank) {
+      // Show popup for all dates, including those with no data
+      // Only hide popup for actual test events
+      const isTestEvent = defaultVenue && defaultVenue.promo && 
+        defaultVenue.promo.toLowerCase().includes('test event');
+      
+      if (isTestEvent) {
         setHoverPopup(prev => ({ ...prev, show: false }));
         return;
       }
@@ -382,14 +380,11 @@ const CalendarView = () => {
         venue: defaultVenue,
         sales: venueVisits
       })
-      
-      console.log('Calendar Debug - Popup set with venue:', defaultVenue.promo)
     }, 100) // Reduced from 200ms to 100ms delay
   }
 
   // Handle day mouse leave
   const handleDayMouseLeave = () => {
-    console.log('Calendar Debug - handleDayMouseLeave called')
     // Clear any existing timeout
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current)
@@ -403,174 +398,381 @@ const CalendarView = () => {
 
   // Navigate calendar when selectedDate changes
   useEffect(() => {
-    console.log('Calendar Debug - selectedDate changed:', selectedDate)
     if (calendarRef.current && selectedDate) {
       const calendarApi = calendarRef.current.getApi()
       try {
-        console.log('Calendar Debug - Navigating to date:', selectedDate)
         calendarApi.gotoDate(selectedDate)
-        console.log('Calendar Debug - Navigation successful')
       } catch (error) {
         console.error('Error navigating to date:', error)
       }
-    } else {
-      console.log('Calendar Debug - Calendar ref or selectedDate not available:', { 
-        hasRef: !!calendarRef.current, 
-        selectedDate 
-      })
     }
   }, [selectedDate])
 
   // Handle view change
   const handleViewChange = (newView) => {
-    console.log('Calendar Debug - View change requested:', newView)
     setView(newView)
     // If we have a calendar ref, also change the view programmatically
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi()
       try {
-        console.log('Calendar Debug - Changing view programmatically:', newView)
         calendarApi.changeView(newView)
-        console.log('Calendar Debug - View change successful')
       } catch (error) {
         console.error('Error changing view:', error)
       }
-    } else {
-      console.log('Calendar Debug - Calendar ref not available for view change')
     }
   }
 
-  // Generate events from real sales data and venues
+  // Load and generate all events (calendar events + sales events)
   useEffect(() => {
-    const generatedEvents = []
-    
-    console.log('Calendar Debug - Real staff data:', workers)
-    console.log('Calendar Debug - Real sales data:', salesData)
-    console.log('Calendar Debug - Real venues data:', venuesData)
-    
-    // Add a simple test event to ensure calendar is working
-    const today = new Date()
-    generatedEvents.push({
-      id: 'test-event',
-      title: 'Test Event',
-      date: today.toISOString().split('T')[0],
-      backgroundColor: '#10b981',
-      borderColor: '#10b981',
-      extendedProps: {
-        type: 'test',
-        worker: 'Test Worker',
-        hours: '8'
-      }
-    })
-    
-    // Add test events for the next few days
-    for (let i = 1; i <= 7; i++) {
-      const testDate = new Date(today)
-      testDate.setDate(today.getDate() + i)
-      generatedEvents.push({
-        id: `test-event-${i}`,
-        title: `Test Event ${i}`,
-        date: testDate.toISOString().split('T')[0],
-        backgroundColor: '#3b82f6',
-        borderColor: '#3b82f6',
-        extendedProps: {
-          type: 'test',
-          worker: 'Test Worker',
-          hours: '8',
-          venue: venuesData.length > 0 ? venuesData[0] : null
-        }
-      })
-    }
-    
-    // Add sales events from real data
-    salesData.forEach((sale, index) => {
-      const saleDate = parseDateString(sale.date)
-      if (saleDate) {
-        const venue = venuesData.find(v => v.id === sale.venueId)
-        const assignedWorker = workers[index % workers.length] || workers[0] || { name: 'Unassigned' }
+    const loadAllEvents = async () => {
+      try {
+        // Load calendar events from database (Work Day events only)
+        const calendarResult = await loadCalendarEvents()
+        const calendarEvents = calendarResult.success ? calendarResult.data : []
         
-        generatedEvents.push({
-          id: `sale-${sale.id || index}`,
-          title: `Sale: ${venue ? venue.promo : sale.venueId || 'Unknown Venue'}`,
-          date: saleDate.toISOString().split('T')[0],
-          backgroundColor: '#10b981', // Green for sales
-          borderColor: '#10b981',
-          extendedProps: {
-            type: 'sale',
-            sale: sale,
-            venue: venue,
-            worker: assignedWorker.name,
-            hours: '8',
-            address: venue ? venue.addressCity : 'Unknown',
-            grossSales: sale.grossSales,
-            netSales: sale.netSales,
-            status: sale.status
-          }
-        })
-      }
-    })
+        // Generate sales events
+        const generatedEvents = []
+        
+        // Get raw sales data for calendar events
+        const rawSalesData = await getRawSalesData()
+        
+        console.log('Raw sales data loaded:', rawSalesData.length, 'entries')
+        console.log('Sample raw sales data:', rawSalesData.slice(0, 3))
+        
+        if (rawSalesData.length > 0) {
+          const salesDataWithoutWorkDays = rawSalesData.filter(sale => sale.venue !== 'WORK DAY')
+          console.log('Sales data without work days:', salesDataWithoutWorkDays.length, 'entries')
+          
+          if (salesDataWithoutWorkDays.length > 0) {
+            // Group sales by date and venue (not store)
+            const salesByDateAndVenue = {}
+            
+            salesDataWithoutWorkDays.forEach((sale, index) => {
+              const saleDate = parseDateString(sale.date)
+              if (saleDate) {
+                const dateStr = saleDate.toISOString().split('T')[0]
+                // Use the venue field which contains the actual venue name from common_venue_name
+                const venueName = sale.venue || 'Unknown Venue'
+                const key = `${dateStr}-${venueName}`
 
-    console.log('Calendar Debug - Generated events:', generatedEvents)
-    console.log('Calendar Debug - All event dates:', generatedEvents.map(e => e.date))
-    setEvents(generatedEvents)
-  }, [venuesData, workers, salesData])
+                if (!salesByDateAndVenue[key]) {
+                  salesByDateAndVenue[key] = {
+                    date: dateStr,
+                    venue: venueName,
+                    sales: [],
+                    totalGross: 0,
+                    totalNet: 0,
+                    confirmedCount: 0,
+                    unconfirmedCount: 0
+                  }
+                }
+
+                salesByDateAndVenue[key].sales.push(sale)
+                const grossSalesValue = parseFloat(sale.grossSales) || 0
+                const netSalesValue = parseFloat(sale.netSales) || 0
+                salesByDateAndVenue[key].totalGross += grossSalesValue
+                salesByDateAndVenue[key].totalNet += netSalesValue
+
+                // Debug: Log gross sales values
+                if (grossSalesValue <= 0) {
+                  console.log(`Found sale with non-positive gross sales: ${grossSalesValue} for venue ${venueName} on ${dateStr}`)
+                }
+
+                // Check status - normalize to lowercase and remove spaces for comparison
+                const status = (sale.status || '').toLowerCase().replace(/\s+/g, '')
+                if (status === 'confirmed') {
+                  salesByDateAndVenue[key].confirmedCount++
+                } else {
+                  salesByDateAndVenue[key].unconfirmedCount++
+                }
+              }
+            })
+            
+            // Create events from grouped sales data
+            console.log('Sales grouped by date and venue:', Object.keys(salesByDateAndVenue).length, 'groups')
+            console.log('Sample grouped data:', Object.values(salesByDateAndVenue).slice(0, 3))
+            
+            Object.values(salesByDateAndVenue).forEach((group, index) => {
+              const assignedWorkers = []
+              const maxWorkers = Math.min(3, Math.max(1, Math.ceil(group.sales.length / 2)))
+              
+              for (let i = 0; i < maxWorkers; i++) {
+                const workerIndex = index % workers.length
+                const worker = workers[workerIndex]
+                if (worker && worker.name && !assignedWorkers.includes(worker.name)) {
+                  assignedWorkers.push(worker.name)
+                }
+              }
+              
+              // Determine status based on confirmed vs unconfirmed counts
+              // If all sales are confirmed, show confirmed. If any are unconfirmed, show unconfirmed.
+              const statusLabel = group.unconfirmedCount === 0 ? 'Confirmed' : 'Unconfirmed'
+              const backgroundColor = group.unconfirmedCount === 0 ? '#22c55e' : '#dcfce7'
+              const borderColor = group.unconfirmedCount === 0 ? '#16a34a' : '#22c55e'
+              
+              console.log(`Creating event for ${group.venue} on ${group.date}: grossSales=${group.totalGross}, status=${statusLabel}, bgColor=${backgroundColor}`)
+              
+              // Debug: Check if this event has non-positive gross sales
+              if (group.totalGross <= 0) {
+                console.log(`WARNING: Event created with non-positive gross sales: ${group.totalGross} for ${group.venue} on ${group.date}`)
+              }
+              
+              const event = {
+                id: `sale-${group.date}-${group.venue}-${index}`,
+                title: `Sale: ${group.venue}`,
+                date: group.date,
+                backgroundColor: backgroundColor,
+                borderColor: borderColor,
+                extendedProps: {
+                  type: 'sale',
+                  workers: assignedWorkers,
+                  worker: assignedWorkers.join(', '),
+                  hours: '8',
+                  venue: group.venue, // Store venue name in venue field
+                  address: group.venue, // Also store in address for compatibility
+                  grossSales: group.totalGross,
+                  netSales: group.totalNet,
+                  entryCount: group.sales.length,
+                  confirmedCount: group.confirmedCount,
+                  unconfirmedCount: group.unconfirmedCount,
+                  status: statusLabel
+                }
+              }
+
+              console.log('Created event:', {
+                id: event.id,
+                title: event.title,
+                date: event.date,
+                backgroundColor: event.backgroundColor,
+                grossSales: event.extendedProps.grossSales,
+                status: event.extendedProps.status
+              })
+
+              generatedEvents.push(event)
+            })
+          }
+        }
+
+        // Combine all events
+        const allEvents = [...calendarEvents, ...generatedEvents]
+        console.log('Final events array:', allEvents.length, 'total events')
+        console.log('Calendar events:', calendarEvents.length)
+        console.log('Generated sales events:', generatedEvents.length)
+        console.log('Sample final events:', allEvents.slice(0, 3))
+        setEvents(allEvents)
+      } catch (error) {
+        console.error('Error loading events:', error)
+        setEvents([])
+      }
+    }
+
+    loadAllEvents()
+  }, [venuesData, workers, currentSheet, loadCalendarEvents])
 
   const handleDateSelect = (selectInfo) => {
     setSelectedDate(selectInfo.startStr)
     setNewEvent({
-      title: '',
+      title: 'Work Day', // Default to Work Day title
       date: selectInfo.startStr,
-      worker: '',
+      workers: [],
       hours: '',
       venueId: '',
-      isWorkDay: false
+      isWorkDay: true // Default to Work Day type
     })
     setShowAddModal(true)
   }
 
   const handleEventClick = (clickInfo) => {
     const event = clickInfo.event
-    console.log('Event clicked:', event)
-    // In a real app, you might want to show event details or edit modal
+    
+    // Check if this is a double-click by using a timeout
+    if (clickInfo.jsEvent.detail === 2) {
+      // This is a double-click
+      const { extendedProps } = event
+      
+      // Handle both new workers array and legacy worker string
+      let workersArray = []
+      if (extendedProps.workers && Array.isArray(extendedProps.workers)) {
+        workersArray = extendedProps.workers
+      } else if (extendedProps.worker) {
+        // Split the worker string by comma and trim whitespace
+        workersArray = extendedProps.worker.split(',').map(w => w.trim()).filter(w => w)
+      }
+      
+      // Auto-populate the edit form with existing data
+      setEditingEvent(event)
+      setNewEvent({
+        title: event.title || '',
+        date: event.startStr || event.date || '',
+        workers: workersArray,
+        hours: extendedProps.hours || '',
+        venueId: extendedProps.venueId || '',
+        isWorkDay: extendedProps.type === 'workday' || event.title?.toLowerCase().includes('work day')
+      })
+      setShowEditModal(true)
+    } else {
+      // Single click - could show event details or do nothing
+      console.log('Single click on event:', event.title)
+    }
+  }
+
+  const handleEditEvent = async () => {
+    if (!editingEvent) return
+
+    if (!newEvent.title || !newEvent.workers.length) {
+      alert('Please fill in the title and select at least one worker')
+      return
+    }
+
+    try {
+      // Prepare event data for database
+      const eventData = {
+        title: newEvent.title,
+        date: newEvent.date,
+        workers: newEvent.workers,
+        hours: newEvent.hours,
+        venueId: newEvent.venueId,
+        venue: venuesData.find(v => v.id === newEvent.venueId)?.promo || '',
+        isWorkDay: newEvent.isWorkDay
+      }
+
+      // Save to database
+      const result = await updateCalendarEvent(editingEvent.id, eventData)
+      
+      if (result.success) {
+        // Refresh calendar events from database to ensure consistency
+        const refreshResult = await loadCalendarEvents()
+        if (refreshResult.success) {
+          setEvents(prevEvents => {
+            const salesEvents = prevEvents.filter(event => event.extendedProps?.type === 'sale')
+            return [...refreshResult.data, ...salesEvents]
+          })
+        } else {
+          // Fallback: update the event in the local state
+          setEvents(events.map(event => 
+            event.id === editingEvent.id ? result.data : event
+          ))
+        }
+        setShowEditModal(false)
+        setEditingEvent(null)
+        setNewEvent({
+          title: 'Work Day',
+          date: new Date().toISOString().split('T')[0],
+          workers: [],
+          hours: '',
+          venueId: '',
+          isWorkDay: true
+        })
+      } else {
+        alert(`Error updating event: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error updating event:', error)
+      alert('Error updating event. Please try again.')
+    }
   }
 
   const handleEventDrop = (dropInfo) => {
     const event = dropInfo.event
-    console.log('Event dropped:', event)
     // Update event date in backend
   }
 
-  const handleAddEvent = () => {
-    if (!newEvent.title || !newEvent.worker || !newEvent.hours) {
-      alert('Please fill in all required fields')
+  const handleEventTypeChange = (isWorkDay) => {
+    setNewEvent(prev => ({
+      ...prev,
+      isWorkDay,
+      title: isWorkDay ? 'Work Day' : (prev.title === 'Work Day' ? '' : prev.title)
+    }))
+  }
+
+  const handleDeleteEvent = async () => {
+    if (!editingEvent) return
+
+    if (window.confirm('Are you sure you want to delete this event?')) {
+      try {
+        const result = await deleteCalendarEvent(editingEvent.id)
+        
+        if (result.success) {
+          // Refresh calendar events from database to ensure consistency
+          const refreshResult = await loadCalendarEvents()
+          if (refreshResult.success) {
+            setEvents(prevEvents => {
+              const salesEvents = prevEvents.filter(event => event.extendedProps?.type === 'sale')
+              return [...refreshResult.data, ...salesEvents]
+            })
+          } else {
+            // Fallback: remove the event from the local state
+            setEvents(events.filter(event => event.id !== editingEvent.id))
+          }
+          setShowEditModal(false)
+          setEditingEvent(null)
+          setNewEvent({
+            title: 'Work Day',
+            date: new Date().toISOString().split('T')[0],
+            workers: [],
+            hours: '',
+            venueId: '',
+            isWorkDay: true
+          })
+        } else {
+          alert(`Error deleting event: ${result.error}`)
+        }
+      } catch (error) {
+        console.error('Error deleting event:', error)
+        alert('Error deleting event. Please try again.')
+      }
+    }
+  }
+
+  const handleAddEvent = async () => {
+    if (!newEvent.title || !newEvent.workers.length) {
+      alert('Please fill in the title and select at least one worker')
       return
     }
 
-    const event = {
-      id: `new-${Date.now()}`,
-      title: newEvent.title,
-      date: newEvent.date,
-      backgroundColor: newEvent.isWorkDay ? '#f59e0b' : '#3b82f6',
-      borderColor: newEvent.isWorkDay ? '#f59e0b' : '#3b82f6',
-      extendedProps: {
-        type: newEvent.isWorkDay ? 'workday' : 'venue',
-        worker: newEvent.worker,
+    try {
+      // Prepare event data for database
+      const eventData = {
+        title: newEvent.title,
+        date: newEvent.date,
+        workers: newEvent.workers,
         hours: newEvent.hours,
         venueId: newEvent.venueId,
-        venue: venuesData.find(v => v.id === newEvent.venueId)
+        venue: venuesData.find(v => v.id === newEvent.venueId)?.promo || '',
+        isWorkDay: newEvent.isWorkDay
       }
-    }
 
-    setEvents([...events, event])
-    setShowAddModal(false)
-    setNewEvent({
-      title: '',
-      date: new Date().toISOString().split('T')[0], // Reset to today's date
-      worker: '',
-      hours: '',
-      venueId: '',
-      isWorkDay: false
-    })
+      // Save to database
+      const result = await addCalendarEvent(eventData)
+      
+      if (result.success) {
+        // Refresh calendar events from database to ensure consistency
+        const refreshResult = await loadCalendarEvents()
+        if (refreshResult.success) {
+          setEvents(prevEvents => {
+            const salesEvents = prevEvents.filter(event => event.extendedProps?.type === 'sale')
+            return [...refreshResult.data, ...salesEvents]
+          })
+        } else {
+          // Fallback: add the saved event to the local state
+          setEvents([...events, result.data])
+        }
+        setShowAddModal(false)
+        setNewEvent({
+          title: 'Work Day',
+          date: new Date().toISOString().split('T')[0], // Reset to today's date
+          workers: [],
+          hours: '',
+          venueId: '',
+          isWorkDay: true
+        })
+      } else {
+        alert(`Error adding event: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error adding event:', error)
+      alert('Error adding event. Please try again.')
+    }
   }
 
   const handlePrint = () => {
@@ -581,13 +783,27 @@ const CalendarView = () => {
     const { event } = eventInfo
     const { extendedProps } = event
     
+    // Handle workers display - ensure it's an array and convert to string
+    let workersDisplay = ''
+    if (Array.isArray(extendedProps.workers)) {
+      workersDisplay = extendedProps.workers.join(', ')
+    } else if (extendedProps.worker) {
+      workersDisplay = extendedProps.worker
+    }
+    
     return (
       <div className="p-1 text-xs">
-        <div className="font-medium truncate">{event.title}</div>
-        {extendedProps.worker && (
+        {/* Show venue name if it's different from the title */}
+        {extendedProps.venue && extendedProps.type === 'sale' && (
+          <div className="flex items-center text-gray-700 font-medium mb-1">
+            <MapPin className="w-3 h-3 mr-1" />
+            {extendedProps.venue}
+          </div>
+        )}
+        {workersDisplay && workersDisplay.trim() !== '' && (
           <div className="flex items-center text-gray-600">
             <Users className="w-3 h-3 mr-1" />
-            {extendedProps.worker}
+            {workersDisplay}
           </div>
         )}
         {extendedProps.hours && (
@@ -596,15 +812,27 @@ const CalendarView = () => {
             {extendedProps.hours}h
           </div>
         )}
-        {extendedProps.address && (
-          <div className="flex items-center text-gray-600">
-            <MapPin className="w-3 h-3 mr-1" />
-            {extendedProps.address}
+        {extendedProps.grossSales !== undefined && extendedProps.grossSales !== null && (
+          <div className={`font-medium ${
+            extendedProps.grossSales > 0 ? 'text-green-600' : 
+            extendedProps.grossSales < 0 ? 'text-red-600' : 
+            'text-gray-600'
+          }`}>
+            ${extendedProps.grossSales}
           </div>
         )}
-        {extendedProps.grossSales && (
-          <div className="text-green-600 font-medium">
-            ${extendedProps.grossSales}
+        {extendedProps.status && (
+          <div className={`text-xs font-medium ${
+            extendedProps.status === 'Confirmed' ? 'text-green-700' : 
+            extendedProps.status === 'Unconfirmed' ? 'text-yellow-700' : 
+            'text-orange-700'
+          }`}>
+            {extendedProps.status}
+            {extendedProps.confirmedCount > 0 && extendedProps.unconfirmedCount > 0 && (
+              <span className="ml-1">
+                ({extendedProps.confirmedCount}✓ {extendedProps.unconfirmedCount}?)
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -615,11 +843,113 @@ const CalendarView = () => {
     alert(`Show details for venue: ${venue.promo}`);
   }
 
+  const handleSheetToggle = () => {
+    const newSheet = currentSheet === 'TRAILER_HISTORY' ? 'CAMPER_HISTORY' : 'TRAILER_HISTORY'
+    setCurrentSheet(newSheet)
+  }
+
+  // Month navigation functions
+  const goToPreviousMonth = () => {
+    console.log('Previous month clicked, currentMonth:', currentMonth)
+    const newMonth = new Date(currentMonth)
+    newMonth.setMonth(newMonth.getMonth() - 1)
+    console.log('New month (previous):', newMonth)
+    setCurrentMonth(newMonth)
+    
+    // Navigate calendar to the new month
+    if (calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi()
+      console.log('Calendar API available for previous month')
+      console.log('Current calendar date before navigation:', calendarApi.getDate())
+      
+      // Try multiple navigation methods
+      try {
+        // Method 1: gotoDate
+        calendarApi.gotoDate(newMonth)
+        console.log('Calendar date after gotoDate:', calendarApi.getDate())
+        
+        // Method 2: Try with changeView to force refresh
+        setTimeout(() => {
+          console.log('Attempting changeView navigation to:', newMonth)
+          calendarApi.changeView(view, newMonth)
+          console.log('Calendar date after changeView:', calendarApi.getDate())
+        }, 50)
+        
+        // Method 3: Try gotoDate again with longer delay
+        setTimeout(() => {
+          console.log('Attempting final gotoDate navigation to:', newMonth)
+          calendarApi.gotoDate(newMonth)
+          console.log('Calendar date after final gotoDate:', calendarApi.getDate())
+        }, 150)
+      } catch (error) {
+        console.error('Error navigating calendar:', error)
+      }
+    } else {
+      console.log('Calendar ref not available for previous month')
+    }
+  }
+
+  const goToNextMonth = () => {
+    console.log('Next month clicked, currentMonth:', currentMonth)
+    const newMonth = new Date(currentMonth)
+    newMonth.setMonth(newMonth.getMonth() + 1)
+    console.log('New month (next):', newMonth)
+    setCurrentMonth(newMonth)
+    
+    // Navigate calendar to the new month
+    if (calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi()
+      console.log('Calendar API available for next month')
+      console.log('Current calendar date before navigation:', calendarApi.getDate())
+      
+      // Try multiple navigation methods
+      try {
+        // Method 1: gotoDate
+        calendarApi.gotoDate(newMonth)
+        console.log('Calendar date after gotoDate:', calendarApi.getDate())
+        
+        // Method 2: Try with changeView to force refresh
+        setTimeout(() => {
+          console.log('Attempting changeView navigation to:', newMonth)
+          calendarApi.changeView(view, newMonth)
+          console.log('Calendar date after changeView:', calendarApi.getDate())
+        }, 50)
+        
+        // Method 3: Try gotoDate again with longer delay
+        setTimeout(() => {
+          console.log('Attempting final gotoDate navigation to:', newMonth)
+          calendarApi.gotoDate(newMonth)
+          console.log('Calendar date after final gotoDate:', calendarApi.getDate())
+        }, 150)
+      } catch (error) {
+        console.error('Error navigating calendar:', error)
+      }
+    } else {
+      console.log('Calendar ref not available for next month')
+    }
+  }
+
+  const formatMonthYear = (date) => {
+    const month = date.toLocaleDateString('en-US', { month: 'long' })
+    const year = date.getFullYear()
+    return `${month} ${year} (${year})`
+  }
+
   return (
     <div className="space-y-6">
       {/* Calendar Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-4">
+          {/* Calendar Type Toggle */}
+          <button
+            onClick={handleSheetToggle}
+            className="flex items-center px-4 py-2 text-sm font-medium bg-primary-100 text-primary-700 hover:bg-primary-200 rounded-md transition-colors duration-200 border border-primary-300"
+          >
+            <span>
+              {currentSheet === 'TRAILER_HISTORY' ? '🚛 Trailer' : '🏕️ Camper'}
+            </span>
+          </button>
+
           {/* View Toggle */}
           <div className="flex bg-secondary-100 rounded-lg p-1">
             <button
@@ -646,22 +976,27 @@ const CalendarView = () => {
             </button>
           </div>
 
-          {/* Date Picker */}
-          <div className="relative">
-            <input
-              type="date"
-              value={selectedDate || ''}
-              onChange={(e) => {
-                console.log('Calendar Debug - Date picker changed:', e.target.value)
-                setSelectedDate(e.target.value)
-              }}
-              className="input max-w-xs cursor-pointer"
-              style={{ 
-                position: 'relative',
-                zIndex: 10,
-                backgroundColor: 'white'
-              }}
-            />
+          {/* Month Navigation */}
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={goToPreviousMonth}
+              className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-200"
+            >
+              <span className="mr-1">&lt;</span>
+              Previous Month
+            </button>
+            
+            <div className="text-lg font-bold text-gray-900">
+              {formatMonthYear(currentMonth)}
+            </div>
+            
+            <button
+              onClick={goToNextMonth}
+              className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-200"
+            >
+              Next Month
+              <span className="ml-1">&gt;</span>
+            </button>
           </div>
         </div>
 
@@ -685,7 +1020,7 @@ const CalendarView = () => {
       </div>
 
       {/* Calendar */}
-      <div className="card">
+      <div className="card print-calendar-container">
         <div className="card-body p-0">
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -717,22 +1052,34 @@ const CalendarView = () => {
               meridiem: 'short'
             }}
             datesSet={(dateInfo) => {
-              console.log('Calendar Debug - Dates set:', dateInfo)
+              // Update currentMonth when calendar view changes
+              console.log('datesSet called with:', dateInfo.start)
+              console.log('datesSet view type:', dateInfo.view.type)
+              console.log('datesSet start/end:', dateInfo.start, 'to', dateInfo.end)
+              
+              // Temporarily disable automatic updates to see if this interferes with navigation
+              // Only update if the change is significant (different month) AND not from manual navigation
+              const currentMonthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
+              const newMonthStart = new Date(dateInfo.start.getFullYear(), dateInfo.start.getMonth(), 1)
+              
+              if (currentMonthStart.getTime() !== newMonthStart.getTime()) {
+                console.log('datesSet detected month change, but skipping automatic update to test navigation')
+                // setCurrentMonth(dateInfo.start) // Temporarily commented out
+              } else {
+                console.log('datesSet called but month unchanged, not updating currentMonth')
+              }
             }}
             viewDidMount={(viewInfo) => {
-              console.log('Calendar Debug - View mounted:', viewInfo.view.type)
             }}
             eventDidMount={(eventInfo) => {
-              console.log('Calendar Debug - Event mounted:', eventInfo.event.title)
+              console.log('Event mounted:', eventInfo.event.title, 'grossSales:', eventInfo.event.extendedProps.grossSales, 'backgroundColor:', eventInfo.event.backgroundColor)
             }}
             dayCellDidMount={(arg) => {
-              console.log('Calendar Debug - Day cell mounted:', arg.date)
               const dayCell = arg.el
               const date = arg.date
               
               // Add mouse enter handler
               dayCell.addEventListener('mouseenter', (e) => {
-                console.log('Calendar Debug - Mouse enter on day:', date.toISOString().split('T')[0])
                 handleDayMouseEnter({
                   date: date,
                   jsEvent: e
@@ -741,7 +1088,6 @@ const CalendarView = () => {
               
               // Add mouse leave handler
               dayCell.addEventListener('mouseleave', () => {
-                console.log('Calendar Debug - Mouse leave on day:', date.toISOString().split('T')[0])
                 handleDayMouseLeave()
               })
             }}
@@ -862,7 +1208,7 @@ const CalendarView = () => {
                       onChange={() => setNewEvent(prev => ({ ...prev, isWorkDay: false }))}
                       className="mr-2"
                     />
-                    Venue Event
+                    Sale
                   </label>
                   <label className="flex items-center">
                     <input
@@ -886,7 +1232,7 @@ const CalendarView = () => {
                   value={newEvent.title}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
                   className="input"
-                  placeholder={newEvent.isWorkDay ? "Work Day" : "Event Title"}
+                  placeholder={newEvent.isWorkDay ? "Work Day" : "Sale Event"}
                 />
               </div>
 
@@ -927,20 +1273,26 @@ const CalendarView = () => {
               {/* Worker */}
               <div>
                 <label className="block text-sm font-medium text-secondary-700 mb-1">
-                  Worker *
+                  Workers * (Hold Ctrl/Cmd to select multiple)
                 </label>
                 <select
-                  value={newEvent.worker}
-                  onChange={(e) => setNewEvent(prev => ({ ...prev, worker: e.target.value }))}
-                  className="input"
+                  multiple
+                  value={newEvent.workers}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, workers: Array.from(e.target.selectedOptions, option => option.value) }))}
+                  className="input min-h-[100px]"
+                  size="4"
                 >
-                  <option value="">Select Worker</option>
                   {workers.map(worker => (
                     <option key={worker.id} value={worker.name}>
                       {worker.name} ({worker.role})
                     </option>
                   ))}
                 </select>
+                {newEvent.workers.length > 0 && (
+                  <p className="text-xs text-secondary-600 mt-1">
+                    Selected: {newEvent.workers.join(', ')}
+                  </p>
+                )}
               </div>
 
               {/* Hours */}
@@ -973,6 +1325,166 @@ const CalendarView = () => {
               >
                 Add Event
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Event Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-secondary-900">
+                Edit Event
+              </h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-secondary-400 hover:text-secondary-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Event Type */}
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Event Type
+                </label>
+                <div className="flex space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      checked={!newEvent.isWorkDay}
+                      onChange={() => setNewEvent(prev => ({ ...prev, isWorkDay: false }))}
+                      className="mr-2"
+                    />
+                    Sale
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      checked={newEvent.isWorkDay}
+                      onChange={() => setNewEvent(prev => ({ ...prev, isWorkDay: true }))}
+                      className="mr-2"
+                    />
+                    Work Day
+                  </label>
+                </div>
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  value={newEvent.title}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
+                  className="input"
+                  placeholder={newEvent.isWorkDay ? "Work Day" : "Sale Event"}
+                />
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Date *
+                </label>
+                <input
+                  type="date"
+                  value={newEvent.date}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, date: e.target.value }))}
+                  className="input"
+                />
+              </div>
+
+              {/* Venue (if not work day) */}
+              {!newEvent.isWorkDay && (
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-1">
+                    Venue
+                  </label>
+                  <select
+                    value={newEvent.venueId}
+                    onChange={(e) => setNewEvent(prev => ({ ...prev, venueId: e.target.value }))}
+                    className="input"
+                  >
+                    <option value="">Select Venue</option>
+                    {venuesData.map(venue => (
+                      <option key={venue.id} value={venue.id}>
+                        {venue.promo} - {venue.addressCity}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Worker */}
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Workers * (Hold Ctrl/Cmd to select multiple)
+                </label>
+                <select
+                  multiple
+                  value={newEvent.workers}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, workers: Array.from(e.target.selectedOptions, option => option.value) }))}
+                  className="input min-h-[100px]"
+                  size="4"
+                >
+                  {workers.map(worker => (
+                    <option key={worker.id} value={worker.name}>
+                      {worker.name} ({worker.role})
+                    </option>
+                  ))}
+                </select>
+                {newEvent.workers.length > 0 && (
+                  <p className="text-xs text-secondary-600 mt-1">
+                    Selected: {newEvent.workers.join(', ')}
+                  </p>
+                )}
+              </div>
+
+              {/* Hours */}
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Hours *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="24"
+                  value={newEvent.hours}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, hours: e.target.value }))}
+                  className="input"
+                  placeholder="8"
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center mt-6">
+              <button
+                onClick={handleDeleteEvent}
+                className="btn-danger"
+              >
+                Delete Event
+              </button>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="btn-outline"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEditEvent}
+                  className="btn-primary"
+                >
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         </div>
