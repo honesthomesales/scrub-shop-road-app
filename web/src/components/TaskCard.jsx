@@ -1,5 +1,5 @@
 import React from 'react'
-import { Calendar, User, Flag, Edit, Trash2, Clock } from 'lucide-react'
+import { Calendar, User, Flag, Edit, Trash2, Clock, Users } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '../utils/cn'
 
@@ -39,10 +39,21 @@ const TaskCard = ({ task, staffData = [], onEdit, onDelete, onViewComments }) =>
     return formatDistanceToNow(new Date(dateString), { addSuffix: true })
   }
 
-  const getAssignedUserName = (assignedToId) => {
-    if (!assignedToId) return 'Unassigned'
-    const assignedUser = staffData.find(user => user.id === assignedToId)
-    return assignedUser ? assignedUser.name : 'Unassigned'
+  const getAssignedUsers = (assignedTo) => {
+    if (!assignedTo) return []
+    
+    // Handle both single assignee (string/number) and multiple assignees (array)
+    let assigneeIds = []
+    if (Array.isArray(assignedTo)) {
+      assigneeIds = assignedTo
+    } else {
+      assigneeIds = [assignedTo]
+    }
+    
+    return assigneeIds.map(id => {
+      const user = staffData.find(user => user.id === id)
+      return user ? user.name : 'Unknown User'
+    })
   }
 
   const getPriorityIcon = (priority) => {
@@ -60,16 +71,35 @@ const TaskCard = ({ task, staffData = [], onEdit, onDelete, onViewComments }) =>
     }
   }
 
+  const assignedUsers = getAssignedUsers(task.assigned_to)
+  const isUnassigned = assignedUsers.length === 0
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
       {/* Header: Assignee - Title */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-1">
-            <User className="w-4 h-4 text-gray-500 flex-shrink-0" />
-            <span className="text-sm font-medium text-gray-700 truncate">
-              {getAssignedUserName(task.assigned_to)}
-            </span>
+            {isUnassigned ? (
+              <>
+                <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-500">Unassigned</span>
+              </>
+            ) : assignedUsers.length === 1 ? (
+              <>
+                <User className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700 truncate">
+                  {assignedUsers[0]}
+                </span>
+              </>
+            ) : (
+              <>
+                <Users className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700 truncate">
+                  {assignedUsers.length} assignees
+                </span>
+              </>
+            )}
           </div>
           <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
             {task.title}
@@ -96,6 +126,22 @@ const TaskCard = ({ task, staffData = [], onEdit, onDelete, onViewComments }) =>
         <p className="text-gray-600 text-sm mb-4 line-clamp-3">
           {task.description}
         </p>
+      )}
+
+      {/* Multiple Assignees Display */}
+      {assignedUsers.length > 1 && (
+        <div className="mb-3">
+          <div className="flex flex-wrap gap-1">
+            {assignedUsers.map((name, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Footer: Priority, Time til due, Actions */}

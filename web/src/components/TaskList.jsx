@@ -1,5 +1,5 @@
 import React from 'react'
-import { Calendar, User, Flag, Edit, Trash2, Clock } from 'lucide-react'
+import { Calendar, User, Flag, Edit, Trash2, Clock, Users } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '../utils/cn'
 
@@ -39,10 +39,21 @@ const TaskList = ({ tasks, staffData = [], onEdit, onDelete, onViewComments }) =
     return formatDistanceToNow(new Date(dateString), { addSuffix: true })
   }
 
-  const getAssignedUserName = (assignedToId) => {
-    if (!assignedToId) return 'Unassigned'
-    const assignedUser = staffData.find(user => user.id === assignedToId)
-    return assignedUser ? assignedUser.name : 'Unassigned'
+  const getAssignedUsers = (assignedTo) => {
+    if (!assignedTo) return []
+    
+    // Handle both single assignee (string/number) and multiple assignees (array)
+    let assigneeIds = []
+    if (Array.isArray(assignedTo)) {
+      assigneeIds = assignedTo
+    } else {
+      assigneeIds = [assignedTo]
+    }
+    
+    return assigneeIds.map(id => {
+      const user = staffData.find(user => user.id === id)
+      return user ? user.name : 'Unknown User'
+    })
   }
 
   const getPriorityIcon = (priority) => {
@@ -80,7 +91,7 @@ const TaskList = ({ tasks, staffData = [], onEdit, onDelete, onViewComments }) =
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Assignee
+                Assignee(s)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Title & Description
@@ -100,73 +111,104 @@ const TaskList = ({ tasks, staffData = [], onEdit, onDelete, onViewComments }) =
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {tasks.map((task) => (
-              <tr key={task.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-2">
-                    <User className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm font-medium text-gray-900">
-                      {getAssignedUserName(task.assigned_to)}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-gray-900 truncate">
-                      {task.title}
-                    </h3>
-                    {task.description && (
-                      <p className="text-sm text-gray-600 truncate mt-1">
-                        {task.description}
-                      </p>
+            {tasks.map((task) => {
+              const assignedUsers = getAssignedUsers(task.assigned_to)
+              const isUnassigned = assignedUsers.length === 0
+              
+              return (
+                <tr key={task.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {isUnassigned ? (
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-500">Unassigned</span>
+                      </div>
+                    ) : assignedUsers.length === 1 ? (
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-900">
+                          {assignedUsers[0]}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <Users className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm font-medium text-gray-900">
+                            {assignedUsers.length} assignees
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 ml-6">
+                          {assignedUsers.map((name, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                            >
+                              {name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-1">
-                    {getPriorityIcon(task.priority)}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-gray-900 truncate">
+                        {task.title}
+                      </h3>
+                      {task.description && (
+                        <p className="text-sm text-gray-600 truncate mt-1">
+                          {task.description}
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center space-x-1">
+                      {getPriorityIcon(task.priority)}
+                      <span className={cn(
+                        'px-2 py-1 text-xs font-medium rounded-full border',
+                        getPriorityColor(task.priority)
+                      )}>
+                        {task.priority}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={cn(
-                      'px-2 py-1 text-xs font-medium rounded-full border',
-                      getPriorityColor(task.priority)
+                      'px-2 py-1 text-xs font-medium rounded-full',
+                      getStatusColor(task.status)
                     )}>
-                      {task.priority}
+                      {task.status.replace('_', ' ')}
                     </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={cn(
-                    'px-2 py-1 text-xs font-medium rounded-full',
-                    getStatusColor(task.status)
-                  )}>
-                    {task.status.replace('_', ' ')}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-1 text-sm text-gray-500">
-                    <Clock className="w-4 h-4" />
-                    <span>{formatDate(task.due_date)}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end space-x-1">
-                    <button
-                      onClick={() => onEdit(task)}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-                      title="Edit task"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(task.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                      title="Delete task"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center space-x-1 text-sm text-gray-500">
+                      <Clock className="w-4 h-4" />
+                      <span>{formatDate(task.due_date)}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end space-x-1">
+                      <button
+                        onClick={() => onEdit(task)}
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                        title="Edit task"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(task.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        title="Delete task"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

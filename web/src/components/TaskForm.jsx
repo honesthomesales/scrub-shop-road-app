@@ -1,28 +1,41 @@
 import React, { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Users, X as XIcon } from 'lucide-react'
 
 const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    assigned_to: '',
+    assigned_to: [], // Changed to array for multiple assignees
     priority: 'normal',
     status: 'pending',
     due_date: '',
     category: 'general'
   })
 
+  const [selectedAssignees, setSelectedAssignees] = useState([])
+
   useEffect(() => {
     if (task) {
+      // Handle both single assignee (string/number) and multiple assignees (array)
+      let assignedTo = []
+      if (task.assigned_to) {
+        if (Array.isArray(task.assigned_to)) {
+          assignedTo = task.assigned_to
+        } else {
+          assignedTo = [task.assigned_to]
+        }
+      }
+
       setFormData({
         title: task.title || '',
         description: task.description || '',
-        assigned_to: task.assigned_to || '',
+        assigned_to: assignedTo,
         priority: task.priority || 'normal',
         status: task.status || 'pending',
         due_date: task.due_date ? task.due_date.split('T')[0] : '',
         category: task.category || 'general'
       })
+      setSelectedAssignees(assignedTo)
     }
   }, [task])
 
@@ -37,6 +50,34 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
       ...prev,
       [name]: value
     }))
+  }
+
+  const handleAssigneeChange = (e) => {
+    const userId = parseInt(e.target.value)
+    if (userId && !selectedAssignees.includes(userId)) {
+      const newAssignees = [...selectedAssignees, userId]
+      setSelectedAssignees(newAssignees)
+      setFormData(prev => ({
+        ...prev,
+        assigned_to: newAssignees
+      }))
+    }
+  }
+
+  const removeAssignee = (userId) => {
+    const newAssignees = selectedAssignees.filter(id => id !== userId)
+    setSelectedAssignees(newAssignees)
+    setFormData(prev => ({
+      ...prev,
+      assigned_to: newAssignees
+    }))
+  }
+
+  const getSelectedUserNames = () => {
+    return selectedAssignees.map(userId => {
+      const user = users.find(u => u.id === userId)
+      return user ? user.name : 'Unknown User'
+    })
   }
 
   return (
@@ -86,19 +127,57 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Assign To
             </label>
-            <select
-              name="assigned_to"
-              value={formData.assigned_to}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
-              <option value="">Unassigned</option>
-              {users.map(user => (
-                <option key={user.id} value={user.id}>
-                  {user.name}
-                </option>
-              ))}
-            </select>
+            
+            {/* Selected Assignees Display */}
+            {selectedAssignees.length > 0 && (
+              <div className="mb-2">
+                <div className="flex flex-wrap gap-2">
+                  {getSelectedUserNames().map((name, index) => (
+                    <div
+                      key={selectedAssignees[index]}
+                      className="flex items-center space-x-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm"
+                    >
+                      <span>{name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeAssignee(selectedAssignees[index])}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <XIcon className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Assignee Selector */}
+            <div className="flex items-center space-x-2">
+              <select
+                value=""
+                onChange={handleAssigneeChange}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="">Add assignee...</option>
+                {users
+                  .filter(user => !selectedAssignees.includes(user.id))
+                  .map(user => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
+                    </option>
+                  ))
+                }
+              </select>
+              <div className="text-gray-400">
+                <Users className="w-5 h-5" />
+              </div>
+            </div>
+            
+            {selectedAssignees.length === 0 && (
+              <p className="text-sm text-gray-500 mt-1">
+                Leave empty for unassigned task
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

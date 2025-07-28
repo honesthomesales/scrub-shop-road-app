@@ -41,7 +41,7 @@ const Tasks = () => {
     const newTaskData = {
       ...taskData,
       assigned_by: currentUser.id,
-      assigned_to: taskData.assigned_to === '' ? null : taskData.assigned_to
+      assigned_to: taskData.assigned_to.length === 0 ? null : taskData.assigned_to
     }
 
     const result = await addTask(newTaskData)
@@ -51,10 +51,10 @@ const Tasks = () => {
   }
 
   const handleUpdateTask = async (taskData) => {
-    // Convert empty string to null for assigned_to
+    // Convert empty array to null for assigned_to
     const processedTaskData = {
       ...taskData,
-      assigned_to: taskData.assigned_to === '' ? null : taskData.assigned_to
+      assigned_to: taskData.assigned_to.length === 0 ? null : taskData.assigned_to
     }
     
     const result = await updateTask(editingTask.id, processedTaskData)
@@ -86,8 +86,20 @@ const Tasks = () => {
 
     // Role-based filtering
     if (!isManager(currentUser)) {
-      // Workers only see tasks assigned to them
-      accessibleTasks = tasksData.filter(task => task.assigned_to === currentUser?.id)
+      // Workers see tasks assigned to them AND unassigned tasks
+      accessibleTasks = tasksData.filter(task => {
+        // Show unassigned tasks to everyone
+        if (!task.assigned_to || (Array.isArray(task.assigned_to) && task.assigned_to.length === 0)) {
+          return true
+        }
+        
+        // Show tasks assigned to current user
+        if (Array.isArray(task.assigned_to)) {
+          return task.assigned_to.includes(currentUser?.id)
+        } else {
+          return task.assigned_to === currentUser?.id
+        }
+      })
     }
     // Managers see all tasks
 
@@ -102,8 +114,20 @@ const Tasks = () => {
   const filteredTasks = getFilteredTasks()
 
   // Separate tasks into lists
-  const unassignedTasks = filteredTasks.filter(task => !task.assigned_to)
-  const assignedTasks = filteredTasks.filter(task => task.assigned_to)
+  const unassignedTasks = filteredTasks.filter(task => {
+    if (!task.assigned_to) return true
+    if (Array.isArray(task.assigned_to)) {
+      return task.assigned_to.length === 0
+    }
+    return false
+  })
+  const assignedTasks = filteredTasks.filter(task => {
+    if (!task.assigned_to) return false
+    if (Array.isArray(task.assigned_to)) {
+      return task.assigned_to.length > 0
+    }
+    return true
+  })
 
   if (loading) {
     return (
@@ -203,52 +227,50 @@ const Tasks = () => {
         {/* Tasks Lists */}
         <div className="space-y-8">
           {/* Unassigned Tasks */}
-          {isManager(currentUser) && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle className="w-5 h-5 text-orange-500" />
-                  <h2 className="text-lg font-semibold text-gray-900">Unassigned Tasks</h2>
-                  <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full">
-                    {unassignedTasks.length}
-                  </span>
-                </div>
-              </div>
-              <div className="p-6">
-                {unassignedTasks.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-gray-400 mb-2">
-                      <svg className="mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                      </svg>
-                    </div>
-                    <p className="text-gray-500 text-sm">No unassigned tasks</p>
-                  </div>
-                ) : viewMode === 'card' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {unassignedTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        staffData={staffData}
-                        onEdit={handleEditTask}
-                        onDelete={handleDeleteTask}
-                        onViewComments={handleViewComments}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <TaskList
-                    tasks={unassignedTasks}
-                    staffData={staffData}
-                    onEdit={handleEditTask}
-                    onDelete={handleDeleteTask}
-                    onViewComments={handleViewComments}
-                  />
-                )}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="w-5 h-5 text-orange-500" />
+                <h2 className="text-lg font-semibold text-gray-900">Unassigned Tasks</h2>
+                <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full">
+                  {unassignedTasks.length}
+                </span>
               </div>
             </div>
-          )}
+            <div className="p-6">
+              {unassignedTasks.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 mb-2">
+                    <svg className="mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500 text-sm">No unassigned tasks</p>
+                </div>
+              ) : viewMode === 'card' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {unassignedTasks.map(task => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      staffData={staffData}
+                      onEdit={handleEditTask}
+                      onDelete={handleDeleteTask}
+                      onViewComments={handleViewComments}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <TaskList
+                  tasks={unassignedTasks}
+                  staffData={staffData}
+                  onEdit={handleEditTask}
+                  onDelete={handleDeleteTask}
+                  onViewComments={handleViewComments}
+                />
+              )}
+            </div>
+          </div>
 
           {/* Assigned Tasks */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
