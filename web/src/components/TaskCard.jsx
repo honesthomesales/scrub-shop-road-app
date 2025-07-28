@@ -1,5 +1,5 @@
 import React from 'react'
-import { Calendar, User, Flag, MessageSquare } from 'lucide-react'
+import { Calendar, User, Flag, Edit, Trash2, Clock } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '../utils/cn'
 
@@ -45,13 +45,37 @@ const TaskCard = ({ task, staffData = [], onEdit, onDelete, onViewComments }) =>
     return assignedUser ? assignedUser.name : 'Unassigned'
   }
 
+  const getPriorityIcon = (priority) => {
+    switch (priority) {
+      case 'urgent':
+        return <Flag className="w-3 h-3 text-red-600" />
+      case 'high':
+        return <Flag className="w-3 h-3 text-orange-600" />
+      case 'normal':
+        return <Flag className="w-3 h-3 text-blue-600" />
+      case 'low':
+        return <Flag className="w-3 h-3 text-gray-600" />
+      default:
+        return <Flag className="w-3 h-3 text-gray-600" />
+    }
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+      {/* Header: Assignee - Title */}
       <div className="flex items-start justify-between mb-3">
-        <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
-          {task.title}
-        </h3>
-        <div className="flex items-center space-x-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center space-x-2 mb-1">
+            <User className="w-4 h-4 text-gray-500 flex-shrink-0" />
+            <span className="text-sm font-medium text-gray-700 truncate">
+              {getAssignedUserName(task.assigned_to)}
+            </span>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+            {task.title}
+          </h3>
+        </div>
+        <div className="flex items-center space-x-2 ml-3">
           <span className={cn(
             'px-2 py-1 text-xs font-medium rounded-full border',
             getPriorityColor(task.priority)
@@ -67,39 +91,42 @@ const TaskCard = ({ task, staffData = [], onEdit, onDelete, onViewComments }) =>
         </div>
       </div>
 
+      {/* Description */}
       {task.description && (
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
           {task.description}
         </p>
       )}
 
-      <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-        <div className="flex items-center space-x-4">
+      {/* Footer: Priority, Time til due, Actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3 text-sm text-gray-500">
           <div className="flex items-center space-x-1">
-            <Calendar className="w-4 h-4" />
-            <span>{formatDate(task.due_date)}</span>
+            {getPriorityIcon(task.priority)}
+            <span className="capitalize">{task.priority}</span>
           </div>
           <div className="flex items-center space-x-1">
-            <User className="w-4 h-4" />
-            <span>{getAssignedUserName(task.assigned_to)}</span>
+            <Clock className="w-4 h-4" />
+            <span>{formatDate(task.due_date)}</span>
           </div>
         </div>
 
-      </div>
-
-      <div className="flex items-center justify-end space-x-2">
-        <button
-          onClick={() => onEdit(task)}
-          className="text-sm text-gray-600 hover:text-gray-700"
-        >
-          Edit
-        </button>
-        <button
-          onClick={() => onDelete(task.id)}
-          className="text-sm text-red-600 hover:text-red-700"
-        >
-          Delete
-        </button>
+        <div className="flex items-center space-x-1">
+          <button
+            onClick={() => onEdit(task)}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+            title="Edit task"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onDelete(task.id)}
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+            title="Delete task"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   )

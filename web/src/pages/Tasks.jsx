@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Filter, User, AlertCircle } from 'lucide-react'
+import { Plus, Filter, User, AlertCircle, Grid, List } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import TaskCard from '../components/TaskCard'
+import TaskList from '../components/TaskList'
 import TaskForm from '../components/TaskForm'
 import { isManager } from '../utils/permissions'
 
@@ -22,6 +23,7 @@ const Tasks = () => {
   const [editingTask, setEditingTask] = useState(null)
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
+  const [viewMode, setViewMode] = useState('card') // 'card' or 'list'
 
   useEffect(() => {
     // Set default current user (first staff member) if none selected
@@ -138,35 +140,63 @@ const Tasks = () => {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters and View Toggle */}
         <div className="mb-6 bg-white rounded-lg shadow-sm border border-secondary-200 p-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Filters:</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Filters:</span>
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="all">All Priorities</option>
+                <option value="low">Low</option>
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="all">All Priorities</option>
-              <option value="low">Low</option>
-              <option value="normal">Normal</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
+            
+            {/* View Toggle */}
+            <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('card')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'card' 
+                    ? 'bg-white text-primary-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                title="Card view"
+              >
+                <Grid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'list' 
+                    ? 'bg-white text-primary-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                title="List view"
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -194,7 +224,7 @@ const Tasks = () => {
                     </div>
                     <p className="text-gray-500 text-sm">No unassigned tasks</p>
                   </div>
-                ) : (
+                ) : viewMode === 'card' ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {unassignedTasks.map(task => (
                       <TaskCard
@@ -207,6 +237,14 @@ const Tasks = () => {
                       />
                     ))}
                   </div>
+                ) : (
+                  <TaskList
+                    tasks={unassignedTasks}
+                    staffData={staffData}
+                    onEdit={handleEditTask}
+                    onDelete={handleDeleteTask}
+                    onViewComments={handleViewComments}
+                  />
                 )}
               </div>
             </div>
@@ -237,7 +275,7 @@ const Tasks = () => {
                     {isManager(currentUser) ? 'No assigned tasks found' : 'No tasks assigned to you'}
                   </p>
                 </div>
-              ) : (
+              ) : viewMode === 'card' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {assignedTasks.map(task => (
                     <TaskCard
@@ -250,6 +288,14 @@ const Tasks = () => {
                     />
                   ))}
                 </div>
+              ) : (
+                <TaskList
+                  tasks={assignedTasks}
+                  staffData={staffData}
+                  onEdit={handleEditTask}
+                  onDelete={handleDeleteTask}
+                  onViewComments={handleViewComments}
+                />
               )}
             </div>
           </div>
@@ -259,7 +305,7 @@ const Tasks = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
               <div className="text-gray-400 mb-4">
                 <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
               <p className="text-gray-500">
