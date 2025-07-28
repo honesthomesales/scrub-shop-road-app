@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrub Shop Road App - Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #3b82f6;
+        }
+        .subtitle {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+        .status {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #22c55e;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f1f5f9;
+            border-radius: 8px;
+        }
+        .test-button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">Scrub Shop Road App</div>
+        <div class="subtitle">Mobile App Test Version</div>
+        
+        <div class="status">
+            ✅ If you can see this page, your phone's browser is working correctly!
+        </div>
+        
+        <div class="test-section">
+            <h3>Basic Functionality Test</h3>
+            <p>This tests if your phone can display a simple web interface.</p>
+            <button class="test-button" onclick="testFunction()">Test Button</button>
+            <p id="test-result"></p>
+        </div>
+        
+        <div class="test-section">
+            <h3>Current Time</h3>
+            <p id="current-time"></p>
+        </div>
+        
+        <div class="test-section">
+            <h3>Device Information</h3>
+            <p><strong>User Agent:</strong> <span id="user-agent"></span></p>
+            <p><strong>Screen Size:</strong> <span id="screen-size"></span></p>
+        </div>
+    </div>
+
+    <script>
+        function testFunction() {
+            document.getElementById('test-result').innerHTML = '✅ Button click works! JavaScript is functioning.';
+        }
+        
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').innerHTML = now.toLocaleString();
+        }
+        
+        function showDeviceInfo() {
+            document.getElementById('user-agent').innerHTML = navigator.userAgent;
+            document.getElementById('screen-size').innerHTML = screen.width + ' x ' + screen.height;
+        }
+        
+        // Update time every second
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // Show device info
+        showDeviceInfo();
+    </script>
+</body>
+</html> 

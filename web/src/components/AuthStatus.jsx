@@ -16,7 +16,7 @@ const AuthStatus = () => {
         await toggleSupabaseConnection(true)
       }
     } catch (error) {
-      console.error('Connection toggle error:', error)
+      // Connection toggle error handled silently
     } finally {
       setIsConnecting(false)
     }

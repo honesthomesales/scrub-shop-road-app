@@ -51,9 +51,15 @@ const ACTIONS = {
   SET_USERS_DATA: 'SET_USERS_DATA',
   SET_MESSAGES_DATA: 'SET_MESSAGES_DATA',
   SET_MESSAGE_GROUPS: 'SET_MESSAGE_GROUPS',
+  ADD_MESSAGE: 'ADD_MESSAGE',
   SET_CURRENT_USER: 'SET_CURRENT_USER',
   SET_SELECTED_GROUP: 'SET_SELECTED_GROUP',
   SET_TASKS_DATA: 'SET_TASKS_DATA',
+  ADD_TASK: 'ADD_TASK',
+  UPDATE_TASK: 'UPDATE_TASK',
+  DELETE_TASK: 'DELETE_TASK',
+  SET_TASK_COMMENTS: 'SET_TASK_COMMENTS',
+  ADD_TASK_COMMENT: 'ADD_TASK_COMMENT',
   SET_SELECTED_TASK: 'SET_SELECTED_TASK',
   SET_SALES_ANALYSIS_DATA: 'SET_SALES_ANALYSIS_DATA',
   SET_SALES_ANALYSIS_STATS: 'SET_SALES_ANALYSIS_STATS'
@@ -205,7 +211,7 @@ function appReducer(state, action) {
     case ACTIONS.ADD_MESSAGE:
       return {
         ...state,
-        messagesData: [action.payload, ...state.messagesData]
+        messagesData: [...state.messagesData, action.payload]
       }
     
     case ACTIONS.SET_CURRENT_USER:
@@ -398,7 +404,7 @@ export function AppProvider({ children }) {
       } else {
         // If staff table doesn't exist, create default staff data
         const defaultStaff = [
-          { id: 1, name: 'John Smith', email: 'john@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
+          { id: 1, name: 'John Smith', email: 'john@scrubshop.com', phone: '', role: 'Manager', status: 'Active', hireDate: '', notes: '' },
           { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
           { id: 3, name: 'Mike Johnson', email: 'mike@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
           { id: 4, name: 'David Wilson', email: 'david@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' }
@@ -407,7 +413,7 @@ export function AppProvider({ children }) {
       }
     } catch (error) {
       const defaultStaff = [
-        { id: 1, name: 'John Smith', email: 'john@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
+        { id: 1, name: 'John Smith', email: 'john@scrubshop.com', phone: '', role: 'Manager', status: 'Active', hireDate: '', notes: '' },
         { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
         { id: 3, name: 'Mike Johnson', email: 'mike@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' },
         { id: 4, name: 'David Wilson', email: 'david@scrubshop.com', phone: '', role: 'Worker', status: 'Active', hireDate: '', notes: '' }
@@ -587,6 +593,24 @@ export function AppProvider({ children }) {
     dispatch({ type: ACTIONS.SET_IS_AUTHENTICATED, payload: authenticated })
   }
 
+  const toggleSupabaseConnection = async (connect) => {
+    try {
+      if (connect) {
+        const isInitialized = await supabaseAPI.init()
+        dispatch({ type: ACTIONS.SET_IS_AUTHENTICATED, payload: isInitialized })
+        return isInitialized
+      } else {
+        // For disconnect, we just set authenticated to false
+        dispatch({ type: ACTIONS.SET_IS_AUTHENTICATED, payload: false })
+        return true
+      }
+    } catch (error) {
+      console.error('Supabase connection toggle error:', error)
+      dispatch({ type: ACTIONS.SET_IS_AUTHENTICATED, payload: false })
+      return false
+    }
+  }
+
   // Get active workers for calendar (filter by status)
   const getActiveWorkers = () => {
     return state.staffData.filter(staff => staff.status === 'Active')
@@ -599,7 +623,23 @@ export function AppProvider({ children }) {
     try {
       const result = await supabaseAPI.getMessages(groupId)
       if (result.success) {
-        dispatch({ type: ACTIONS.SET_MESSAGES_DATA, payload: result.data })
+        // Add sender information to messages
+        const messagesWithSenders = result.data.map(message => {
+          const sender = state.usersData.find(user => user.id === message.sender_id)
+          return {
+            ...message,
+            sender: sender ? {
+              id: sender.id,
+              name: sender.name,
+              email: sender.email
+            } : {
+              id: message.sender_id,
+              name: 'Unknown User',
+              email: 'unknown@scrubshop.com'
+            }
+          }
+        })
+        dispatch({ type: ACTIONS.SET_MESSAGES_DATA, payload: messagesWithSenders })
       }
     } catch (error) {
       console.error('Failed to load messages:', error)
@@ -610,8 +650,18 @@ export function AppProvider({ children }) {
   const sendMessage = async (messageData) => {
     try {
       const result = await supabaseAPI.sendMessage(messageData)
+      
       if (result.success) {
-        dispatch({ type: ACTIONS.ADD_MESSAGE, payload: result.data })
+        // Add sender information to the message
+        const messageWithSender = {
+          ...result.data,
+          sender: {
+            id: messageData.sender_id,
+            name: state.currentUser?.name || 'Unknown User',
+            email: state.currentUser?.email || 'unknown@scrubshop.com'
+          }
+        }
+        dispatch({ type: ACTIONS.ADD_MESSAGE, payload: messageWithSender })
         return { success: true }
       } else {
         return { success: false, error: result.error }
@@ -925,6 +975,7 @@ export function AppProvider({ children }) {
     loadVenuesData,
     loadStaffData,
     setIsAuthenticated,
+    toggleSupabaseConnection,
     loadStaffAndGroups, // Add new functions to context value
     loadMessages,
     sendMessage,

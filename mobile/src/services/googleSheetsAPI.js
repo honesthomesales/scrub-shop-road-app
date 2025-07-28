@@ -7,72 +7,9 @@
 
 // Mock data for development
 const MOCK_DATA = {
-  CAMPER_HISTORY: [
-    {
-      rowId: 1,
-      A: '2024-01-15',
-      B: 'Confirmed',
-      C: 45.00,
-      D: 855.00,
-      E: 900.00,
-      F: 'Venue 1'
-    },
-    {
-      rowId: 2,
-      A: '2024-01-20',
-      B: 'Closed',
-      C: 52.50,
-      D: 997.50,
-      E: 1050.00,
-      F: 'Venue 2'
-    }
-  ],
-  TRAILER_HISTORY: [
-    {
-      rowId: 1,
-      A: '2024-01-10',
-      B: 'Confirmed',
-      C: 38.00,
-      D: 722.00,
-      E: 760.00,
-      F: 'Venue 3'
-    },
-    {
-      rowId: 2,
-      A: '2024-01-25',
-      B: 'Pending',
-      C: 60.00,
-      D: 1140.00,
-      E: 1200.00,
-      F: 'Venue 1'
-    }
-  ],
-  VENUES: [
-    {
-      rowId: 1,
-      A: 'Summer Festival',
-      B: 'Yes',
-      C: '123 Main St, City A',
-      D: 'John Smith',
-      E: '555-123-4567',
-      F: 'john@venue.com',
-      G: '9 AM - 5 PM',
-      H: 'Outdoor event',
-      I: 'High'
-    },
-    {
-      rowId: 2,
-      A: 'Winter Market',
-      B: 'No',
-      C: '456 Oak Ave, City B',
-      D: 'Jane Doe',
-      E: '555-987-6543',
-      F: 'jane@venue.com',
-      G: '10 AM - 6 PM',
-      H: 'Indoor market',
-      I: 'Medium'
-    }
-  ]
+  CAMPER_HISTORY: [],
+  TRAILER_HISTORY: [],
+  VENUES: []
 }
 
 class GoogleSheetsAPI {
@@ -85,7 +22,6 @@ class GoogleSheetsAPI {
   async init() {
     try {
       // In production, implement OAuth 2.0 flow here
-      console.log('Google Sheets API initialized')
       return true
     } catch (error) {
       console.error('Failed to initialize Google Sheets API:', error)
@@ -143,7 +79,6 @@ class GoogleSheetsAPI {
       await new Promise(resolve => setTimeout(resolve, 300))
       
       // In production, this would make a real API call
-      console.log(`Writing to ${sheetName}:`, data)
       
       return {
         success: true,

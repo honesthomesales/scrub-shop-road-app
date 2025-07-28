@@ -8,7 +8,7 @@ const Messages = () => {
     loading, 
     messagesData, 
     messageGroups, 
-    staffData, 
+    usersData, 
     currentUser,
     loadMessages, 
     sendMessage,
@@ -40,7 +40,6 @@ const Messages = () => {
 
   const handleSendMessage = async (messageText) => {
     if (!currentUser || !selectedGroupId) {
-
       return
     }
 
@@ -50,7 +49,6 @@ const Messages = () => {
       message_text: messageText,
       message_type: 'text'
     }
-
 
     await sendMessage(messageData)
   }
@@ -62,7 +60,7 @@ const Messages = () => {
   }
 
   const handleUserSelect = (userId) => {
-    const selectedUser = staffData.find(user => user.id === parseInt(userId))
+    const selectedUser = usersData.find(user => user.id === parseInt(userId))
     setCurrentUser(selectedUser)
   }
 
@@ -104,7 +102,7 @@ const Messages = () => {
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="">Select your name</option>
-                  {staffData.map(user => (
+                  {usersData.map(user => (
                     <option key={user.id} value={user.id}>
                       {user.name}
                     </option>

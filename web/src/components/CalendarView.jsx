@@ -59,23 +59,16 @@ const CalendarView = () => {
         
         // Filter by current sheet (Trailer vs Camper)
         const storeName = currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'
-        console.log('Filtering by store name:', storeName)
-        console.log('Available store names in data:', [...new Set(transformedData.map(sale => sale.store))])
         
         const filtered = transformedData.filter(sale => {
           const saleStore = sale.store
-          const matches = saleStore === storeName
-          if (!matches) {
-            console.log(`Skipping sale for store ${saleStore} (looking for ${storeName})`)
-          }
-          return matches
+          return saleStore === storeName
         })
         
         return filtered
       }
       return []
     } catch (error) {
-      console.error('Error loading raw sales data:', error)
       return []
     }
   }
@@ -436,12 +429,11 @@ const CalendarView = () => {
         // Get raw sales data for calendar events
         const rawSalesData = await getRawSalesData()
         
-        console.log('Raw sales data loaded:', rawSalesData.length, 'entries')
-        console.log('Sample raw sales data:', rawSalesData.slice(0, 3))
+
         
         if (rawSalesData.length > 0) {
           const salesDataWithoutWorkDays = rawSalesData.filter(sale => sale.venue !== 'WORK DAY')
-          console.log('Sales data without work days:', salesDataWithoutWorkDays.length, 'entries')
+  
           
           if (salesDataWithoutWorkDays.length > 0) {
             // Group sales by date and venue (not store)
@@ -475,7 +467,7 @@ const CalendarView = () => {
 
                 // Debug: Log gross sales values
                 if (grossSalesValue <= 0) {
-                  console.log(`Found sale with non-positive gross sales: ${grossSalesValue} for venue ${venueName} on ${dateStr}`)
+      
                 }
 
                 // Check status - normalize to lowercase and remove spaces for comparison
@@ -489,8 +481,7 @@ const CalendarView = () => {
             })
             
             // Create events from grouped sales data
-            console.log('Sales grouped by date and venue:', Object.keys(salesByDateAndVenue).length, 'groups')
-            console.log('Sample grouped data:', Object.values(salesByDateAndVenue).slice(0, 3))
+            
             
             Object.values(salesByDateAndVenue).forEach((group, index) => {
               const assignedWorkers = []
@@ -510,11 +501,11 @@ const CalendarView = () => {
               const backgroundColor = group.unconfirmedCount === 0 ? '#22c55e' : '#dcfce7'
               const borderColor = group.unconfirmedCount === 0 ? '#16a34a' : '#22c55e'
               
-              console.log(`Creating event for ${group.venue} on ${group.date}: grossSales=${group.totalGross}, status=${statusLabel}, bgColor=${backgroundColor}`)
+              
               
               // Debug: Check if this event has non-positive gross sales
               if (group.totalGross <= 0) {
-                console.log(`WARNING: Event created with non-positive gross sales: ${group.totalGross} for ${group.venue} on ${group.date}`)
+
               }
               
               const event = {
@@ -539,14 +530,7 @@ const CalendarView = () => {
                 }
               }
 
-              console.log('Created event:', {
-                id: event.id,
-                title: event.title,
-                date: event.date,
-                backgroundColor: event.backgroundColor,
-                grossSales: event.extendedProps.grossSales,
-                status: event.extendedProps.status
-              })
+
 
               generatedEvents.push(event)
             })
@@ -555,10 +539,7 @@ const CalendarView = () => {
 
         // Combine all events
         const allEvents = [...calendarEvents, ...generatedEvents]
-        console.log('Final events array:', allEvents.length, 'total events')
-        console.log('Calendar events:', calendarEvents.length)
-        console.log('Generated sales events:', generatedEvents.length)
-        console.log('Sample final events:', allEvents.slice(0, 3))
+
         setEvents(allEvents)
       } catch (error) {
         console.error('Error loading events:', error)
@@ -612,7 +593,7 @@ const CalendarView = () => {
       setShowEditModal(true)
     } else {
       // Single click - could show event details or do nothing
-      console.log('Single click on event:', event.title)
+
     }
   }
 
@@ -850,82 +831,67 @@ const CalendarView = () => {
 
   // Month navigation functions
   const goToPreviousMonth = () => {
-    console.log('Previous month clicked, currentMonth:', currentMonth)
+
     const newMonth = new Date(currentMonth)
     newMonth.setMonth(newMonth.getMonth() - 1)
-    console.log('New month (previous):', newMonth)
+    
     setCurrentMonth(newMonth)
     
     // Navigate calendar to the new month
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi()
-      console.log('Calendar API available for previous month')
-      console.log('Current calendar date before navigation:', calendarApi.getDate())
+      
       
       // Try multiple navigation methods
       try {
         // Method 1: gotoDate
         calendarApi.gotoDate(newMonth)
-        console.log('Calendar date after gotoDate:', calendarApi.getDate())
         
         // Method 2: Try with changeView to force refresh
         setTimeout(() => {
-          console.log('Attempting changeView navigation to:', newMonth)
           calendarApi.changeView(view, newMonth)
-          console.log('Calendar date after changeView:', calendarApi.getDate())
         }, 50)
         
         // Method 3: Try gotoDate again with longer delay
         setTimeout(() => {
-          console.log('Attempting final gotoDate navigation to:', newMonth)
           calendarApi.gotoDate(newMonth)
-          console.log('Calendar date after final gotoDate:', calendarApi.getDate())
         }, 150)
       } catch (error) {
         console.error('Error navigating calendar:', error)
       }
     } else {
-      console.log('Calendar ref not available for previous month')
+      // Calendar ref not available
     }
   }
 
   const goToNextMonth = () => {
-    console.log('Next month clicked, currentMonth:', currentMonth)
     const newMonth = new Date(currentMonth)
     newMonth.setMonth(newMonth.getMonth() + 1)
-    console.log('New month (next):', newMonth)
     setCurrentMonth(newMonth)
     
     // Navigate calendar to the new month
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi()
-      console.log('Calendar API available for next month')
-      console.log('Current calendar date before navigation:', calendarApi.getDate())
       
       // Try multiple navigation methods
       try {
         // Method 1: gotoDate
         calendarApi.gotoDate(newMonth)
-        console.log('Calendar date after gotoDate:', calendarApi.getDate())
         
         // Method 2: Try with changeView to force refresh
         setTimeout(() => {
-          console.log('Attempting changeView navigation to:', newMonth)
           calendarApi.changeView(view, newMonth)
-          console.log('Calendar date after changeView:', calendarApi.getDate())
         }, 50)
         
         // Method 3: Try gotoDate again with longer delay
         setTimeout(() => {
-          console.log('Attempting final gotoDate navigation to:', newMonth)
           calendarApi.gotoDate(newMonth)
-          console.log('Calendar date after final gotoDate:', calendarApi.getDate())
         }, 150)
       } catch (error) {
         console.error('Error navigating calendar:', error)
       }
     } else {
-      console.log('Calendar ref not available for next month')
+      // Calendar ref not available
     }
   }
 
@@ -1053,26 +1019,18 @@ const CalendarView = () => {
             }}
             datesSet={(dateInfo) => {
               // Update currentMonth when calendar view changes
-              console.log('datesSet called with:', dateInfo.start)
-              console.log('datesSet view type:', dateInfo.view.type)
-              console.log('datesSet start/end:', dateInfo.start, 'to', dateInfo.end)
-              
-              // Temporarily disable automatic updates to see if this interferes with navigation
               // Only update if the change is significant (different month) AND not from manual navigation
               const currentMonthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
               const newMonthStart = new Date(dateInfo.start.getFullYear(), dateInfo.start.getMonth(), 1)
               
               if (currentMonthStart.getTime() !== newMonthStart.getTime()) {
-                console.log('datesSet detected month change, but skipping automatic update to test navigation')
                 // setCurrentMonth(dateInfo.start) // Temporarily commented out
-              } else {
-                console.log('datesSet called but month unchanged, not updating currentMonth')
               }
             }}
             viewDidMount={(viewInfo) => {
             }}
             eventDidMount={(eventInfo) => {
-              console.log('Event mounted:', eventInfo.event.title, 'grossSales:', eventInfo.event.extendedProps.grossSales, 'backgroundColor:', eventInfo.event.backgroundColor)
+              // Event mounted
             }}
             dayCellDidMount={(arg) => {
               const dayCell = arg.el

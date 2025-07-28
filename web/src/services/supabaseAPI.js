@@ -26,6 +26,10 @@ try {
 class SupabaseAPI {
   constructor() {
     this.isAuthenticated = true // Supabase handles auth differently
+    // Initialize mock message storage
+    if (!SupabaseAPI.mockMessages) {
+      SupabaseAPI.mockMessages = []
+    }
   }
 
   // Initialize the API
@@ -58,92 +62,10 @@ class SupabaseAPI {
   // Get mock data for testing
   getMockData(tableName) {
     const mockData = {
-      venues: [
-        { id: 1, promo: 'Venue A', address_city: 'New York', contact: 'John Doe', phone: '555-0101', email: 'john@venuea.com' },
-        { id: 2, promo: 'Venue B', address_city: 'Los Angeles', contact: 'Jane Smith', phone: '555-0102', email: 'jane@venueb.com' },
-        { id: 3, promo: 'Venue C', address_city: 'Chicago', contact: 'Bob Johnson', phone: '555-0103', email: 'bob@venuec.com' }
-      ],
-      trailer_history: [
-        { 
-          id: 1, 
-          date: '2024-07-15', 
-          venue_id: 1, 
-          gross_sales: 2500, 
-          net_sales: 2250, 
-          sales_tax: 250, 
-          items_sold: 25, 
-          staff: 'Alice Johnson',
-          venue_name: 'Venue A',
-          address_city: 'New York'
-        },
-        { 
-          id: 2, 
-          date: '2024-07-16', 
-          venue_id: 2, 
-          gross_sales: 3200, 
-          net_sales: 2880, 
-          sales_tax: 320, 
-          items_sold: 35, 
-          staff: 'Bob Smith',
-          venue_name: 'Venue B',
-          address_city: 'Los Angeles'
-        },
-        { 
-          id: 3, 
-          date: '2024-07-17', 
-          venue_id: 3, 
-          gross_sales: 1800, 
-          net_sales: 1620, 
-          sales_tax: 180, 
-          items_sold: 30, 
-          staff: 'Charlie Brown',
-          venue_name: 'Venue C',
-          address_city: 'Chicago'
-        }
-      ],
-      camper_history: [
-        { 
-          id: 1, 
-          date: '2024-07-15', 
-          venue_id: 1, 
-          gross_sales: 1500, 
-          net_sales: 1350, 
-          sales_tax: 150, 
-          items_sold: 15, 
-          staff: 'Alice Johnson',
-          venue_name: 'Venue A',
-          address_city: 'New York'
-        },
-        { 
-          id: 2, 
-          date: '2024-07-16', 
-          venue_id: 2, 
-          gross_sales: 2200, 
-          net_sales: 1980, 
-          sales_tax: 220, 
-          items_sold: 22, 
-          staff: 'Bob Smith',
-          venue_name: 'Venue B',
-          address_city: 'Los Angeles'
-        },
-        { 
-          id: 3, 
-          date: '2024-07-17', 
-          venue_id: 3, 
-          gross_sales: 1900, 
-          net_sales: 1710, 
-          sales_tax: 190, 
-          items_sold: 19, 
-          staff: 'Charlie Brown',
-          venue_name: 'Venue C',
-          address_city: 'Chicago'
-        }
-      ],
-      staff: [
-        { id: 1, name: 'Alice Johnson', email: 'alice@scrubshop.com', phone: '555-0201', role: 'Sales Rep' },
-        { id: 2, name: 'Bob Smith', email: 'bob@scrubshop.com', phone: '555-0202', role: 'Manager' },
-        { id: 3, name: 'Charlie Brown', email: 'charlie@scrubshop.com', phone: '555-0203', role: 'Sales Rep' }
-      ]
+      venues: [],
+      trailer_history: [],
+      camper_history: [],
+      staff: []
     }
     return mockData[tableName] || []
   }
@@ -674,7 +596,7 @@ class SupabaseAPI {
     try {
       if (!supabase) {
         const mockGroups = [
-          { id: 1, group_name: 'Staff Chat', created_by: 1, is_active: true }
+          { id: 1, group_name: 'General', created_by: 1, is_active: true }
         ]
         return { success: true, data: mockGroups }
       }
@@ -702,7 +624,8 @@ class SupabaseAPI {
           { id: 2, group_id: 1, user_id: 2, role: 'member' },
           { id: 3, group_id: 1, user_id: 3, role: 'member' },
           { id: 4, group_id: 1, user_id: 4, role: 'member' },
-          { id: 5, group_id: 1, user_id: 5, role: 'admin' }
+          { id: 5, group_id: 1, user_id: 5, role: 'admin' },
+          { id: 6, group_id: 1, user_id: 6, role: 'member' }
         ]
         return { success: true, data: mockMembers }
       }
@@ -728,37 +651,29 @@ class SupabaseAPI {
   async getMessages(groupId = null, recipientId = null, limit = 50) {
     try {
       if (!supabase) {
-        const mockMessages = [
-          {
-            id: 1,
-            sender_id: 1,
-            group_id: 1,
-            message_text: 'Hello staff! How is everyone doing today?',
-            message_type: 'text',
-            created_at: new Date().toISOString(),
-            sender: { id: 1, name: 'John Smith', email: 'john@scrubshop.com' }
-          },
-          {
-            id: 2,
-            sender_id: 2,
-            group_id: 1,
-            message_text: 'Doing great! Ready for the weekend shows.',
-            message_type: 'text',
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-            sender: { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com' }
-          }
-        ]
-        return { success: true, data: mockMessages }
+        let messages = SupabaseAPI.mockMessages || []
+        
+        // Filter by group if specified
+        if (groupId) {
+          messages = messages.filter(msg => msg.group_id === groupId)
+        }
+        
+        // Sort by created_at ascending (oldest first) for chat display
+        messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        
+        // Apply limit
+        if (limit) {
+          messages = messages.slice(0, limit)
+        }
+        
+        return { success: true, data: messages }
       }
 
       let query = supabase
         .from('team_messages')
-        .select(`
-          *,
-          sender:staff!team_messages_sender_id_fkey (id, name, email)
-        `)
+        .select('*')
         .eq('is_deleted', false)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: true })
         .limit(limit)
 
       if (groupId) {
@@ -781,22 +696,39 @@ class SupabaseAPI {
   async sendMessage(messageData) {
     try {
       if (!supabase) {
+        // Get sender name from mock users
+        const mockUsers = [
+          { id: 1, name: 'John Smith', email: 'john@scrubshop.com', role: 'manager', is_active: true },
+          { id: 2, name: 'Jane Doe', email: 'jane@scrubshop.com', role: 'worker', is_active: true },
+          { id: 3, name: 'Mike Johnson', email: 'mike@scrubshop.com', role: 'worker', is_active: true },
+          { id: 4, name: 'Sarah Wilson', email: 'sarah@scrubshop.com', role: 'worker', is_active: true },
+          { id: 5, name: 'Tom Brown', email: 'tom@scrubshop.com', role: 'admin', is_active: true },
+          { id: 6, name: 'David Wilson', email: 'david@scrubshop.com', role: 'worker', is_active: true }
+        ]
+        
+        const sender = mockUsers.find(user => user.id === messageData.sender_id) || 
+                      { id: messageData.sender_id, name: 'Unknown User', email: 'unknown@scrubshop.com' }
+        
         const newMessage = {
           id: Date.now(),
           ...messageData,
           created_at: new Date().toISOString(),
-          sender: { id: messageData.sender_id, name: 'Current User', email: 'user@scrubshop.com' }
+          sender: { id: sender.id, name: sender.name, email: sender.email }
         }
+        
+        // Add to mock storage
+        if (!SupabaseAPI.mockMessages) {
+          SupabaseAPI.mockMessages = []
+        }
+        SupabaseAPI.mockMessages.push(newMessage)
+        
         return { success: true, data: newMessage }
       }
 
       const { data, error } = await supabase
         .from('team_messages')
         .insert([messageData])
-        .select(`
-          *,
-          sender:staff!team_messages_sender_id_fkey (id, name, email)
-        `)
+        .select('*')
         .single()
 
       if (error) throw new Error(error.message)
@@ -812,30 +744,7 @@ class SupabaseAPI {
   async getTasks(assignedTo = null, status = null) {
     try {
       if (!supabase) {
-        const mockTasks = [
-          {
-            id: 1,
-            title: 'Prepare trailer for weekend shows',
-            description: 'Clean and stock the trailer for upcoming events',
-            assigned_by: 1,
-            assigned_to: 2,
-            priority: 'high',
-            status: 'pending',
-            due_date: new Date(Date.now() + 86400000).toISOString(),
-            category: 'maintenance'
-          },
-          {
-            id: 2,
-            title: 'Contact new venue',
-            description: 'Follow up with the new venue we discussed',
-            assigned_by: 1,
-            assigned_to: 3,
-            priority: 'normal',
-            status: 'in_progress',
-            due_date: new Date(Date.now() + 172800000).toISOString(),
-            category: 'venue'
-          }
-        ]
+        const mockTasks = []
         return { success: true, data: mockTasks }
       }
 
@@ -986,30 +895,7 @@ class SupabaseAPI {
 
       
       if (!supabase) {
-
-        // Mock data for development
-        const mockData = [
-          {
-            id: 1,
-            store_id: 1,
-            invoice_date: '2024-01-15',
-            invoice_no: 'INV-001-123',
-            po_no: 'PO-001',
-            vendor: 'Sample Vendor',
-            style: 'STYLE-001',
-            color: 'Blue',
-            size: 'M',
-            product: 'Sample Product',
-            description: 'Sample description',
-            department: 'Clothing',
-            sold_qty: 5,
-            spec_qty: 2,
-            total_qty: 7,
-            cost: 25.00,
-            retail: 50.00,
-            actual: 45.00
-          }
-        ]
+        const mockData = []
         return { success: true, data: mockData }
       }
 
@@ -1091,24 +977,16 @@ class SupabaseAPI {
 
       
       if (!supabase) {
-
-        // Mock stats for development
         return {
           success: true,
           data: {
-            totalSales: 15000.00,
-            totalCost: 7500.00,
-            totalProfit: 7500.00,
-            totalItems: 150,
-            avgProfitMargin: 50.0,
-            topVendors: [
-              { vendor: 'Vendor A', sales: 5000.00 },
-              { vendor: 'Vendor B', sales: 4000.00 }
-            ],
-            topDepartments: [
-              { department: 'Clothing', sales: 8000.00 },
-              { department: 'Accessories', sales: 4000.00 }
-            ]
+            totalSales: 0,
+            totalCost: 0,
+            totalProfit: 0,
+            totalItems: 0,
+            avgProfitMargin: 0,
+            topVendors: [],
+            topDepartments: []
           }
         }
       }

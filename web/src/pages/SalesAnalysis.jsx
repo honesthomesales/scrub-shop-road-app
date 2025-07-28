@@ -72,13 +72,9 @@ const SalesAnalysis = () => {
         storeIds: selectedStores.length > 0 ? selectedStores : undefined
       }
 
-      
-
       const result = await supabaseAPI.getSalesAnalysis(options)
       
       if (result.success) {
-        
-
         
         setAnalysisData(result.data)
       } else {
@@ -118,7 +114,7 @@ const SalesAnalysis = () => {
 
   // Process data for charts
   const processChartData = () => {
-    if (!analysisData.length) return { dailyData: [], storeData: [], productData: [], brandData: [] }
+    if (!analysisData.length) return { dailyData: [], storeData: [] }
 
 
 
@@ -208,55 +204,11 @@ const SalesAnalysis = () => {
       })
     }
 
-    // Product type data
-    const productData = analysisData.reduce((acc, item) => {
-      const product = item.product || 'Unknown'
-      const existing = acc.find(p => p.product === product)
-      const actual = parseFloat(item.actual) || 0
-      const soldQty = parseInt(item.sold_qty) || 0
-      const sales = actual * soldQty
-      
-      if (existing) {
-        existing.sales += sales
-        existing.count += soldQty
-      } else {
-        acc.push({
-          product,
-          sales,
-          count: soldQty
-        })
-      }
-      return acc
-    }, []).sort((a, b) => b.sales - a.sales).slice(0, 10)
-
-    // Brand/Vendor data
-    const brandData = analysisData.reduce((acc, item) => {
-      const vendor = item.vendor || 'Unknown'
-      const existing = acc.find(b => b.vendor === vendor)
-      const actual = parseFloat(item.actual) || 0
-      const soldQty = parseInt(item.sold_qty) || 0
-      const sales = actual * soldQty
-      
-      if (existing) {
-        existing.sales += sales
-        existing.count += soldQty
-      } else {
-        acc.push({
-          vendor,
-          sales,
-          count: soldQty
-        })
-      }
-      return acc
-    }, []).sort((a, b) => b.sales - a.sales).slice(0, 10)
-
-    return { dailyData, storeData, productData, brandData }
-
-    return { dailyData, storeData, productData, brandData }
+    return { dailyData, storeData }
   }
 
   const exportData = () => {
-    const { dailyData, storeData, productData, brandData } = processChartData()
+    const { dailyData, storeData } = processChartData()
     
     // Create CSV content
     let csvContent = 'data:text/csv;charset=utf-8,'
@@ -284,11 +236,13 @@ const SalesAnalysis = () => {
     document.body.removeChild(link)
   }
 
-  const { dailyData, storeData, productData, brandData } = processChartData()
+  const { dailyData, storeData } = processChartData()
 
   const totalSales = storeData.reduce((sum, store) => sum + store.sales, 0)
   const totalProfit = storeData.reduce((sum, store) => sum + store.profit, 0)
   const avgDailySales = dailyData.length > 0 ? totalSales / dailyData.length : 0
+
+
 
   if (loading) {
     return (
@@ -574,36 +528,7 @@ const SalesAnalysis = () => {
           </div>
         </div>
 
-        {/* Product and Brand Analysis */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Top Products */}
-          <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Top Products by Sales</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={productData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="product" type="category" width={100} />
-                <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Sales']} />
-                <Bar dataKey="sales" fill="#FFBB28" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
 
-          {/* Top Brands/Vendors */}
-          <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Top Brands/Vendors</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={brandData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="vendor" type="category" width={100} />
-                <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Sales']} />
-                <Bar dataKey="sales" fill="#FF8042" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
 
         {/* Detailed Tables */}
         <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">

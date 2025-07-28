@@ -3,7 +3,7 @@ import { Calendar, User, Flag, MessageSquare } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '../utils/cn'
 
-const TaskCard = ({ task, onEdit, onDelete, onViewComments }) => {
+const TaskCard = ({ task, staffData = [], onEdit, onDelete, onViewComments }) => {
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'urgent':
@@ -37,6 +37,12 @@ const TaskCard = ({ task, onEdit, onDelete, onViewComments }) => {
   const formatDate = (dateString) => {
     if (!dateString) return 'No due date'
     return formatDistanceToNow(new Date(dateString), { addSuffix: true })
+  }
+
+  const getAssignedUserName = (assignedToId) => {
+    if (!assignedToId) return 'Unassigned'
+    const assignedUser = staffData.find(user => user.id === assignedToId)
+    return assignedUser ? assignedUser.name : 'Unassigned'
   }
 
   return (
@@ -75,39 +81,25 @@ const TaskCard = ({ task, onEdit, onDelete, onViewComments }) => {
           </div>
           <div className="flex items-center space-x-1">
             <User className="w-4 h-4" />
-            <span>{task.assigned_to_user?.name || 'Unassigned'}</span>
+            <span>{getAssignedUserName(task.assigned_to)}</span>
           </div>
         </div>
-        <div className="flex items-center space-x-1">
-          <MessageSquare className="w-4 h-4" />
-          <span>{task.comment_count || 0}</span>
-        </div>
+
       </div>
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-400">
-          Created {formatDistanceToNow(new Date(task.created_at), { addSuffix: true })}
-        </span>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => onViewComments(task.id)}
-            className="text-sm text-primary-600 hover:text-primary-700"
-          >
-            Comments
-          </button>
-          <button
-            onClick={() => onEdit(task)}
-            className="text-sm text-gray-600 hover:text-gray-700"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => onDelete(task.id)}
-            className="text-sm text-red-600 hover:text-red-700"
-          >
-            Delete
-          </button>
-        </div>
+      <div className="flex items-center justify-end space-x-2">
+        <button
+          onClick={() => onEdit(task)}
+          className="text-sm text-gray-600 hover:text-gray-700"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => onDelete(task.id)}
+          className="text-sm text-red-600 hover:text-red-700"
+        >
+          Delete
+        </button>
       </div>
     </div>
   )
