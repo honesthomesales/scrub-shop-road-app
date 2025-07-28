@@ -59,11 +59,6 @@ const Messages = () => {
     setSelectedGroup(group)
   }
 
-  const handleUserSelect = (userId) => {
-    const selectedUser = usersData.find(user => user.id === parseInt(userId))
-    setCurrentUser(selectedUser)
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -90,26 +85,12 @@ const Messages = () => {
               </p>
             </div>
             
-            {/* User Selector */}
-            <div className="flex items-center space-x-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  You are:
-                </label>
-                <select
-                  value={currentUser?.id || ''}
-                  onChange={(e) => handleUserSelect(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="">Select your name</option>
-                  {usersData.map(user => (
-                    <option key={user.id} value={user.id}>
-                      {user.name}
-                    </option>
-                  ))}
-                </select>
+            {/* Current User Display */}
+            {currentUser && (
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">Signed in as:</span> {currentUser.name}
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -171,8 +152,8 @@ const Messages = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
-                    <p className="text-gray-500 mb-2">Please select your name above to start messaging</p>
-                    <p className="text-sm text-gray-400">This helps identify who you are in conversations</p>
+                    <p className="text-gray-500 mb-2">Please select your name in the header to start messaging</p>
+                    <p className="text-sm text-gray-400">Use the user selector in the top navigation bar</p>
                   </div>
                 ) : messagesData.length === 0 ? (
                   <div className="text-center py-8">
@@ -206,7 +187,7 @@ const Messages = () => {
               {selectedGroupId && !currentUser && (
                 <div className="p-4 border-t border-gray-200 bg-gray-50">
                   <p className="text-center text-gray-500 text-sm">
-                    Select your name above to send messages
+                    Please select your name in the header to send messages
                   </p>
                 </div>
               )}
