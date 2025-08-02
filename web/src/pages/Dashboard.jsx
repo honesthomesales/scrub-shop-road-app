@@ -56,7 +56,7 @@ const Dashboard = () => {
     storeDebounceTimer.current = setTimeout(() => {
       setDebouncedStores(selectedStores)
       setIsFiltering(false)
-    }, 300) // 300ms debounce delay
+    }, 800) // 800ms debounce delay (increased from 300ms)
 
     return () => {
       if (storeDebounceTimer.current) {
@@ -76,7 +76,7 @@ const Dashboard = () => {
     yearDebounceTimer.current = setTimeout(() => {
       setDebouncedYears(selectedYears)
       setIsFiltering(false)
-    }, 300) // 300ms debounce delay
+    }, 800) // 800ms debounce delay (increased from 300ms)
 
     return () => {
       if (yearDebounceTimer.current) {
