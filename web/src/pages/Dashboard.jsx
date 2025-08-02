@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { TrendingUp, DollarSign, Calendar, Eye, X, ChevronDown } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import DashboardChart from '../components/DashboardChart'
@@ -15,6 +15,15 @@ const Dashboard = () => {
   const [hoveredYear, setHoveredYear] = useState(null)
   const storePickerRef = useRef(null)
   const yearPickerRef = useRef(null)
+
+  // Debounced filter states
+  const [debouncedStores, setDebouncedStores] = useState([])
+  const [debouncedYears, setDebouncedYears] = useState([new Date().getFullYear()])
+  const [isFiltering, setIsFiltering] = useState(false)
+
+  // Debounce timer refs
+  const storeDebounceTimer = useRef(null)
+  const yearDebounceTimer = useRef(null)
 
   // Click outside handler to close store picker
   useEffect(() => {
@@ -36,7 +45,57 @@ const Dashboard = () => {
     }
   }, [showStorePicker, showYearPicker])
 
+  // Debounced store filter effect
+  useEffect(() => {
+    setIsFiltering(true)
+    
+    if (storeDebounceTimer.current) {
+      clearTimeout(storeDebounceTimer.current)
+    }
 
+    storeDebounceTimer.current = setTimeout(() => {
+      setDebouncedStores(selectedStores)
+      setIsFiltering(false)
+    }, 300) // 300ms debounce delay
+
+    return () => {
+      if (storeDebounceTimer.current) {
+        clearTimeout(storeDebounceTimer.current)
+      }
+    }
+  }, [selectedStores])
+
+  // Debounced year filter effect
+  useEffect(() => {
+    setIsFiltering(true)
+    
+    if (yearDebounceTimer.current) {
+      clearTimeout(yearDebounceTimer.current)
+    }
+
+    yearDebounceTimer.current = setTimeout(() => {
+      setDebouncedYears(selectedYears)
+      setIsFiltering(false)
+    }, 300) // 300ms debounce delay
+
+    return () => {
+      if (yearDebounceTimer.current) {
+        clearTimeout(yearDebounceTimer.current)
+      }
+    }
+  }, [selectedYears])
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (storeDebounceTimer.current) {
+        clearTimeout(storeDebounceTimer.current)
+      }
+      if (yearDebounceTimer.current) {
+        clearTimeout(yearDebounceTimer.current)
+      }
+    }
+  }, [])
 
   // Map store numbers to store names
   const getStoreName = (storeNumber) => {
@@ -49,8 +108,6 @@ const Dashboard = () => {
     }
     return storeMap[storeNumber] || `Store ${storeNumber}`
   }
-
-
 
   // Multi-store picker options (matching the transformed data)
   const STORE_OPTIONS = [
@@ -70,22 +127,22 @@ const Dashboard = () => {
     return uniqueStores;
   }
 
-  // Filter data based on selected stores
-  const getFilteredData = () => {
-    if (selectedStores.length === 0) {
+  // Filter data based on debounced store selection
+  const getFilteredData = useCallback(() => {
+    if (debouncedStores.length === 0) {
       return salesData // Show all stores when none selected
     }
     
     // Filter salesData by selected stores
     const filtered = salesData.filter(sale =>
-      selectedStores.includes(sale.store)
+      debouncedStores.includes(sale.store)
     );
     
     return filtered
-  }
+  }, [debouncedStores, salesData])
 
-  // Handle store selection/deselection
-  const handleStoreToggle = (store) => {
+  // Handle store selection/deselection with optimistic UI
+  const handleStoreToggle = useCallback((store) => {
     setSelectedStores(prev => {
       if (prev.includes(store)) {
         return prev.filter(s => s !== store)
@@ -93,21 +150,21 @@ const Dashboard = () => {
         return [...prev, store]
       }
     })
-  }
+  }, [])
 
   // Handle "Select All" stores
-  const handleSelectAll = () => {
+  const handleSelectAll = useCallback(() => {
     const allStores = getUniqueStores()
     setSelectedStores(allStores)
-  }
+  }, [])
 
   // Handle "Clear All" stores
-  const handleClearAll = () => {
+  const handleClearAll = useCallback(() => {
     setSelectedStores([])
-  }
+  }, [])
 
-  // Year picker handlers
-  const handleYearToggle = (year) => {
+  // Year picker handlers with optimistic UI
+  const handleYearToggle = useCallback((year) => {
     setSelectedYears(prev => {
       if (prev.includes(year)) {
         // Remove year if already selected
@@ -122,17 +179,17 @@ const Dashboard = () => {
         return prev
       }
     })
-  }
+  }, [])
 
-  const handleSelectAllYears = () => {
+  const handleSelectAllYears = useCallback(() => {
     const currentYear = new Date().getFullYear()
     const years = [currentYear, currentYear - 1, currentYear - 2, currentYear - 3, currentYear - 4]
     setSelectedYears(years)
-  }
+  }, [])
 
-  const handleClearAllYears = () => {
+  const handleClearAllYears = useCallback(() => {
     setSelectedYears([new Date().getFullYear()])
-  }
+  }, [])
 
   const getSelectedYearsText = () => {
     if (selectedYears.length === 0) return 'Select Years'
@@ -155,24 +212,22 @@ const Dashboard = () => {
     return `${selectedStores.length} Stores Selected`
   }
 
-  // Calculate summary statistics
-  const calculateStats = () => {
+  // Calculate summary statistics using debounced filters
+  const calculateStats = useCallback(() => {
     const filteredData = getFilteredData()
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     
-    // Use selected years instead of hardcoded years
+    // Use debounced years instead of selected years
     const selectedYearsData = {}
     
     // Calculate data for each selected year
-    selectedYears.forEach(year => {
+    debouncedYears.forEach(year => {
       const yearSales = filteredData.filter(sale => {
         const saleDate = parseDateString(sale.date);
         return saleDate && saleDate.getFullYear() === year;
       });
-      
-
       
       const totalGross = yearSales.reduce((sum, sale) => sum + (sale.grossSales || 0), 0);
       const positiveSalesCount = yearSales.filter(sale => (sale.grossSales || 0) > 0).length;
@@ -182,25 +237,25 @@ const Dashboard = () => {
       let monthlyAverage;
       let averagePerSale;
       
-             if (year === currentYear) {
-         // For current year, use data from January through the last completed month
-         const lastCompletedMonth = Math.max(0, currentMonth - 1); // Previous month (0-indexed)
-         monthsToCount = lastCompletedMonth + 1; // Number of completed months (1-indexed)
-         
-         // Get sales for all months from January through the last completed month
-         const completedMonthsSales = yearSales.filter(sale => {
-           const saleDate = parseDateString(sale.date);
-           return saleDate && saleDate.getMonth() <= lastCompletedMonth;
-         });
-         
-         const completedMonthsGross = completedMonthsSales.reduce((sum, sale) => sum + (sale.grossSales || 0), 0);
-         const completedMonthsPositiveSales = completedMonthsSales.filter(sale => (sale.grossSales || 0) > 0).length;
-         
-         // Per month average = Total gross sales for completed months ÷ number of completed months
-         monthlyAverage = monthsToCount > 0 ? Math.round(completedMonthsGross / monthsToCount) : 0;
-         
-         // Per sale average = Total gross sales for completed months ÷ number of positive sales in completed months
-         averagePerSale = completedMonthsPositiveSales > 0 ? Math.round(completedMonthsGross / completedMonthsPositiveSales) : 0;
+      if (year === currentYear) {
+        // For current year, use data from January through the last completed month
+        const lastCompletedMonth = Math.max(0, currentMonth - 1); // Previous month (0-indexed)
+        monthsToCount = lastCompletedMonth + 1; // Number of completed months (1-indexed)
+        
+        // Get sales for all months from January through the last completed month
+        const completedMonthsSales = yearSales.filter(sale => {
+          const saleDate = parseDateString(sale.date);
+          return saleDate && saleDate.getMonth() <= lastCompletedMonth;
+        });
+        
+        const completedMonthsGross = completedMonthsSales.reduce((sum, sale) => sum + (sale.grossSales || 0), 0);
+        const completedMonthsPositiveSales = completedMonthsSales.filter(sale => (sale.grossSales || 0) > 0).length;
+        
+        // Per month average = Total gross sales for completed months ÷ number of completed months
+        monthlyAverage = monthsToCount > 0 ? Math.round(completedMonthsGross / monthsToCount) : 0;
+        
+        // Per sale average = Total gross sales for completed months ÷ number of positive sales in completed months
+        averagePerSale = completedMonthsPositiveSales > 0 ? Math.round(completedMonthsGross / completedMonthsPositiveSales) : 0;
       } else {
         // For past years, use all 12 months
         monthsToCount = 12;
@@ -218,7 +273,7 @@ const Dashboard = () => {
     });
 
     // All sales for selected month (use the first selected year for month selection)
-    const primaryYear = selectedYears[0] || currentYear;
+    const primaryYear = debouncedYears[0] || currentYear;
     const monthSales = filteredData.filter(sale => {
       const saleDate = parseDateString(sale.date);
       return saleDate && saleDate.getMonth() === selectedMonth && saleDate.getFullYear() === primaryYear;
@@ -240,10 +295,10 @@ const Dashboard = () => {
       monthTotalGross: Math.round(monthTotalGross),
       primaryYear
     };
-  };
+  }, [getFilteredData, debouncedYears, selectedMonth]);
 
-  // Calculate stats whenever selectedStores changes
-  const stats = useMemo(() => calculateStats(), [selectedStores, selectedMonth, selectedYears, salesData]);
+  // Calculate stats whenever debounced filters change
+  const stats = useMemo(() => calculateStats(), [calculateStats]);
 
   // Generate month options for dropdown
   const monthOptions = [
@@ -265,8 +320,8 @@ const Dashboard = () => {
     return monthOptions.find(option => option.value === selectedMonth)?.label || 'Unknown';
   };
 
-  // Generate monthly stats table data
-  const generateMonthlyStats = () => {
+  // Generate monthly stats table data using debounced filters
+  const generateMonthlyStats = useCallback(() => {
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
@@ -285,7 +340,7 @@ const Dashboard = () => {
       let hasData = false
       
       // Generate stats for each selected year
-      selectedYears.forEach(year => {
+      debouncedYears.forEach(year => {
         const yearSales = getFilteredData().filter(sale => {
           const saleDate = parseDateString(sale.date)
           return saleDate && saleDate.getMonth() === index && saleDate.getFullYear() === year
@@ -315,9 +370,9 @@ const Dashboard = () => {
     })
     
     return allMonthlyStats
-  }
+  }, [getFilteredData, debouncedYears])
 
-  const monthlyStats = useMemo(() => generateMonthlyStats(), [selectedStores, selectedYears, salesData]);
+  const monthlyStats = useMemo(() => generateMonthlyStats(), [generateMonthlyStats]);
 
   const handleShowMonthDetails = (monthData) => {
     setSelectedMonthDetails(monthData)
@@ -543,13 +598,23 @@ const Dashboard = () => {
                 </div>
                 <div className="flex-1 flex flex-col justify-center">
                   <p className="text-base font-bold text-primary-700 mb-2 whitespace-nowrap">Total Gross Sales</p>
-                  <div className="flex flex-col gap-1">
-                    {selectedYears.map(year => (
-                      <span key={year} className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap">
-                        {year} - ${stats.selectedYearsData[year]?.totalGross.toLocaleString() || '0'}
-                      </span>
-                    ))}
-                  </div>
+                  {isFiltering ? (
+                    <div className="flex flex-col gap-1">
+                      {selectedYears.map(year => (
+                        <div key={year} className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap">
+                          {year} - <div className="animate-pulse bg-gray-200 h-6 w-20 ml-2 rounded"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      {debouncedYears.map(year => (
+                        <span key={year} className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap">
+                          {year} - ${stats.selectedYearsData[year]?.totalGross.toLocaleString() || '0'}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -582,15 +647,25 @@ const Dashboard = () => {
                       </select>
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap" style={{minHeight: '2.5rem'}}>
-                    Confirmed: {stats.confirmedMonthSalesCount}
-                  </p>
-                  <p className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap" style={{minHeight: '2.5rem'}}>
-                    Completed Sales: {stats.positiveMonthSalesCount}
-                  </p>
-                  <p className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap" style={{minHeight: '2.5rem'}}>
-                    Total Gross Sales ({getSelectedMonthName()} {stats.primaryYear}): ${stats.monthTotalGross.toLocaleString()}
-                  </p>
+                  {isFiltering ? (
+                    <div className="space-y-2">
+                      <div className="animate-pulse bg-gray-200 h-6 w-32 rounded"></div>
+                      <div className="animate-pulse bg-gray-200 h-6 w-40 rounded"></div>
+                      <div className="animate-pulse bg-gray-200 h-6 w-48 rounded"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap" style={{minHeight: '2.5rem'}}>
+                        Confirmed: {stats.confirmedMonthSalesCount}
+                      </p>
+                      <p className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap" style={{minHeight: '2.5rem'}}>
+                        Completed Sales: {stats.positiveMonthSalesCount}
+                      </p>
+                      <p className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap" style={{minHeight: '2.5rem'}}>
+                        Total Gross Sales ({getSelectedMonthName()} {stats.primaryYear}): ${stats.monthTotalGross.toLocaleString()}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -605,43 +680,60 @@ const Dashboard = () => {
                 </div>
                 <div className="flex-1 flex flex-col justify-center">
                   <p className="text-base font-bold text-primary-700 mb-2 whitespace-nowrap">Average</p>
-                  <div className="text-xs w-full">
-                    <div className="grid grid-cols-3 gap-2 mb-1">
-                      <div></div>
-                      <div className="text-primary-700 font-bold whitespace-nowrap text-base">Per Sale</div>
-                      <div className="text-primary-700 font-bold whitespace-nowrap text-base">Per Month</div>
-                    </div>
-                    {selectedYears.map(year => (
-                      <div key={year} className="grid grid-cols-3 gap-2">
-                        <div className="text-secondary-900 font-bold text-lg flex items-center whitespace-nowrap">{year}</div>
-                        <div className="text-secondary-900 font-bold text-lg flex items-center whitespace-nowrap">
-                          ${stats.selectedYearsData[year]?.averagePerSale.toLocaleString() || '0'}
-                        </div>
-                                                 <div 
-                           className="text-secondary-900 font-bold text-lg flex items-center whitespace-nowrap cursor-help relative group"
-                           onMouseEnter={() => setHoveredYear(year)}
-                           onMouseLeave={() => setHoveredYear(null)}
-                         >
-                           ${stats.selectedYearsData[year]?.monthlyAverage.toLocaleString() || '0'}
-                           {hoveredYear === year && (
-                             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-50">
-                               <div>{stats.selectedYearsData[year]?.monthsToCount || 0} month{(stats.selectedYearsData[year]?.monthsToCount || 0) !== 1 ? 's' : ''} used</div>
-                               <div>Total: ${stats.selectedYearsData[year]?.totalGross.toLocaleString() || '0'}</div>
-                               <div>Monthly Average: ${stats.selectedYearsData[year]?.monthlyAverage.toLocaleString() || '0'}</div>
-                               <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                             </div>
-                           )}
-                         </div>
+                  {isFiltering ? (
+                    <div className="text-xs w-full">
+                      <div className="grid grid-cols-3 gap-2 mb-1">
+                        <div></div>
+                        <div className="text-primary-700 font-bold whitespace-nowrap text-base">Per Sale</div>
+                        <div className="text-primary-700 font-bold whitespace-nowrap text-base">Per Month</div>
                       </div>
-                    ))}
-                    {/* Show months used in calculation for the primary year */}
-                    <div className="mt-2 text-xs text-secondary-600">
-                      {stats.primaryYear === new Date().getFullYear() 
-                        ? `Based on ${stats.selectedYearsData[stats.primaryYear]?.monthsToCount || 0} month${(stats.selectedYearsData[stats.primaryYear]?.monthsToCount || 0) !== 1 ? 's' : ''} (Jan - ${monthOptions[Math.max(0, new Date().getMonth() - 1)]?.label || 'Previous Month'})`
-                        : 'Based on 12 months'
-                      }
+                      {selectedYears.map(year => (
+                        <div key={year} className="grid grid-cols-3 gap-2">
+                          <div className="text-secondary-900 font-bold text-lg flex items-center whitespace-nowrap">{year}</div>
+                          <div className="animate-pulse bg-gray-200 h-6 w-16 rounded"></div>
+                          <div className="animate-pulse bg-gray-200 h-6 w-16 rounded"></div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="text-xs w-full">
+                      <div className="grid grid-cols-3 gap-2 mb-1">
+                        <div></div>
+                        <div className="text-primary-700 font-bold whitespace-nowrap text-base">Per Sale</div>
+                        <div className="text-primary-700 font-bold whitespace-nowrap text-base">Per Month</div>
+                      </div>
+                      {debouncedYears.map(year => (
+                        <div key={year} className="grid grid-cols-3 gap-2">
+                          <div className="text-secondary-900 font-bold text-lg flex items-center whitespace-nowrap">{year}</div>
+                          <div className="text-secondary-900 font-bold text-lg flex items-center whitespace-nowrap">
+                            ${stats.selectedYearsData[year]?.averagePerSale.toLocaleString() || '0'}
+                          </div>
+                          <div 
+                            className="text-secondary-900 font-bold text-lg flex items-center whitespace-nowrap cursor-help relative group"
+                            onMouseEnter={() => setHoveredYear(year)}
+                            onMouseLeave={() => setHoveredYear(null)}
+                          >
+                            ${stats.selectedYearsData[year]?.monthlyAverage.toLocaleString() || '0'}
+                            {hoveredYear === year && (
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-50">
+                                <div>{stats.selectedYearsData[year]?.monthsToCount || 0} month{(stats.selectedYearsData[year]?.monthsToCount || 0) !== 1 ? 's' : ''} used</div>
+                                <div>Total: ${stats.selectedYearsData[year]?.totalGross.toLocaleString() || '0'}</div>
+                                <div>Monthly Average: ${stats.selectedYearsData[year]?.monthlyAverage.toLocaleString() || '0'}</div>
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {/* Show months used in calculation for the primary year */}
+                      <div className="mt-2 text-xs text-secondary-600">
+                        {stats.primaryYear === new Date().getFullYear() 
+                          ? `Based on ${stats.selectedYearsData[stats.primaryYear]?.monthsToCount || 0} month${(stats.selectedYearsData[stats.primaryYear]?.monthsToCount || 0) !== 1 ? 's' : ''} (Jan - ${monthOptions[Math.max(0, new Date().getMonth() - 1)]?.label || 'Previous Month'})`
+                          : 'Based on 12 months'
+                        }
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -650,7 +742,17 @@ const Dashboard = () => {
 
         {/* Chart */}
         <div className="mb-8">
-          <DashboardChart salesData={getFilteredData()} currentSheet={currentSheet} selectedYears={selectedYears} />
+          {isFiltering ? (
+            <div className="card">
+              <div className="card-body">
+                <div className="animate-pulse">
+                  <div className="h-64 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <DashboardChart salesData={getFilteredData()} currentSheet={currentSheet} selectedYears={debouncedYears} />
+          )}
         </div>
 
         {/* Monthly Stats Table */}
@@ -661,55 +763,61 @@ const Dashboard = () => {
             </h3>
           </div>
           <div className="card-body">
-            <div className="overflow-x-auto">
-              <table className="table">
-                <thead className="table-header">
-                  <tr>
-                    <th className="table-header-cell">Month</th>
-                    {selectedYears.map(year => (
-                      <th key={year} className="table-header-cell" colSpan="3">{year}</th>
-                    ))}
-                    <th className="table-header-cell">Actions</th>
-                  </tr>
-                  <tr>
-                    <th className="table-header-cell"></th>
-                    {selectedYears.map(year => (
-                      <React.Fragment key={year}>
-                        <th className="table-header-cell text-xs">Sales</th>
-                        <th className="table-header-cell text-xs">Confirmed</th>
-                        <th className="table-header-cell text-xs">Gross Sales</th>
-                      </React.Fragment>
-                    ))}
-                    <th className="table-header-cell"></th>
-                  </tr>
-                </thead>
-                <tbody className="table-body">
-                  {monthlyStats.map((stat, index) => (
-                    <tr key={index} className="table-row">
-                      <td className="table-cell font-medium">{stat.month}</td>
-                      {selectedYears.map(year => (
+            {isFiltering ? (
+              <div className="animate-pulse">
+                <div className="h-64 bg-gray-200 rounded"></div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="table">
+                  <thead className="table-header">
+                    <tr>
+                      <th className="table-header-cell">Month</th>
+                      {debouncedYears.map(year => (
+                        <th key={year} className="table-header-cell" colSpan="3">{year}</th>
+                      ))}
+                      <th className="table-header-cell">Actions</th>
+                    </tr>
+                    <tr>
+                      <th className="table-header-cell"></th>
+                      {debouncedYears.map(year => (
                         <React.Fragment key={year}>
-                          <td className="table-cell">{stat.years[year]?.salesCount || 0}</td>
-                          <td className="table-cell">{stat.years[year]?.confirmedSales || 0}</td>
-                          <td className="table-cell font-semibold">
-                            {formatCurrency(stat.years[year]?.totalGross || 0)}
-                          </td>
+                          <th className="table-header-cell text-xs">Sales</th>
+                          <th className="table-header-cell text-xs">Confirmed</th>
+                          <th className="table-header-cell text-xs">Gross Sales</th>
                         </React.Fragment>
                       ))}
-                      <td className="table-cell">
-                        <button
-                          onClick={() => handleShowMonthDetails(stat)}
-                          className="text-primary-600 hover:text-primary-900 transition-colors"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      </td>
+                      <th className="table-header-cell"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="table-body">
+                    {monthlyStats.map((stat, index) => (
+                      <tr key={index} className="table-row">
+                        <td className="table-cell font-medium">{stat.month}</td>
+                        {debouncedYears.map(year => (
+                          <React.Fragment key={year}>
+                            <td className="table-cell">{stat.years[year]?.salesCount || 0}</td>
+                            <td className="table-cell">{stat.years[year]?.confirmedSales || 0}</td>
+                            <td className="table-cell font-semibold">
+                              {formatCurrency(stat.years[year]?.totalGross || 0)}
+                            </td>
+                          </React.Fragment>
+                        ))}
+                        <td className="table-cell">
+                          <button
+                            onClick={() => handleShowMonthDetails(stat)}
+                            className="text-primary-600 hover:text-primary-900 transition-colors"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>
