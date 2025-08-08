@@ -321,7 +321,10 @@ export function AppProvider({ children }) {
 
   // Load initial data
   useEffect(() => {
-    loadInitialData()
+    // Load data asynchronously without blocking the app
+    setTimeout(() => {
+      loadInitialData()
+    }, 100)
   }, [])
 
   // Load data when sheet changes
@@ -337,19 +340,33 @@ export function AppProvider({ children }) {
       dispatch({ type: ACTIONS.SET_IS_AUTHENTICATED, payload: isInitialized })
       
       if (isInitialized) {
-        await Promise.all([
-          loadSalesData(),
-          loadVenuesData(),
-          loadStaffData()
-        ])
+        // Load data with timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Data loading timeout')), 10000)
+        )
         
-        // Load staff and groups data separately (non-critical)
-        loadStaffAndGroups()
-        
-        // Load tasks separately (non-critical)
-        loadTasks()
+        try {
+          await Promise.race([
+            Promise.all([
+              loadSalesData(),
+              loadVenuesData(),
+              loadStaffData()
+            ]),
+            timeoutPromise
+          ])
+          
+          // Load staff and groups data separately (non-critical)
+          loadStaffAndGroups()
+          
+          // Load tasks separately (non-critical)
+          loadTasks()
+        } catch (timeoutError) {
+          console.warn('Data loading timed out, continuing with app:', timeoutError)
+          // Continue with app even if data loading fails
+        }
       }
     } catch (error) {
+      console.error('Failed to initialize app:', error)
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
     } finally {
       dispatch({ type: ACTIONS.SET_LOADING, payload: false })

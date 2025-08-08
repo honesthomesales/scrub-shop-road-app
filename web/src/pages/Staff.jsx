@@ -1,15 +1,20 @@
-import React, { useState } from 'react'
-import { Plus, Edit, Trash2, Users, Mail, Phone, Calendar, FileText, CheckCircle, XCircle } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Plus, Edit, Trash2, Users, Mail, Phone, Calendar, FileText, CheckCircle, XCircle, DollarSign, MapPin, Target } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
-import { STAFF_ROLE_OPTIONS, STAFF_STATUS_OPTIONS, getDefaultStaffEntry } from '../utils/sheetMappings'
+import { STAFF_ROLE_OPTIONS, STAFF_STATUS_OPTIONS, STAFF_PAY_TYPE_OPTIONS, getDefaultStaffEntry } from '../utils/sheetMappings'
 import { formatDate } from '../utils/dateUtils'
 import { cn } from '../utils/cn'
+import supabaseAPI from '../services/supabaseAPI'
+import StaffBonusTiers from '../components/StaffBonusTiers'
 
 const Staff = () => {
   const { staffData, addStaffEntry, updateStaffEntry, deleteStaffEntry, loading, error } = useApp()
   const [showModal, setShowModal] = useState(false)
   const [editingStaff, setEditingStaff] = useState(null)
   const [formData, setFormData] = useState(getDefaultStaffEntry())
+  const [stores, setStores] = useState([])
+  const [showBonusTiersModal, setShowBonusTiersModal] = useState(false)
+  const [selectedStaffForBonus, setSelectedStaffForBonus] = useState(null)
 
   const handleAddNew = () => {
     setEditingStaff(null)
@@ -26,7 +31,14 @@ const Staff = () => {
       role: staff.role || 'Worker',
       status: staff.status || 'Active',
       hireDate: staff.hireDate || '',
-      notes: staff.notes || ''
+      notes: staff.notes || '',
+      store_id: staff.store_id || null,
+      // Pay structure fields
+      payType: staff.payType || 'hourly',
+      hourlyRate: staff.hourlyRate || 0,
+      salaryAmount: staff.salaryAmount || 0,
+      preferredHoursPerWeek: staff.preferredHoursPerWeek || 0,
+      maxHoursPerWeek: staff.maxHoursPerWeek || 0
     })
     setShowModal(true)
   }
@@ -38,6 +50,11 @@ const Staff = () => {
         alert(`Error deleting staff: ${result.error}`)
       }
     }
+  }
+
+  const handleBonusTiers = (staff) => {
+    setSelectedStaffForBonus(staff)
+    setShowBonusTiersModal(true)
   }
 
   const handleSubmit = async (e) => {
@@ -59,6 +76,21 @@ const Staff = () => {
       alert(`Error ${editingStaff ? 'updating' : 'adding'} staff: ${result.error}`)
     }
   }
+
+  // Fetch stores for store assignment
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        const result = await supabaseAPI.getStores()
+        if (result.success) {
+          setStores(result.data)
+        }
+      } catch (error) {
+        console.error('Error fetching stores:', error)
+      }
+    }
+    fetchStores()
+  }, [])
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -189,7 +221,9 @@ const Staff = () => {
                   <th>Contact</th>
                   <th>Role</th>
                   <th>Status</th>
+                  <th>Store</th>
                   <th>Hire Date</th>
+                  <th>Pay Structure</th>
                   <th>Notes</th>
                   <th>Actions</th>
                 </tr>
@@ -197,7 +231,7 @@ const Staff = () => {
               <tbody>
                 {staffData.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="text-center py-8 text-secondary-500">
+                    <td colSpan="8" className="text-center py-8 text-secondary-500">
                       <p className="text-gray-500 text-center">
                         No staff members found. Add your first staff member to get started.
                       </p>
@@ -244,6 +278,16 @@ const Staff = () => {
                         </span>
                       </td>
                       <td>
+                        {staff.store_id ? (
+                          <div className="flex items-center text-sm text-secondary-600">
+                            <MapPin className="w-3 h-3 mr-1 text-blue-600" />
+                            <span>{stores.find(s => s.id === staff.store_id)?.name || 'Unknown Store'}</span>
+                          </div>
+                        ) : (
+                          <span className="text-secondary-400 text-sm">Unassigned</span>
+                        )}
+                      </td>
+                      <td>
                         {staff.hireDate ? (
                           <div className="flex items-center text-sm text-secondary-600">
                             <Calendar className="w-3 h-3 mr-1" />
@@ -252,6 +296,33 @@ const Staff = () => {
                         ) : (
                           <span className="text-secondary-400">Not set</span>
                         )}
+                      </td>
+                      <td>
+                        <div className="space-y-1">
+                          <div className="flex items-center text-sm text-secondary-600">
+                            <DollarSign className="w-3 h-3 mr-1" />
+                            <span className="font-medium">
+                              {staff.payType === 'hourly' ? 'Hourly' : 
+                               staff.payType === 'salary' ? 'Salary' : 
+                               staff.payType === 'salary+bonus' ? 'Salary+Bonus' : staff.payType}
+                            </span>
+                          </div>
+                          {staff.payType === 'hourly' && staff.hourlyRate > 0 && (
+                            <div className="text-xs text-secondary-500">
+                              ${staff.hourlyRate}/hr
+                            </div>
+                          )}
+                          {(staff.payType === 'salary' || staff.payType === 'salary+bonus') && staff.salaryAmount > 0 && (
+                            <div className="text-xs text-secondary-500">
+                              ${staff.salaryAmount.toLocaleString()}/year
+                            </div>
+                          )}
+                          {staff.preferredHoursPerWeek > 0 && (
+                            <div className="text-xs text-secondary-500">
+                              {staff.preferredHoursPerWeek}h preferred
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td>
                         {staff.notes ? (
@@ -273,6 +344,13 @@ const Staff = () => {
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleBonusTiers(staff)}
+                            className="btn-icon btn-sm text-green-600 hover:text-green-700"
+                            title="Manage Bonus Tiers"
+                          >
+                            <Target className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(staff.id)}
@@ -398,6 +476,118 @@ const Staff = () => {
                 />
               </div>
 
+              {/* Pay Structure Section */}
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium text-secondary-700 mb-3">Pay Structure</h4>
+                
+                {/* Pay Type */}
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-secondary-700 mb-1">
+                    Pay Type
+                  </label>
+                  <select
+                    value={formData.payType}
+                    onChange={(e) => handleInputChange('payType', e.target.value)}
+                    className="input"
+                  >
+                    {STAFF_PAY_TYPE_OPTIONS.map(payType => (
+                      <option key={payType} value={payType}>
+                        {payType === 'hourly' ? 'Hourly' : 
+                         payType === 'salary' ? 'Salary' : 
+                         payType === 'salary+bonus' ? 'Salary + Bonus' : payType}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Hourly Rate */}
+                {formData.payType === 'hourly' && (
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-secondary-700 mb-1">
+                      Hourly Rate ($)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.hourlyRate}
+                      onChange={(e) => handleInputChange('hourlyRate', parseFloat(e.target.value) || 0)}
+                      className="input"
+                      placeholder="0.00"
+                    />
+                  </div>
+                )}
+
+                {/* Salary Amount */}
+                {(formData.payType === 'salary' || formData.payType === 'salary+bonus') && (
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-secondary-700 mb-1">
+                      Salary Amount ($)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.salaryAmount}
+                      onChange={(e) => handleInputChange('salaryAmount', parseFloat(e.target.value) || 0)}
+                      className="input"
+                      placeholder="0.00"
+                    />
+                  </div>
+                )}
+
+                {/* Preferred Hours Per Week */}
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-secondary-700 mb-1">
+                    Preferred Hours Per Week
+                  </label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={formData.preferredHoursPerWeek}
+                    onChange={(e) => handleInputChange('preferredHoursPerWeek', parseFloat(e.target.value) || 0)}
+                    className="input"
+                    placeholder="40"
+                  />
+                </div>
+
+                {/* Max Hours Per Week */}
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-secondary-700 mb-1">
+                    Max Hours Per Week
+                  </label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={formData.maxHoursPerWeek}
+                    onChange={(e) => handleInputChange('maxHoursPerWeek', parseFloat(e.target.value) || 0)}
+                    className="input"
+                    placeholder="40"
+                  />
+                </div>
+              </div>
+
+              {/* Store Assignment */}
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Assigned Store
+                </label>
+                <select
+                  value={formData.store_id || ''}
+                  onChange={(e) => handleInputChange('store_id', e.target.value ? parseInt(e.target.value) : null)}
+                  className="input"
+                >
+                  <option value="">No Store Assigned</option>
+                  {stores.map(store => (
+                    <option key={store.id} value={store.id}>
+                      {store.name} (#{store.number})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Notes */}
               <div>
                 <label className="block text-sm font-medium text-secondary-700 mb-1">
@@ -428,6 +618,34 @@ const Staff = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bonus Tiers Modal */}
+      {showBonusTiersModal && selectedStaffForBonus && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-secondary-900">
+                Bonus Tiers Management - {selectedStaffForBonus.name}
+              </h3>
+              <button
+                onClick={() => setShowBonusTiersModal(false)}
+                className="text-secondary-400 hover:text-secondary-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <StaffBonusTiers
+              staffId={selectedStaffForBonus.id}
+              staffName={selectedStaffForBonus.name}
+              onSave={() => {
+                setShowBonusTiersModal(false)
+                // Optionally refresh staff data or show success message
+              }}
+            />
           </div>
         </div>
       )}

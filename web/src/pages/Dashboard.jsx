@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { TrendingUp, DollarSign, Calendar, Eye, X, ChevronDown } from 'lucide-react'
+import { TrendingUp, DollarSign, Calendar, Eye, X, ChevronDown, MapPin, Users, Clock, BarChart3, Calculator, Gift, Settings } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import DashboardChart from '../components/DashboardChart'
 import { formatCurrency, getMonthName, parseDateString, formatDate } from '../utils/dateUtils'
+import supabaseAPI from '../services/supabaseAPI'
 
 const Dashboard = () => {
   const { salesData, currentSheet, loading } = useApp()
@@ -15,6 +16,11 @@ const Dashboard = () => {
   const [hoveredYear, setHoveredYear] = useState(null)
   const storePickerRef = useRef(null)
   const yearPickerRef = useRef(null)
+  
+  // Store list state
+  const [stores, setStores] = useState([])
+  const [storesLoading, setStoresLoading] = useState(true)
+  const [hoveredStore, setHoveredStore] = useState(null)
 
   // Debounced filter states
   const [debouncedStores, setDebouncedStores] = useState([])
@@ -95,6 +101,26 @@ const Dashboard = () => {
         clearTimeout(yearDebounceTimer.current)
       }
     }
+  }, [])
+
+  // Fetch stores from database
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        const result = await supabaseAPI.getStores()
+        if (result.success) {
+          setStores(result.data)
+        } else {
+          console.error('Error fetching stores:', result.error)
+        }
+      } catch (error) {
+        console.error('Error fetching stores:', error)
+      } finally {
+        setStoresLoading(false)
+      }
+    }
+
+    fetchStores()
   }, [])
 
   // Map store numbers to store names
@@ -384,6 +410,32 @@ const Dashboard = () => {
 
   const handleMonthChange = (e) => {
     setSelectedMonth(parseInt(e.target.value))
+  }
+
+  // Store action handlers
+  const handleStoreAction = (action, store) => {
+    switch (action) {
+      case 'scheduler':
+        window.location.href = `/scheduler?store=${store.id}`
+        break
+      case 'staff':
+        window.location.href = `/staff?store=${store.id}`
+        break
+      case 'reports':
+        window.location.href = `/sales-analysis?store=${store.id}`
+        break
+      case 'pay-calculator':
+        window.location.href = `/pay-calculator?store=${store.id}`
+        break
+      case 'bonuses':
+        window.location.href = `/bonuses?store=${store.id}`
+        break
+      case 'settings':
+        window.location.href = `/venues?store=${store.id}`
+        break
+      default:
+        break
+    }
   }
 
   // Update getVenueName to show store for Trailer/Camper, venue for others
@@ -816,6 +868,104 @@ const Dashboard = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Store List */}
+        <div className="card">
+          <div className="card-header">
+            <h3 className="text-lg font-semibold text-secondary-900">
+              Store Management
+            </h3>
+            <p className="text-sm text-secondary-600 mt-1">
+              Hover over a store to see available actions
+            </p>
+          </div>
+          <div className="card-body">
+            {storesLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-gray-300 rounded mr-4"></div>
+                      <div className="flex-1">
+                        <div className="h-6 bg-gray-300 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {stores.map((store) => (
+                  <div 
+                    key={store.id} 
+                    className="relative bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200"
+                    onMouseEnter={() => setHoveredStore(store.id)}
+                    onMouseLeave={() => setHoveredStore(null)}
+                  >
+                    <div className="flex items-center">
+                      <MapPin className="w-8 h-8 text-blue-600 mr-4" />
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-900">{store.name}</h3>
+                        <p className="text-gray-600">Store #{store.number}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Hover Actions */}
+                    {hoveredStore === store.id && (
+                      <div className="absolute inset-0 bg-blue-50 bg-opacity-95 rounded-lg p-4 flex flex-col justify-center">
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            onClick={() => handleStoreAction('scheduler', store)}
+                            className="flex items-center justify-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-sm font-medium text-gray-700 hover:text-blue-600"
+                          >
+                            <Clock className="w-4 h-4 mr-2" />
+                            Scheduler
+                          </button>
+                          <button
+                            onClick={() => handleStoreAction('staff', store)}
+                            className="flex items-center justify-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-sm font-medium text-gray-700 hover:text-blue-600"
+                          >
+                            <Users className="w-4 h-4 mr-2" />
+                            Staff
+                          </button>
+                          <button
+                            onClick={() => handleStoreAction('reports', store)}
+                            className="flex items-center justify-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-sm font-medium text-gray-700 hover:text-blue-600"
+                          >
+                            <BarChart3 className="w-4 h-4 mr-2" />
+                            Reports
+                          </button>
+                          <button
+                            onClick={() => handleStoreAction('pay-calculator', store)}
+                            className="flex items-center justify-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-sm font-medium text-gray-700 hover:text-blue-600"
+                          >
+                            <Calculator className="w-4 h-4 mr-2" />
+                            Pay Calculator
+                          </button>
+                          <button
+                            onClick={() => handleStoreAction('bonuses', store)}
+                            className="flex items-center justify-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-sm font-medium text-gray-700 hover:text-blue-600"
+                          >
+                            <Gift className="w-4 h-4 mr-2" />
+                            Bonuses
+                          </button>
+                          <button
+                            onClick={() => handleStoreAction('settings', store)}
+                            className="flex items-center justify-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-sm font-medium text-gray-700 hover:text-blue-600"
+                          >
+                            <Settings className="w-4 h-4 mr-2" />
+                            Settings
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>

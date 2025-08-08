@@ -14,7 +14,8 @@ import {
   Upload,
   TrendingUp,
   Car,
-  Settings
+  Settings,
+  Clock
 } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { cn } from '../utils/cn'
@@ -76,13 +77,16 @@ const Header = () => {
     { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
     { name: 'Tasks', href: '/tasks', icon: CheckSquare },
     { name: 'Messages', href: '/messages', icon: MessageSquare },
-    { name: 'Sales Analysis', href: '/sales-analysis', icon: TrendingUp }
+    { name: 'Sales Analysis', href: '/sales-analysis', icon: TrendingUp },
+    { name: 'Scheduler', href: '/scheduler', icon: Clock },
+
   ]
 
   const allRoadNavigation = [
     { name: 'Daily Sales', href: '/daily-sales', icon: BarChart3 },
     { name: 'Venues', href: '/venues', icon: MapPin },
-    { name: 'Calendar', href: '/calendar', icon: Calendar }
+    { name: 'Calendar', href: '/calendar', icon: Calendar },
+    { name: 'Bonuses', href: '/bonuses', icon: TrendingUp }
   ]
 
   const allAdminNavigation = [
@@ -145,7 +149,7 @@ const Header = () => {
                 <button
                   className={cn(
                     'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-                    (isActive('/daily-sales') || isActive('/venues') || isActive('/calendar'))
+                    (isActive('/daily-sales') || isActive('/venues') || isActive('/calendar') || isActive('/bonuses'))
                       ? 'bg-primary-100 text-primary-700'
                       : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
                   )}

@@ -117,7 +117,14 @@ export const transformStaffData = (rowData) => {
     role: rowData.role || 'Worker',
     status: rowData.status || 'Active',
     hireDate: rowData.hire_date || '',
-    notes: rowData.notes || ''
+    notes: rowData.notes || '',
+    store_id: rowData.store_id || null,
+    // Pay structure fields
+    payType: rowData.pay_type || 'hourly',
+    hourlyRate: parseFloat(rowData.hourly_rate || 0) || 0,
+    salaryAmount: parseFloat(rowData.salary_amount || 0) || 0,
+    preferredHoursPerWeek: parseFloat(rowData.preferred_hours_per_week || 0) || 0,
+    maxHoursPerWeek: parseFloat(rowData.max_hours_per_week || 0) || 0
   }
 }
 
@@ -130,7 +137,14 @@ export const staffToDb = (staff, includeId = false) => {
     role: staff.role || 'Worker',
     status: staff.status || 'Active',
     hire_date: staff.hireDate || '',
-    notes: staff.notes || ''
+    notes: staff.notes || '',
+    store_id: staff.store_id || null,
+    // Pay structure fields
+    pay_type: staff.payType || 'hourly',
+    hourly_rate: parseFloat(staff.hourlyRate || 0) || 0,
+    salary_amount: parseFloat(staff.salaryAmount || 0) || 0,
+    preferred_hours_per_week: parseFloat(staff.preferredHoursPerWeek || 0) || 0,
+    max_hours_per_week: parseFloat(staff.maxHoursPerWeek || 0) || 0
   };
   if (includeId && staff.id) obj.id = staff.id;
   return obj;
@@ -160,6 +174,13 @@ export const STAFF_STATUS_OPTIONS = [
   'Inactive',
   'On Leave',
   'Terminated'
+]
+
+// Pay type options for staff
+export const STAFF_PAY_TYPE_OPTIONS = [
+  'hourly',
+  'salary',
+  'salary+bonus'
 ]
 
 // Default values for new entries
@@ -192,5 +213,12 @@ export const getDefaultStaffEntry = () => ({
   role: 'Worker',
   status: 'Active',
   hireDate: new Date().toISOString().split('T')[0],
-  notes: ''
+  notes: '',
+  store_id: null,
+  // Pay structure defaults
+  payType: 'hourly',
+  hourlyRate: 0,
+  salaryAmount: 0,
+  preferredHoursPerWeek: 0,
+  maxHoursPerWeek: 0
 }) 

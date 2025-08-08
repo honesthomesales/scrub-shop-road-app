@@ -6,6 +6,11 @@ import { hasPageAccess } from '../utils/permissions'
 const ProtectedRoute = ({ children, path }) => {
   const { currentUser } = useApp()
 
+  // If no user is selected, allow access (user selection modal will handle this)
+  if (!currentUser) {
+    return children
+  }
+
   // Check if user has access to this page
   if (!hasPageAccess(currentUser, path)) {
     // Redirect to dashboard if no access

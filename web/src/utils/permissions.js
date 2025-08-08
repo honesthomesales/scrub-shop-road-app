@@ -13,11 +13,13 @@ export const PAGE_PERMISSIONS = {
   '/tasks': [ROLES.MANAGER, ROLES.WORKER],
   '/messages': [ROLES.MANAGER, ROLES.WORKER],
   '/sales-analysis': [ROLES.MANAGER],
+  '/scheduler': [ROLES.MANAGER, ROLES.WORKER],
   
   // ROAD navigation
   '/daily-sales': [ROLES.MANAGER],
   '/venues': [ROLES.MANAGER, ROLES.WORKER],
   '/calendar': [ROLES.MANAGER, ROLES.WORKER],
+  '/bonuses': [ROLES.MANAGER],
   
   // ADMIN navigation
   '/staff': [ROLES.MANAGER],

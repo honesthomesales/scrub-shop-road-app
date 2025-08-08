@@ -1146,6 +1146,425 @@ class SupabaseAPI {
     }
   }
 
+  // ===== STORE HOURS & HOLIDAYS MANAGEMENT =====
+  
+  async getStoreHours(storeId) {
+    try {
+      if (!supabase) {
+        // Mock data for development
+        return { success: true, data: [] }
+      }
+
+      const { data, error } = await supabase
+        .from('store_hours')
+        .select('*')
+        .eq('store_id', storeId)
+        .order('day_of_week')
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get store hours:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async saveStoreHours(storeId, hoursData) {
+    try {
+      if (!supabase) {
+        console.log('Mock: Saving store hours:', hoursData)
+        return { success: true }
+      }
+
+      // First, delete existing hours for this store
+      const { error: deleteError } = await supabase
+        .from('store_hours')
+        .delete()
+        .eq('store_id', storeId)
+
+      if (deleteError) throw new Error(deleteError.message)
+
+      // Then insert new hours
+      const { error: insertError } = await supabase
+        .from('store_hours')
+        .insert(hoursData)
+
+      if (insertError) throw new Error(insertError.message)
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to save store hours:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async getStoreHolidays(storeId) {
+    try {
+      if (!supabase) {
+        // Mock data for development
+        return { success: true, data: [] }
+      }
+
+      const { data, error } = await supabase
+        .from('store_holidays')
+        .select('*')
+        .eq('store_id', storeId)
+        .order('date')
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get store holidays:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async saveStoreHolidays(storeId, holidaysData) {
+    try {
+      if (!supabase) {
+        console.log('Mock: Saving store holidays:', holidaysData)
+        return { success: true }
+      }
+
+      // First, delete existing holidays for this store
+      const { error: deleteError } = await supabase
+        .from('store_holidays')
+        .delete()
+        .eq('store_id', storeId)
+
+      if (deleteError) throw new Error(deleteError.message)
+
+      // Then insert new holidays
+      const { error: insertError } = await supabase
+        .from('store_holidays')
+        .insert(holidaysData)
+
+      if (insertError) throw new Error(insertError.message)
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to save store holidays:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // ===== COMMISSION MANAGEMENT =====
+  
+  async getCommissionTiers(storeId) {
+    try {
+      if (!supabase) {
+        // Mock data for development
+        return { success: true, data: [] }
+      }
+
+      const { data, error } = await supabase
+        .from('commission_tiers')
+        .select('*')
+        .eq('store_id', storeId)
+        .order('sales_target')
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get commission tiers:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async saveCommissionTiers(storeId, tiersData) {
+    try {
+      if (!supabase) {
+        console.log('Mock: Saving commission tiers:', tiersData)
+        return { success: true }
+      }
+
+      console.log('saveCommissionTiers called with storeId:', storeId, 'tiersData:', tiersData)
+
+      // First, delete existing tiers for this store
+      const { error: deleteError } = await supabase
+        .from('commission_tiers')
+        .delete()
+        .eq('store_id', storeId)
+
+      if (deleteError) throw new Error(deleteError.message)
+
+      // Prepare data for insertion - only include fields that exist in the database
+      const insertData = tiersData
+        .filter(tier => tier.sales_target > 0 && tier.bonus_amount > 0) // Only save valid entries
+        .map(tier => {
+          // Ensure tier_name is never empty
+          const tierName = (tier.tier_name && tier.tier_name.trim()) || `Bonus for $${tier.sales_target.toLocaleString()}+ sales`
+          
+          return {
+            store_id: tier.store_id,
+            tier_name: tierName,
+            sales_target: tier.sales_target,
+            commission_rate: tier.commission_rate || 0,
+            bonus_amount: tier.bonus_amount
+            // Do NOT include id field - let database auto-generate
+          }
+        })
+
+      console.log('Final insertData to send to database:', insertData)
+
+      // Insert new tiers without specifying columns (let database handle ID generation)
+      const { error: insertError } = await supabase
+        .from('commission_tiers')
+        .insert(insertData)
+
+      if (insertError) throw new Error(insertError.message)
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to save commission tiers:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async getStaffCommissionRates(storeId) {
+    try {
+      if (!supabase) {
+        // Mock data for development
+        return { success: true, data: [] }
+      }
+
+      const { data, error } = await supabase
+        .from('staff_commission_rates')
+        .select('*')
+        .eq('store_id', storeId)
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get staff commission rates:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async saveStaffCommissionRates(storeId, ratesData) {
+    try {
+      if (!supabase) {
+        console.log('Mock: Saving staff commission rates:', ratesData)
+        return { success: true }
+      }
+
+      // First, delete existing rates for this store
+      const { error: deleteError } = await supabase
+        .from('staff_commission_rates')
+        .delete()
+        .eq('store_id', storeId)
+
+      if (deleteError) throw new Error(deleteError.message)
+
+      // Then insert new rates
+      const { error: insertError } = await supabase
+        .from('staff_commission_rates')
+        .insert(ratesData)
+
+      if (insertError) throw new Error(insertError.message)
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to save staff commission rates:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // ===== SCHEDULE MANAGEMENT =====
+  
+  async getScheduleSlots(storeId, startDate, endDate) {
+    try {
+      if (!supabase) {
+        // Mock data for development
+        return { success: true, data: [] }
+      }
+
+      const { data, error } = await supabase
+        .from('schedule_slots')
+        .select('*')
+        .eq('store_id', storeId)
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date, start_time')
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get schedule slots:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async saveScheduleSlot(slotData) {
+    try {
+      if (!supabase) {
+        console.log('Mock: Saving schedule slot:', slotData)
+        return { success: true }
+      }
+
+      const { error } = await supabase
+        .from('schedule_slots')
+        .upsert(slotData, { onConflict: 'store_id,date,start_time' })
+
+      if (error) throw new Error(error.message)
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to save schedule slot:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async deleteScheduleSlot(slotId) {
+    try {
+      if (!supabase) {
+        console.log('Mock: Deleting schedule slot:', slotId)
+        return { success: true }
+      }
+
+      const { error } = await supabase
+        .from('schedule_slots')
+        .delete()
+        .eq('id', slotId)
+
+      if (error) throw new Error(error.message)
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to delete schedule slot:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async getScheduleAssignments(storeId, startDate, endDate) {
+    try {
+      if (!supabase) {
+        // Mock data for development
+        return { success: true, data: [] }
+      }
+
+      const { data, error } = await supabase
+        .from('schedule_assignments')
+        .select(`
+          *,
+          staff:staff_id(name, role)
+        `)
+        .eq('store_id', storeId)
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date, start_time')
+
+      if (error) throw new Error(error.message)
+
+      // Transform snake_case to camelCase for frontend
+      const transformedData = (data || []).map(item => ({
+        id: item.id,
+        storeId: item.store_id,
+        staffId: item.staff_id,
+        date: item.date,
+        startTime: item.start_time,
+        endTime: item.end_time,
+        notes: item.notes,
+        staff: item.staff
+      }))
+
+      return { success: true, data: transformedData }
+    } catch (error) {
+      console.error('Failed to get schedule assignments:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+  }
+
+  async saveScheduleAssignment(assignmentData) {
+    try {
+      if (!supabase) {
+        console.log('Mock: Saving schedule assignment:', assignmentData)
+        return { success: true, data: { ...assignmentData, id: Date.now() } }
+      }
+
+      // Transform camelCase to snake_case for database
+      const dbData = {
+        store_id: assignmentData.storeId,
+        staff_id: assignmentData.staffId,
+        date: assignmentData.date,
+        start_time: assignmentData.startTime,
+        end_time: assignmentData.endTime,
+        notes: assignmentData.notes
+      }
+
+      const { data, error } = await supabase
+        .from('schedule_assignments')
+        .upsert(dbData, { onConflict: 'staff_id,date,start_time' })
+        .select()
+
+      if (error) throw new Error(error.message)
+
+      // Transform back to camelCase for frontend
+      const transformedData = data?.[0] ? {
+        id: data[0].id,
+        storeId: data[0].store_id,
+        staffId: data[0].staff_id,
+        date: data[0].date,
+        startTime: data[0].start_time,
+        endTime: data[0].end_time,
+        notes: data[0].notes
+      } : assignmentData
+
+      return { success: true, data: transformedData }
+    } catch (error) {
+      console.error('Failed to save schedule assignment:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async createScheduleAssignment(assignmentData) {
+    try {
+      if (!supabase) {
+        console.log('Mock: Creating schedule assignment:', assignmentData)
+        const newAssignment = { ...assignmentData, id: Date.now() }
+        return { success: true, data: newAssignment }
+      }
+
+      const { data, error } = await supabase
+        .from('schedule_assignments')
+        .insert(assignmentData)
+        .select()
+
+      if (error) throw new Error(error.message)
+
+      return { success: true, data: data?.[0] || assignmentData }
+    } catch (error) {
+      console.error('Failed to create schedule assignment:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async deleteScheduleAssignment(assignmentId) {
+    try {
+      if (!supabase) {
+        console.log('Mock: Deleting schedule assignment:', assignmentId)
+        return { success: true }
+      }
+
+      const { error } = await supabase
+        .from('schedule_assignments')
+        .delete()
+        .eq('id', assignmentId)
+
+      if (error) throw new Error(error.message)
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to delete schedule assignment:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
   async importTrailerHistory(rows) {
     if (!Array.isArray(rows) || rows.length === 0) {
       return { success: false, error: 'No data to import', processed: 0, failed: 0 }
@@ -1203,6 +1622,358 @@ class SupabaseAPI {
     }
     
     return { success: failed === 0, processed, failed }
+  }
+
+  // ===== SALES DATA INTEGRATION =====
+  async getSalesForPeriod(storeId, startDate, endDate) {
+    try {
+      if (!supabase) {
+        // Return mock sales data
+        return { success: true, data: [
+          { date: startDate, store: storeId, total_sales: 15000 },
+          { date: endDate, store: storeId, total_sales: 18000 }
+        ]}
+      }
+
+      // Query sales data from trailer_history and camper_history
+      const { data: trailerSales, error: trailerError } = await supabase
+        .from('trailer_history')
+        .select('date, Store, gross_sales')
+        .eq('Store', storeId)
+        .gte('date', startDate)
+        .lte('date', endDate)
+
+      const { data: camperSales, error: camperError } = await supabase
+        .from('camper_history')
+        .select('date, Store, gross_sales')
+        .eq('Store', storeId)
+        .gte('date', startDate)
+        .lte('date', endDate)
+
+      if (trailerError) throw trailerError
+      if (camperError) throw camperError
+
+      // Combine and aggregate sales data
+      const allSales = [...(trailerSales || []), ...(camperSales || [])]
+      const aggregatedSales = allSales.reduce((acc, sale) => {
+        const date = sale.date
+        if (!acc[date]) {
+          acc[date] = { date, store: storeId, total_sales: 0 }
+        }
+        acc[date].total_sales += parseFloat(sale.gross_sales || 0)
+        return acc
+      }, {})
+
+      return { success: true, data: Object.values(aggregatedSales) }
+    } catch (error) {
+      console.error('Error fetching sales data:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async getSalesByStaff(staffId, startDate, endDate) {
+    try {
+      if (!supabase) {
+        return { success: true, data: [] }
+      }
+
+      // This would query sales data associated with specific staff
+      // For now, return mock data
+      return { success: true, data: [
+        { date: startDate, staff_id: staffId, sales_amount: 5000 },
+        { date: endDate, staff_id: staffId, sales_amount: 6000 }
+      ]}
+    } catch (error) {
+      console.error('Error fetching staff sales:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async getPayrollHistory(storeId, startDate, endDate) {
+    try {
+      if (!supabase) {
+        return { success: true, data: [] }
+      }
+
+      const { data, error } = await supabase
+        .from('payroll_history')
+        .select('*')
+        .eq('store_id', storeId)
+        .gte('pay_period_start', startDate)
+        .lte('pay_period_end', endDate)
+        .order('pay_period_start', { ascending: false })
+
+      if (error) throw error
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Error fetching payroll history:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async savePayrollRecord(payrollData) {
+    try {
+      if (!supabase) {
+        return { success: true, data: { id: Date.now() } }
+      }
+
+      const { data, error } = await supabase
+        .from('payroll_history')
+        .insert([payrollData])
+        .select()
+
+      if (error) throw error
+
+      return { success: true, data: data[0] }
+    } catch (error) {
+      console.error('Error saving payroll record:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // ===== STORES MANAGEMENT =====
+  async getStores() {
+    try {
+      if (!supabase) {
+        // Return mock stores data when Supabase is not configured
+        return { success: true, data: [
+          { id: 1, name: 'Spartanburg', number: '1' },
+          { id: 2, name: 'Greenville', number: '3' },
+          { id: 3, name: 'Columbia', number: '4' },
+          { id: 4, name: 'Trailer', number: '5' },
+          { id: 5, name: 'Camper', number: '7' }
+        ]}
+      }
+
+      const { data, error } = await supabase
+        .from('stores')
+        .select('*')
+        .eq('is_active', true)
+        .order('number')
+
+      if (error) throw error
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Error fetching stores:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Staff Bonus Tiers API functions
+  async getStaffBonusTiers(staffId) {
+    try {
+      console.log('🔍 Getting staff bonus tiers for staffId:', staffId)
+      
+      const { data, error } = await supabase
+        .from('staff_bonus_tiers')
+        .select('*')
+        .eq('staff_id', staffId)
+        .order('sales_target', { ascending: true })
+
+      if (error) {
+        console.error('❌ Error fetching staff bonus tiers:', error)
+        return { success: false, error: error.message }
+      }
+
+      console.log('✅ Staff bonus tiers fetched successfully:', data)
+      return { success: true, data }
+    } catch (error) {
+      console.error('❌ Exception in getStaffBonusTiers:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async saveStaffBonusTiers(staffId, tiersData) {
+    try {
+      console.log('💾 Saving staff bonus tiers for staffId:', staffId, 'tiersData:', tiersData)
+      
+      // Check if supabase is available
+      if (!supabase) {
+        console.log('❌ Supabase not available, returning mock success')
+        return { success: true, data: tiersData }
+      }
+      
+      // First, delete existing tiers for this staff member
+      console.log('🗑️ Deleting existing tiers for staff:', staffId)
+      const { error: deleteError } = await supabase
+        .from('staff_bonus_tiers')
+        .delete()
+        .eq('staff_id', staffId)
+
+      if (deleteError) {
+        console.error('❌ Error deleting existing staff bonus tiers:', deleteError)
+        return { success: false, error: deleteError.message }
+      }
+      
+      console.log('✅ Successfully deleted existing tiers')
+
+      // If no new tiers to save, return success
+      if (!tiersData || tiersData.length === 0) {
+        console.log('✅ No tiers to save, deletion completed')
+        return { success: true, data: [] }
+      }
+
+      // Insert new tiers
+      console.log('📝 Inserting new tiers:', tiersData)
+      const { data, error } = await supabase
+        .from('staff_bonus_tiers')
+        .insert(tiersData)
+        .select()
+
+      if (error) {
+        console.error('❌ Error saving staff bonus tiers:', error)
+        console.error('❌ Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        })
+        return { success: false, error: error.message }
+      }
+
+      console.log('✅ Staff bonus tiers saved successfully:', data)
+      return { success: true, data }
+    } catch (error) {
+      console.error('❌ Exception in saveStaffBonusTiers:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async calculateStaffBonus(staffId, salesAmount) {
+    try {
+      console.log('🧮 Calculating staff bonus for staffId:', staffId, 'salesAmount:', salesAmount)
+      
+      const { data, error } = await supabase
+        .from('staff_bonus_tiers')
+        .select('*')
+        .eq('staff_id', staffId)
+        .eq('is_active', true)
+        .order('sales_target', { ascending: false })
+
+      if (error) {
+        console.error('❌ Error calculating staff bonus:', error)
+        return { success: false, error: error.message }
+      }
+
+      // Find the applicable bonus tier
+      let applicableBonus = 0
+      for (const tier of data || []) {
+        if (salesAmount >= tier.sales_target) {
+          applicableBonus = tier.bonus_amount
+          break
+        }
+      }
+
+      console.log('✅ Staff bonus calculated:', applicableBonus)
+      return { success: true, data: applicableBonus }
+    } catch (error) {
+      console.error('❌ Exception in calculateStaffBonus:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Pay Calculator API functions
+  async getScheduleAssignmentsForDateRange(storeId, startDate, endDate) {
+    try {
+      console.log('📅 Getting schedule assignments for store:', storeId, 'date range:', startDate, 'to', endDate)
+      
+      const { data, error } = await supabase
+        .from('schedule_assignments')
+        .select(`
+          *,
+          slot:schedule_slots(*)
+        `)
+        .eq('slot.store_id', storeId)
+        .gte('slot.slot_date', startDate)
+        .lte('slot.slot_date', endDate)
+
+      if (error) {
+        console.error('❌ Error fetching schedule assignments:', error)
+        return { success: false, error: error.message }
+      }
+
+      console.log('✅ Schedule assignments fetched:', data)
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('❌ Exception in getScheduleAssignmentsForDateRange:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async getSalesForDateRange(storeName, startDate, endDate) {
+    try {
+      console.log('💰 Getting sales for store:', storeName, 'date range:', startDate, 'to', endDate)
+      
+      // First, let's see what dates are actually in the table
+      const { data: allData, error: allError } = await supabase
+        .from('trailer_history')
+        .select('date, Store, gross_sales')
+        .order('date', { ascending: false })
+        .limit(5)
+
+      if (allError) {
+        console.error('❌ Error fetching sample data:', allError)
+      } else {
+        console.log('📅 Sample dates from trailer_history:', allData)
+      }
+      
+      // All sales data is stored in trailer_history table
+      const { data, error } = await supabase
+        .from('trailer_history')
+        .select('*')
+        .gte('date', startDate)
+        .lte('date', endDate)
+
+      if (error) {
+        console.error('❌ Error fetching sales data:', error)
+        return { success: false, error: error.message }
+      }
+
+      console.log('📊 Raw data for date range:', data?.length || 0, 'records')
+
+      // Filter by store name
+      const filteredSales = (data || []).filter(sale => {
+        // Map store numbers to names for filtering
+        const storeMap = {
+          '1': 'Spartanburg',
+          '3': 'Greenville', 
+          '4': 'Columbia',
+          '5': 'Trailer',
+          '7': 'Camper'
+        }
+        const saleStoreName = storeMap[sale.Store] || sale.Store
+        return saleStoreName === storeName
+      })
+
+      console.log('✅ Sales fetched for store:', storeName, filteredSales)
+      return { success: true, data: filteredSales }
+    } catch (error) {
+      console.error('❌ Exception in getSalesForDateRange:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  async savePayrollRecord(payrollData) {
+    try {
+      console.log('💾 Saving payroll record:', payrollData)
+      
+      const { data, error } = await supabase
+        .from('payroll_records')
+        .insert(payrollData)
+        .select()
+
+      if (error) {
+        console.error('❌ Error saving payroll record:', error)
+        return { success: false, error: error.message }
+      }
+
+      console.log('✅ Payroll record saved:', data)
+      return { success: true, data }
+    } catch (error) {
+      console.error('❌ Exception in savePayrollRecord:', error)
+      return { success: false, error: error.message }
+    }
   }
 }
 
