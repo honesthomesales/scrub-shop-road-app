@@ -13,6 +13,7 @@ const initialState = {
   currentMonth: new Date(),
   selectedVenue: null,
   isAuthenticated: false,
+  user: null, // Current authenticated user
   // Messages functionality
   usersData: [],
   messagesData: [],
@@ -48,6 +49,7 @@ const ACTIONS = {
   UPDATE_STAFF_ENTRY: 'UPDATE_STAFF_ENTRY',
   DELETE_STAFF_ENTRY: 'DELETE_STAFF_ENTRY',
   SET_IS_AUTHENTICATED: 'SET_IS_AUTHENTICATED',
+  SET_USER: 'SET_USER',
   SET_USERS_DATA: 'SET_USERS_DATA',
   SET_MESSAGES_DATA: 'SET_MESSAGES_DATA',
   SET_MESSAGE_GROUPS: 'SET_MESSAGE_GROUPS',
@@ -187,6 +189,13 @@ function appReducer(state, action) {
       return {
         ...state,
         isAuthenticated: action.payload
+      }
+    
+    case ACTIONS.SET_USER:
+      return {
+        ...state,
+        user: action.payload,
+        isAuthenticated: !!action.payload
       }
     
     // Messages functionality
@@ -337,9 +346,11 @@ export function AppProvider({ children }) {
     
     try {
       const isInitialized = await supabaseAPI.init()
-      dispatch({ type: ACTIONS.SET_IS_AUTHENTICATED, payload: isInitialized })
       
       if (isInitialized) {
+        // Check authentication status
+        await checkAuth()
+        
         // Load data with timeout to prevent hanging
         const timeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Data loading timeout')), 10000)
@@ -608,6 +619,67 @@ export function AppProvider({ children }) {
 
   const setIsAuthenticated = (authenticated) => {
     dispatch({ type: ACTIONS.SET_IS_AUTHENTICATED, payload: authenticated })
+  }
+
+  const setUser = (user) => {
+    dispatch({ type: ACTIONS.SET_USER, payload: user })
+  }
+
+  const signIn = async (email, password) => {
+    try {
+      const result = await supabaseAPI.signIn(email, password)
+      if (result.success) {
+        setUser(result.data)
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  const signUp = async (email, password, name) => {
+    try {
+      const result = await supabaseAPI.signUp(email, password, name)
+      if (result.success) {
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  const signOut = async () => {
+    try {
+      const result = await supabaseAPI.signOut()
+      if (result.success) {
+        setUser(null)
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  const checkAuth = async () => {
+    try {
+      const result = await supabaseAPI.getCurrentUser()
+      if (result.success) {
+        setUser(result.data)
+        return true
+      } else {
+        setUser(null)
+        return false
+      }
+    } catch (error) {
+      setUser(null)
+      return false
+    }
   }
 
   const toggleSupabaseConnection = async (connect) => {
@@ -992,6 +1064,11 @@ export function AppProvider({ children }) {
     loadVenuesData,
     loadStaffData,
     setIsAuthenticated,
+    setUser,
+    signIn,
+    signUp,
+    signOut,
+    checkAuth,
     toggleSupabaseConnection,
     loadStaffAndGroups, // Add new functions to context value
     loadMessages,

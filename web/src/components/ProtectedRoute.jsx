@@ -1,23 +1,36 @@
 import React from 'react'
-import { Navigate } from 'react-router-dom'
 import { useApp } from '../contexts/AppContext'
-import { hasPageAccess } from '../utils/permissions'
+import LoginForm from './LoginForm'
+import RegisterForm from './RegisterForm'
 
-const ProtectedRoute = ({ children, path }) => {
-  const { currentUser } = useApp()
+export default function ProtectedRoute({ children }) {
+  const { user, loading } = useApp()
+  const [showRegister, setShowRegister] = React.useState(false)
 
-  // If no user is selected, allow access (user selection modal will handle this)
-  if (!currentUser) {
-    return children
+  // Show loading spinner while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
+    )
   }
 
-  // Check if user has access to this page
-  if (!hasPageAccess(currentUser, path)) {
-    // Redirect to dashboard if no access
-    return <Navigate to="/dashboard" replace />
+  // If not authenticated, show login/register form
+  if (!user) {
+    return showRegister ? (
+      <RegisterForm
+        onSuccess={() => setShowRegister(false)}
+        onSwitchToLogin={() => setShowRegister(false)}
+      />
+    ) : (
+      <LoginForm
+        onSuccess={() => {}} // Will be handled by context
+        onSwitchToRegister={() => setShowRegister(true)}
+      />
+    )
   }
 
+  // If authenticated, show the protected content
   return children
-}
-
-export default ProtectedRoute 
+} 

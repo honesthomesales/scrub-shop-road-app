@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider } from './contexts/AppContext'
+import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import Dashboard from './pages/Dashboard'
 import Venues from './pages/Venues'
@@ -21,25 +22,27 @@ function App() {
     <AppProvider>
       <Router>
         <div className="min-h-screen bg-gray-50">
-          <Header />
-          <main className="container mx-auto px-4 py-8">
-            <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/venues" element={<Venues />} />
-              <Route path="/staff" element={<Staff />} />
-              <Route path="/tasks" element={<Tasks />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/daily-sales" element={<DailySales />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/pay-calculator" element={<PayCalculator />} />
-              <Route path="/sales-analysis" element={<SalesAnalysis />} />
-              <Route path="/sales-upload" element={<SalesUpload />} />
-              <Route path="/scheduler" element={<Scheduler />} />
-              <Route path="/bonuses" element={<Bonuses />} />
-              <Route path="/holiday-manager" element={<HolidayManager />} />
-            </Routes>
-          </main>
+          <ProtectedRoute>
+            <Header />
+            <main className="container mx-auto px-4 py-8">
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/venues" element={<Venues />} />
+                <Route path="/staff" element={<Staff />} />
+                <Route path="/tasks" element={<Tasks />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/daily-sales" element={<DailySales />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/pay-calculator" element={<PayCalculator />} />
+                <Route path="/sales-analysis" element={<SalesAnalysis />} />
+                <Route path="/sales-upload" element={<SalesUpload />} />
+                <Route path="/scheduler" element={<Scheduler />} />
+                <Route path="/bonuses" element={<Bonuses />} />
+                <Route path="/holiday-manager" element={<HolidayManager />} />
+              </Routes>
+            </main>
+          </ProtectedRoute>
         </div>
       </Router>
     </AppProvider>

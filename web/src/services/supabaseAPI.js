@@ -508,11 +508,212 @@ class SupabaseAPI {
     }
   }
 
-  // Authenticate user (placeholder for future auth implementation)
+  // ===== AUTHENTICATION METHODS =====
+
+  // Get current user
+  async getCurrentUser() {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' }
+      }
+
+      const { data: { user }, error } = await supabase.auth.getUser()
+      
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      if (!user) {
+        return { success: false, error: 'No user found' }
+      }
+
+      // Get user profile from our users table
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', user.email)
+        .single()
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.warn('Could not fetch user profile:', profileError)
+      }
+
+      const userData = {
+        id: user.id,
+        email: user.email,
+        name: profile?.name || user.user_metadata?.name || user.email,
+        role: profile?.role || 'user',
+        created_at: user.created_at,
+        last_sign_in: user.last_sign_in_at
+      }
+
+      return { success: true, data: userData }
+    } catch (error) {
+      console.error('Failed to get current user:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Sign in user
+  async signIn(email, password) {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' }
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      // Get user profile
+      const userData = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.user_metadata?.name || data.user.email,
+        role: 'user', // Will be updated from profile
+        created_at: data.user.created_at,
+        last_sign_in: data.user.last_sign_in_at
+      }
+
+      // Try to get profile from users table
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', data.user.email)
+        .single()
+
+      if (profile) {
+        userData.name = profile.name
+        userData.role = profile.role
+      }
+
+      return { success: true, data: userData }
+    } catch (error) {
+      console.error('Failed to sign in:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Sign up user
+  async signUp(email, password, name) {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' }
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name
+          }
+        }
+      })
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      // Create user profile in our users table
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([{
+            email: data.user.email,
+            name: name,
+            role: 'user',
+            is_active: true
+          }])
+
+        if (profileError) {
+          console.warn('Could not create user profile:', profileError)
+        }
+      }
+
+      return { success: true, data: data.user }
+    } catch (error) {
+      console.error('Failed to sign up:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Sign out user
+  async signOut() {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' }
+      }
+
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to sign out:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Reset password
+  async resetPassword(email) {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' }
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      })
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to reset password:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Update user profile
+  async updateProfile(userId, profileData) {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' }
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .update(profileData)
+        .eq('id', userId)
+        .select()
+        .single()
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Failed to update profile:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Authenticate user (legacy method - now uses getCurrentUser)
   async authenticate() {
-    // For now, return true since we're using anonymous access
-    // In the future, you can implement Supabase Auth here
-    return true
+    const result = await this.getCurrentUser()
+    return result.success
   }
 
   // ===== STAFF COMMUNICATION & TASK MANAGEMENT FUNCTIONS =====
