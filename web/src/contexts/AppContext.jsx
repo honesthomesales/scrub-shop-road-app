@@ -431,11 +431,24 @@ export function AppProvider({ children }) {
       const tableName = 'trailer_history';
       console.log(`Using table: ${tableName} for cleanup`);
       
+      // First, let's check what data exists in the table
+      const { data: allData, error: checkError } = await supabase
+        .from(tableName)
+        .select('id, net_sales, gross_sales, date')
+        .limit(10);
+      
+      if (checkError) {
+        console.error('Error checking table data:', checkError);
+        return { success: false, error: `Table check error: ${checkError.message}` };
+      }
+      
+      console.log('Sample data from table:', allData);
+      
       // Get all entries with $0 or negative sales using only columns that definitely exist
       const { data: zeroSalesEntries, error: queryError } = await supabase
         .from(tableName)
         .select('id, net_sales, gross_sales, date')
-        .or('net_sales.lte.0,gross_sales.lte.0')
+        .or('net_sales.eq.0,gross_sales.eq.0,net_sales.lt.0,gross_sales.lt.0')
       
       if (queryError) {
         console.error('Error querying zero sales entries:', queryError);
@@ -443,6 +456,7 @@ export function AppProvider({ children }) {
       }
       
       console.log(`Found ${zeroSalesEntries?.length || 0} zero sales entries to clean up`);
+      console.log('Zero sales entries:', zeroSalesEntries);
       
       if (zeroSalesEntries && zeroSalesEntries.length > 0) {
         // Delete each entry individually

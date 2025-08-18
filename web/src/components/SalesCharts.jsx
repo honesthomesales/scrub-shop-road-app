@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  AreaChart, Area
+  ComposedChart, Line
 } from 'recharts';
 
 // ---- helpers ----
@@ -107,10 +107,10 @@ export default function SalesCharts({ rows }) {
   const currentMonthRows = useMemo(() => getCurrentMonthData(rows), [rows]);
   
   const barData = useMemo(() => groupTotalsByStore(currentMonthRows), [currentMonthRows]);
-  const { data: areaData, stores } = useMemo(() => buildStackedByDate(currentMonthRows), [currentMonthRows]);
+  const { data: stackedData, stores } = useMemo(() => buildStackedByDate(currentMonthRows), [currentMonthRows]);
 
   console.log('SalesCharts: Bar data:', barData);
-  console.log('SalesCharts: Area data:', areaData?.length || 0, 'Stores:', stores);
+  console.log('SalesCharts: Stacked data:', stackedData?.length || 0, 'Stores:', stores);
 
   // Add month/year to chart titles
   const now = new Date();
@@ -145,12 +145,12 @@ export default function SalesCharts({ rows }) {
         )}
       </div>
 
-      {/* Stacked Area: Daily Gross by Store */}
+      {/* Stacked Bar: Daily Gross by Store */}
       <div className="rounded-2xl border p-4">
         <h3 className="text-lg font-semibold mb-2">Daily Gross by Store - {monthName} {year}</h3>
-        {areaData.length > 0 ? (
+        {stackedData.length > 0 ? (
           <ResponsiveContainer width="100%" height={320}>
-            <AreaChart data={areaData} margin={{ left: 8, right: 8, bottom: 20 }}>
+            <ComposedChart data={stackedData} margin={{ left: 8, right: 8, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="date" 
@@ -167,18 +167,16 @@ export default function SalesCharts({ rows }) {
               />
               <Legend />
               {stores.map((s, i) => (
-                <Area
+                <Bar
                   key={s}
-                  type="monotone"
                   dataKey={s}
                   stackId="1"
                   name={s}
                   fill={colorFor(i)}
                   stroke={colorFor(i)}
-                  dot={false}
                 />
               ))}
-            </AreaChart>
+            </ComposedChart>
           </ResponsiveContainer>
         ) : (
           <div className="h-80 flex items-center justify-center text-gray-500">
