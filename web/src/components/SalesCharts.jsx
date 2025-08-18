@@ -14,11 +14,31 @@ function getCurrentMonthData(rows) {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
   
-  return rows.filter(row => {
-    if (!row.date) return false;
+  console.log('SalesCharts: Processing rows:', rows?.length || 0);
+  console.log('SalesCharts: Current month/year:', currentMonth, currentYear);
+  
+  const filtered = rows.filter(row => {
+    if (!row.date) {
+      console.log('SalesCharts: Skipping row without date:', row);
+      return false;
+    }
+    
     const rowDate = new Date(row.date);
-    return rowDate.getMonth() === currentMonth && rowDate.getFullYear() === currentYear;
+    if (isNaN(rowDate.getTime())) {
+      console.log('SalesCharts: Skipping row with invalid date:', row.date, row);
+      return false;
+    }
+    
+    const matchesMonth = rowDate.getMonth() === currentMonth && rowDate.getFullYear() === currentYear;
+    if (matchesMonth) {
+      console.log('SalesCharts: Including row:', row.date, row.store, row.grossSales);
+    }
+    
+    return matchesMonth;
   });
+  
+  console.log('SalesCharts: Filtered to current month:', filtered.length);
+  return filtered;
 }
 
 function groupTotalsByStore(rows) {
@@ -57,7 +77,10 @@ function buildStackedByDate(rows) {
 function formatChartDate(dateString) {
   try {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
+    if (isNaN(date.getTime())) {
+      console.log('SalesCharts: Invalid date string:', dateString);
+      return dateString;
+    }
     
     // Format as "MMM DD" (e.g., "Aug 15")
     return date.toLocaleDateString('en-US', { 
@@ -65,6 +88,7 @@ function formatChartDate(dateString) {
       day: 'numeric' 
     });
   } catch (error) {
+    console.error('SalesCharts: Error formatting date:', dateString, error);
     return dateString;
   }
 }
@@ -77,11 +101,16 @@ const colorFor = (i) => palette[i % palette.length];
 
 // ---- component ----
 export default function SalesCharts({ rows }) {
+  console.log('SalesCharts: Received rows:', rows?.length || 0, 'Sample:', rows?.slice(0, 3));
+  
   // Filter to current month only
   const currentMonthRows = useMemo(() => getCurrentMonthData(rows), [rows]);
   
   const barData = useMemo(() => groupTotalsByStore(currentMonthRows), [currentMonthRows]);
   const { data: areaData, stores } = useMemo(() => buildStackedByDate(currentMonthRows), [currentMonthRows]);
+
+  console.log('SalesCharts: Bar data:', barData);
+  console.log('SalesCharts: Area data:', areaData?.length || 0, 'Stores:', stores);
 
   // Add month/year to chart titles
   const now = new Date();

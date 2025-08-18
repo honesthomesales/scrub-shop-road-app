@@ -12,9 +12,20 @@ export const transformSalesData = (rowData, sheetType) => {
     return storeMap[storeNumber] || `Store ${storeNumber}`
   }
 
-  // Get the store value from the database and map it to a name
-  const rawStore = rowData.Store || rowData.store || null
-  const storeName = rawStore ? getStoreName(String(rawStore)) : (sheetType === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper')
+  // Get the store value from the database
+  // Priority: 1. Database store column, 2. Store number mapping, 3. Default based on sheet type
+  let storeName = null
+  
+  if (rowData.store) {
+    // If store column exists in database, use it directly
+    storeName = rowData.store
+  } else if (rowData.Store) {
+    // Fallback to Store field (capitalized) if it exists
+    storeName = getStoreName(String(rowData.Store))
+  } else {
+    // Default based on sheet type
+    storeName = sheetType === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'
+  }
 
   const transformed = {
     id: rowData.id || null,
@@ -23,7 +34,7 @@ export const transformSalesData = (rowData, sheetType) => {
     salesTax: parseFloat(rowData.sales_tax || 0) || 0,
     netSales: parseFloat(rowData.net_sales || 0) || 0,
     grossSales: parseFloat(rowData.gross_sales || 0) || 0,
-    // Store is where we're selling FROM - use the mapped store name
+    // Store is where we're selling FROM - use the determined store name
     store: storeName,
     // Venue is where we're selling AT (the place name)
     venue: rowData.common_venue_name || rowData.venue_name || '',

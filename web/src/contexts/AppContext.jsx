@@ -431,7 +431,7 @@ export function AppProvider({ children }) {
       const tableName = state.currentSheet === 'CAMPER_HISTORY' ? 'camper_history' : 'trailer_history';
       console.log(`Using table: ${tableName} for cleanup`);
       
-      // Get all entries with $0 or negative sales
+      // Get all entries with $0 or negative sales using correct column names
       const { data: zeroSalesEntries, error: queryError } = await supabase
         .from(tableName)
         .select('id, net_sales, gross_sales, date, store')
