@@ -368,8 +368,8 @@ export function AppProvider({ children }) {
 
   const loadSalesData = async () => {
     try {
-      // Use the correct table based on current sheet
-      const tableName = state.currentSheet === 'CAMPER_HISTORY' ? 'camper_history' : 'trailer_history';
+      // Use trailer_history table since that's where all the data is
+      const tableName = 'trailer_history';
       console.log(`Loading sales data from table: ${tableName}`);
       
       const result = await supabaseAPI.readTable(tableName)
@@ -396,8 +396,8 @@ export function AppProvider({ children }) {
 
   const loadRawSalesData = async () => {
     try {
-      // Use the correct table based on current sheet
-      const tableName = state.currentSheet === 'CAMPER_HISTORY' ? 'camper_history' : 'trailer_history';
+      // Use trailer_history table since that's where all the data is
+      const tableName = 'trailer_history';
       console.log(`Loading raw sales data from table: ${tableName}`);
       
       const result = await supabaseAPI.readTable(tableName)
@@ -427,14 +427,14 @@ export function AppProvider({ children }) {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2c2Jycm16ZWRhZHlmZnF0Y2RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxOTQxNzQsImV4cCI6MjA2Nzc3MDE3NH0.S3DSc-15No3SUr2Zmw_Qf7GQ4xABMYhMtN7LwvDDAiw'
       );
       
-      // Determine the correct table name based on current sheet
-      const tableName = state.currentSheet === 'CAMPER_HISTORY' ? 'camper_history' : 'trailer_history';
+      // Use trailer_history table since that's where all the data is
+      const tableName = 'trailer_history';
       console.log(`Using table: ${tableName} for cleanup`);
       
       // Get all entries with $0 or negative sales using correct column names
       const { data: zeroSalesEntries, error: queryError } = await supabase
         .from(tableName)
-        .select('id, net_sales, gross_sales, date, store')
+        .select('id, net_sales, gross_sales, date, Store')
         .or('net_sales.lte.0,gross_sales.lte.0')
       
       if (queryError) {
