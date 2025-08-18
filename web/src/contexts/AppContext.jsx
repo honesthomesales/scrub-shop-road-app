@@ -431,10 +431,10 @@ export function AppProvider({ children }) {
       const tableName = 'trailer_history';
       console.log(`Using table: ${tableName} for cleanup`);
       
-      // Get all entries with $0 or negative sales using correct column names
+      // Get all entries with $0 or negative sales using only columns that definitely exist
       const { data: zeroSalesEntries, error: queryError } = await supabase
         .from(tableName)
-        .select('id, net_sales, gross_sales, date, Store')
+        .select('id, net_sales, gross_sales, date')
         .or('net_sales.lte.0,gross_sales.lte.0')
       
       if (queryError) {

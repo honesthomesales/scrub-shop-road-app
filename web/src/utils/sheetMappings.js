@@ -12,12 +12,23 @@ export const transformSalesData = (rowData, sheetType) => {
     return storeMap[storeNumber] || `Store ${storeNumber}`
   }
 
-  // Get the store value from the Store field (capitalized) in trailer_history table
+  // Try to get store information from various possible sources
   let storeName = 'Trailer' // Default for trailer_history
   
+  // Check if Store field exists (capitalized)
   if (rowData.Store) {
-    // Use the Store field from the database and map it to a readable name
     storeName = getStoreName(String(rowData.Store))
+  }
+  // Check if store field exists (lowercase)
+  else if (rowData.store) {
+    storeName = getStoreName(String(rowData.store))
+  }
+  // Check if we can derive store from other fields
+  else if (rowData.promo && rowData.promo.includes('Trailer')) {
+    storeName = 'Trailer'
+  }
+  else if (rowData.promo && rowData.promo.includes('Camper')) {
+    storeName = 'Camper'
   }
 
   const transformed = {
@@ -27,7 +38,7 @@ export const transformSalesData = (rowData, sheetType) => {
     salesTax: parseFloat(rowData.sales_tax || 0) || 0,
     netSales: parseFloat(rowData.net_sales || 0) || 0,
     grossSales: parseFloat(rowData.gross_sales || 0) || 0,
-    // Store is where we're selling FROM - use the mapped store name
+    // Store is where we're selling FROM - use the determined store name
     store: storeName,
     // Venue is where we're selling AT (the place name)
     venue: rowData.common_venue_name || rowData.venue_name || '',
