@@ -11,7 +11,6 @@ import Calendar from './pages/Calendar'
 import DailySales from './pages/DailySales'
 import Messages from './pages/Messages'
 import PayCalculator from './pages/PayCalculator'
-import SalesAnalysis from './pages/SalesAnalysis'
 import SalesUpload from './pages/SalesUpload'
 import Scheduler from './pages/Scheduler'
 import Bonuses from './pages/Bonuses'
@@ -26,19 +25,18 @@ function App() {
             <Header />
             <main className="container mx-auto px-4 py-8">
               <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/" element={<Navigate to="/daily-sales" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/daily-sales" element={<DailySales />} />
                 <Route path="/venues" element={<Venues />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/bonuses" element={<Bonuses />} />
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/tasks" element={<Tasks />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/daily-sales" element={<DailySales />} />
                 <Route path="/messages" element={<Messages />} />
-                <Route path="/pay-calculator" element={<PayCalculator />} />
-                <Route path="/sales-analysis" element={<SalesAnalysis />} />
-                <Route path="/sales-upload" element={<SalesUpload />} />
                 <Route path="/scheduler" element={<Scheduler />} />
-                <Route path="/bonuses" element={<Bonuses />} />
+                <Route path="/admin/sales-upload" element={<SalesUpload />} />
+                <Route path="/pay-calculator" element={<PayCalculator />} />
                 <Route path="/holiday-manager" element={<HolidayManager />} />
               </Routes>
             </main>

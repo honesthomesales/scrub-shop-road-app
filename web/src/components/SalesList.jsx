@@ -6,14 +6,14 @@ import { SALES_STATUS_OPTIONS } from '../utils/sheetMappings'
 import { cn } from '../utils/cn'
 
 const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
-  const { salesData, currentMonth, setCurrentMonth, venuesData } = useApp()
+  const { rawSalesData, currentMonth, setCurrentMonth, venuesData } = useApp()
   const [filteredSales, setFilteredSales] = useState([])
   const [selectedSale, setSelectedSale] = useState(null)
   const [showDetails, setShowDetails] = useState(false)
 
   // Filter sales by current month
   useEffect(() => {
-    const filtered = salesData.filter(sale => {
+    const filtered = rawSalesData.filter(sale => {
       // Use the parseDateString function for consistent date parsing
       const saleDate = parseDateString(sale.date)
       
@@ -33,7 +33,7 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
     })
     
     setFilteredSales(filtered)
-  }, [salesData, currentMonth])
+  }, [rawSalesData, currentMonth])
 
   const getVenueName = (sale) => {
     // For aggregated data, use the store field, fallback to venueId for backward compatibility

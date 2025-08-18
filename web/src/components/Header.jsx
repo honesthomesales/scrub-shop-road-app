@@ -21,6 +21,7 @@ import { useApp } from '../contexts/AppContext'
 import { cn } from '../utils/cn'
 import AuthStatus from './AuthStatus'
 import { getFilteredNavigation } from '../utils/permissions'
+import ScrubShopLogo from './ScrubShopLogo'
 
 const Header = () => {
   const location = useLocation()
@@ -77,9 +78,7 @@ const Header = () => {
     { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
     { name: 'Tasks', href: '/tasks', icon: CheckSquare },
     { name: 'Messages', href: '/messages', icon: MessageSquare },
-    { name: 'Sales Analysis', href: '/sales-analysis', icon: TrendingUp },
     { name: 'Scheduler', href: '/scheduler', icon: Clock },
-
   ]
 
   const allRoadNavigation = [
@@ -105,9 +104,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <h1 className="text-xl font-bold text-primary-600">
-              Scrub Shop Road App
-            </h1>
+            <ScrubShopLogo size="small" className="text-primary-600" />
           </div>
 
           {/* Navigation */}

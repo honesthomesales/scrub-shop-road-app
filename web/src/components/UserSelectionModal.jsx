@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useApp } from '../contexts/AppContext'
+import ScrubShopLogo from './ScrubShopLogo'
 
 const UserSelectionModal = () => {
   const { staffData, currentUser, setCurrentUser, loading } = useApp()
@@ -46,9 +47,9 @@ const UserSelectionModal = () => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Welcome to Scrub Shop Road App
-            </h2>
+            <div className="mb-4">
+              <ScrubShopLogo size="medium" />
+            </div>
             <p className="text-gray-600 mb-6">
               Please select your name to get started. This will help personalize your experience and determine your access level.
             </p>

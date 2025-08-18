@@ -12,6 +12,7 @@ const Tasks = () => {
     tasksData, 
     staffData, 
     currentUser,
+    user, // Add user to access staffMember
     loadTasks, 
     addTask, 
     updateTask, 
@@ -23,17 +24,28 @@ const Tasks = () => {
   const [editingTask, setEditingTask] = useState(null)
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
-  const [viewMode, setViewMode] = useState('card') // 'card' or 'list'
+  const [viewMode, setViewMode] = useState('list') // 'card' or 'list'
 
   useEffect(() => {
-    // Set default current user (first staff member) if none selected
-    if (staffData.length > 0 && !currentUser) {
+    // Auto-login as linked staff member if user is authenticated
+    if (user?.staffMember && !currentUser) {
+      setCurrentUser(user.staffMember)
+    }
+    // Set default current user (first staff member) if none selected and no linked staff
+    else if (staffData.length > 0 && !currentUser && !user?.staffMember) {
       setCurrentUser(staffData[0])
     }
 
     // Load tasks
     loadTasks()
-  }, [staffData, currentUser, setCurrentUser, loadTasks])
+  }, [staffData, currentUser, setCurrentUser, loadTasks, user])
+
+  // Auto-login as linked staff member when user changes
+  useEffect(() => {
+    if (user?.staffMember && !currentUser) {
+      setCurrentUser(user.staffMember)
+    }
+  }, [user, currentUser, setCurrentUser])
 
   const handleCreateTask = async (taskData) => {
     if (!currentUser) return

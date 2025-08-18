@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useApp } from '../contexts/AppContext'
 import SalesList from '../components/SalesList'
+import SalesCharts from '../components/SalesCharts'
 import { getDefaultSalesEntry, SALES_STATUS_OPTIONS } from '../utils/sheetMappings'
 import { cn } from '../utils/cn'
 import { parseDateString, formatDateInput } from '../utils/dateUtils'
@@ -12,13 +13,27 @@ const DailySales = () => {
     updateSalesEntry, 
     deleteSalesEntry, 
     venuesData,
-    loading 
+    rawSalesData,
+    loading,
+    cleanupZeroSalesEntries
   } = useApp()
+  
+  // Debug logging
+  console.log('DailySales component rendering with:', {
+    currentSheet,
+    venuesDataLength: venuesData?.length,
+    rawSalesDataLength: rawSalesData?.length,
+    loading,
+    addSalesEntry: typeof addSalesEntry,
+    updateSalesEntry: typeof updateSalesEntry,
+    deleteSalesEntry: typeof deleteSalesEntry
+  })
   
   const [showModal, setShowModal] = useState(false)
   const [editingSale, setEditingSale] = useState(null)
   const [formData, setFormData] = useState(getDefaultSalesEntry(currentSheet))
   const [formErrors, setFormErrors] = useState({})
+  const [isCleaning, setIsCleaning] = useState(false)
 
   const handleAddSale = () => {
     setEditingSale(null)
@@ -49,6 +64,26 @@ const DailySales = () => {
     const result = await deleteSalesEntry(saleId)
     if (!result.success) {
       alert(`Error deleting sale: ${result.error}`)
+    }
+  }
+
+  const handleCleanupZeroSales = async () => {
+    setIsCleaning(true)
+    try {
+      console.log('DailySales: Starting cleanup...');
+      const result = await cleanupZeroSalesEntries()
+      console.log('DailySales: Cleanup result:', result);
+      
+      if (result.success) {
+        alert(result.message)
+      } else {
+        alert(`Error during cleanup: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('DailySales: Cleanup error:', error);
+      alert(`Unexpected error during cleanup: ${error.message}`)
+    } finally {
+      setIsCleaning(false)
     }
   }
 
@@ -137,17 +172,78 @@ const DailySales = () => {
     )
   }
 
+  // Fallback render if data is missing
+  if (!venuesData || !rawSalesData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-secondary-900 mb-4">Data Loading Issue</h2>
+          <p className="text-secondary-600 mb-4">
+            Venues: {venuesData ? 'Loaded' : 'Missing'} | 
+            Sales: {rawSalesData ? 'Loaded' : 'Missing'}
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn-primary"
+          >
+            Reload Page
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-secondary-900">
-            Daily Sales
-          </h1>
-          <p className="mt-2 text-secondary-600">
-            Manage sales entries for {currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'} operations
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-secondary-900">
+                Daily Sales
+              </h1>
+              <p className="mt-2 text-secondary-600">
+                Manage sales entries for {currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'} operations
+              </p>
+            </div>
+            <button
+              onClick={handleCleanupZeroSales}
+              disabled={isCleaning}
+              className="btn-outline bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+            >
+              {isCleaning ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
+                  Cleaning...
+                </>
+              ) : (
+                '🧹 Clean $0 Entries'
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Sales Charts */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-secondary-900 mb-4">Sales Analytics</h2>
+          {(() => {
+            const chartData = rawSalesData
+              .filter(sale => sale.date && sale.grossSales > 0)
+              .map(sale => ({
+                date: sale.date,
+                store: sale.store,
+                grossSales: sale.grossSales
+              }));
+            
+            console.log('DailySales: Raw sales data count:', rawSalesData?.length || 0);
+            console.log('DailySales: Filtered chart data count:', chartData.length);
+            console.log('DailySales: Chart data sample:', chartData.slice(0, 3));
+            
+            return (
+              <SalesCharts rows={chartData} />
+            );
+          })()}
         </div>
 
         {/* Sales List */}

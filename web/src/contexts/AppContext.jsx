@@ -4,29 +4,18 @@ import { transformSalesData, transformVenueData, transformStaffData, staffToDb, 
 
 // Initial state
 const initialState = {
-  currentSheet: 'TRAILER_HISTORY', // Default to Trailer_History
+  currentSheet: 'TRAILER_HISTORY',
   salesData: [],
+  rawSalesData: [],
   venuesData: [],
-  staffData: [], // Real staff data from Google Sheets
+  staffData: [],
+  tasksData: [],
+  messagesData: [],
+  calendarEvents: [],
+  currentMonth: new Date(),
   loading: false,
   error: null,
-  currentMonth: new Date(),
-  selectedVenue: null,
-  isAuthenticated: false,
-  user: null, // Current authenticated user
-  // Messages functionality
-  usersData: [],
-  messagesData: [],
-  messageGroups: [],
-  currentUser: null,
-  selectedGroup: null,
-  // Tasks functionality
-  tasksData: [],
-  taskComments: [],
-  selectedTask: null,
-  // Sales Analysis functionality
-  salesAnalysisData: [],
-  salesAnalysisStats: {}
+  user: null
 }
 
 // Action types
@@ -63,8 +52,7 @@ const ACTIONS = {
   SET_TASK_COMMENTS: 'SET_TASK_COMMENTS',
   ADD_TASK_COMMENT: 'ADD_TASK_COMMENT',
   SET_SELECTED_TASK: 'SET_SELECTED_TASK',
-  SET_SALES_ANALYSIS_DATA: 'SET_SALES_ANALYSIS_DATA',
-  SET_SALES_ANALYSIS_STATS: 'SET_SALES_ANALYSIS_STATS'
+  SET_RAW_SALES_DATA: 'SET_RAW_SALES_DATA',
 }
 
 // Reducer function
@@ -281,18 +269,11 @@ function appReducer(state, action) {
       }
     
     // Sales Analysis functionality
-    case ACTIONS.SET_SALES_ANALYSIS_DATA:
+    case ACTIONS.SET_RAW_SALES_DATA:
       return {
         ...state,
-        salesAnalysisData: action.payload
+        rawSalesData: action.payload
       }
-    
-    case ACTIONS.SET_SALES_ANALYSIS_STATS:
-      return {
-        ...state,
-        salesAnalysisStats: action.payload
-      }
-    
     default:
       return state
   }
@@ -348,8 +329,9 @@ export function AppProvider({ children }) {
       const isInitialized = await supabaseAPI.init()
       
       if (isInitialized) {
-        // Check authentication status
-        await checkAuth()
+        // Check authentication status and get user data
+        const authResult = await checkAuth()
+        console.log('Auth check result:', authResult)
         
         // Load data with timeout to prevent hanging
         const timeoutPromise = new Promise((_, reject) => 
@@ -386,7 +368,10 @@ export function AppProvider({ children }) {
 
   const loadSalesData = async () => {
     try {
-      const tableName = 'trailer_history' // Always use trailer_history table
+      // Use the correct table based on current sheet
+      const tableName = state.currentSheet === 'CAMPER_HISTORY' ? 'camper_history' : 'trailer_history';
+      console.log(`Loading sales data from table: ${tableName}`);
+      
       const result = await supabaseAPI.readTable(tableName)
       if (result.success) {
         const transformedData = result.data.map(row => {
@@ -398,11 +383,111 @@ export function AppProvider({ children }) {
         const aggregatedData = aggregateSalesByStoreAndDate(transformedData);
         
         dispatch({ type: ACTIONS.SET_SALES_DATA, payload: aggregatedData })
+        
+        // Also store the raw data for components that need individual entries
+        dispatch({ type: ACTIONS.SET_RAW_SALES_DATA, payload: transformedData })
       } else {
         dispatch({ type: ACTIONS.SET_ERROR, payload: result.error })
       }
     } catch (error) {
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
+    }
+  }
+
+  const loadRawSalesData = async () => {
+    try {
+      // Use the correct table based on current sheet
+      const tableName = state.currentSheet === 'CAMPER_HISTORY' ? 'camper_history' : 'trailer_history';
+      console.log(`Loading raw sales data from table: ${tableName}`);
+      
+      const result = await supabaseAPI.readTable(tableName)
+      if (result.success) {
+        const transformedData = result.data.map(row => {
+          const transformed = transformSalesData(row, state.currentSheet);
+          return transformed;
+        });
+        
+        dispatch({ type: ACTIONS.SET_RAW_SALES_DATA, payload: transformedData })
+      } else {
+        dispatch({ type: ACTIONS.SET_ERROR, payload: result.error })
+      }
+    } catch (error) {
+      dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
+    }
+  }
+
+  const cleanupZeroSalesEntries = async () => {
+    try {
+      console.log('Starting cleanup of zero sales entries...');
+      
+      // Import the supabase client directly
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        'https://kvsbrrmzedadyffqtcdq.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2c2Jycm16ZWRhZHlmZnF0Y2RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxOTQxNzQsImV4cCI6MjA2Nzc3MDE3NH0.S3DSc-15No3SUr2Zmw_Qf7GQ4xABMYhMtN7LwvDDAiw'
+      );
+      
+      // Determine the correct table name based on current sheet
+      const tableName = state.currentSheet === 'CAMPER_HISTORY' ? 'camper_history' : 'trailer_history';
+      console.log(`Using table: ${tableName} for cleanup`);
+      
+      // Get all entries with $0 or negative sales
+      const { data: zeroSalesEntries, error: queryError } = await supabase
+        .from(tableName)
+        .select('id, net_sales, gross_sales, date, store')
+        .or('net_sales.lte.0,gross_sales.lte.0')
+      
+      if (queryError) {
+        console.error('Error querying zero sales entries:', queryError);
+        return { success: false, error: `Query error: ${queryError.message}` };
+      }
+      
+      console.log(`Found ${zeroSalesEntries?.length || 0} zero sales entries to clean up`);
+      
+      if (zeroSalesEntries && zeroSalesEntries.length > 0) {
+        // Delete each entry individually
+        const deletePromises = zeroSalesEntries.map(async (entry) => {
+          console.log(`Deleting entry ID ${entry.id}: net_sales=${entry.net_sales}, gross_sales=${entry.gross_sales}`);
+          
+          const { error: deleteError } = await supabase
+            .from(tableName)
+            .delete()
+            .eq('id', entry.id)
+          
+          if (deleteError) {
+            console.error(`Error deleting entry ${entry.id}:`, deleteError);
+            return { success: false, error: deleteError.message };
+          }
+          
+          return { success: true, id: entry.id };
+        });
+        
+        const results = await Promise.all(deletePromises);
+        const successful = results.filter(r => r.success).length;
+        const failed = results.filter(r => !r.success).length;
+        
+        console.log(`Cleanup completed: ${successful} deleted, ${failed} failed`);
+        
+        // Reload the data after cleanup
+        await loadRawSalesData();
+        
+        if (failed > 0) {
+          return { 
+            success: false, 
+            error: `${successful} entries cleaned up, but ${failed} failed to delete` 
+          };
+        }
+        
+        return { 
+          success: true, 
+          message: `${successful} zero sales entries cleaned up successfully` 
+        };
+      } else {
+        return { success: true, message: 'No zero sales entries found to clean up' };
+      }
+    } catch (error) {
+      console.error('Cleanup error:', error);
+      return { success: false, error: error.message };
     }
   }
 
@@ -629,12 +714,48 @@ export function AppProvider({ children }) {
     try {
       const result = await supabaseAPI.signIn(email, password)
       if (result.success) {
-        setUser(result.data)
-        return { success: true }
+        const userData = result.data
+        
+        // Auto-link user to staff member by email if not already linked
+        if (!userData.staffMember) {
+          try {
+            // Import the supabase client directly
+            const { createClient } = await import('@supabase/supabase-js');
+            const supabase = createClient(
+              'https://kvsbrrmzedadyffqtcdq.supabase.co',
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2c2Jycm16ZWRhZHlmZnF0Y2RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxOTQxNzQsImV4cCI6MjA2Nzc3MDE3NH0.S3DSc-15No3SUr2Zmw_Qf7GQ4xABMYhMtN7LwvDDAiw'
+            );
+            
+            // Check if there's a staff member with this email
+            const { data: staffMembers } = await supabase
+              .from('staff')
+              .select('*')
+              .eq('email', email)
+              .single()
+            
+            if (staffMembers) {
+              // Update the user profile with staff_id
+              await supabase
+                .from('users')
+                .update({ staff_id: staffMembers.id })
+                .eq('email', email)
+              
+              userData.staffMember = staffMembers
+              userData.name = staffMembers.name || userData.name
+              userData.staff_id = staffMembers.id
+            }
+          } catch (error) {
+            console.log('No staff member found for email:', email)
+          }
+        }
+        
+        dispatch({ type: ACTIONS.SET_USER, payload: userData })
+        return { success: true, data: userData }
       } else {
         return { success: false, error: result.error }
       }
     } catch (error) {
+      console.error('Sign in error:', error)
       return { success: false, error: error.message }
     }
   }
@@ -670,7 +791,46 @@ export function AppProvider({ children }) {
     try {
       const result = await supabaseAPI.getCurrentUser()
       if (result.success) {
-        setUser(result.data)
+        const userData = result.data
+        
+        // Auto-link user to staff member by email if not already linked
+        if (!userData.staffMember) {
+          try {
+            // Import the supabase client directly
+            const { createClient } = await import('@supabase/supabase-js');
+            const supabase = createClient(
+              'https://kvsbrrmzedadyffqtcdq.supabase.co',
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2c2Jycm16ZWRhZHlmZnF0Y2RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxOTQxNzQsImV4cCI6MjA2Nzc3MDE3NH0.S3DSc-15No3SUr2Zmw_Qf7GQ4xABMYhMtN7LwvDDAiw'
+            );
+            
+            // Check if there's a staff member with this email
+            const { data: staffMembers } = await supabase
+              .from('staff')
+              .select('*')
+              .eq('email', userData.email)
+              .single()
+            
+            if (staffMembers) {
+              // Update the user profile with staff_id
+              await supabase
+                .from('users')
+                .update({ staff_id: staffMembers.id })
+                .eq('email', userData.email)
+              
+              userData.staffMember = staffMembers
+              userData.name = staffMembers.name || userData.name
+              userData.staff_id = staffMembers.id
+              
+              // Set this user as the current user automatically
+              dispatch({ type: ACTIONS.SET_CURRENT_USER, payload: staffMembers })
+              console.log('Auto-set current user to staff member:', staffMembers.name)
+            }
+          } catch (error) {
+            console.log('No staff member found for email:', userData.email)
+          }
+        }
+        
+        setUser(userData)
         return true
       } else {
         setUser(null)
@@ -679,6 +839,19 @@ export function AppProvider({ children }) {
     } catch (error) {
       setUser(null)
       return false
+    }
+  }
+
+  const resendConfirmationEmail = async (email) => {
+    try {
+      const result = await supabaseAPI.resendConfirmationEmail(email)
+      if (result.success) {
+        return { success: true }
+      } else {
+        return { success: false, error: result.error }
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
     }
   }
 
@@ -851,29 +1024,6 @@ export function AppProvider({ children }) {
 
   const setSelectedTask = (task) => {
     dispatch({ type: ACTIONS.SET_SELECTED_TASK, payload: task })
-  }
-
-  // Sales Analysis functionality
-  const loadSalesAnalysisData = async () => {
-    try {
-      const result = await supabaseAPI.getSalesAnalysisData()
-      if (result.success) {
-        dispatch({ type: ACTIONS.SET_SALES_ANALYSIS_DATA, payload: result.data })
-      }
-    } catch (error) {
-      console.error('Failed to load sales analysis data:', error)
-    }
-  }
-
-  const loadSalesAnalysisStats = async () => {
-    try {
-      const result = await supabaseAPI.getSalesAnalysisStats()
-      if (result.success) {
-        dispatch({ type: ACTIONS.SET_SALES_ANALYSIS_STATS, payload: result.data })
-      }
-    } catch (error) {
-      console.error('Failed to load sales analysis stats:', error)
-    }
   }
 
   // ===== CALENDAR EVENTS FUNCTIONALITY =====
@@ -1069,6 +1219,7 @@ export function AppProvider({ children }) {
     signUp,
     signOut,
     checkAuth,
+    resendConfirmationEmail,
     toggleSupabaseConnection,
     loadStaffAndGroups, // Add new functions to context value
     loadMessages,
@@ -1082,12 +1233,12 @@ export function AppProvider({ children }) {
     loadTaskComments,
     addTaskComment,
     setSelectedTask,
-    loadSalesAnalysisData,
-    loadSalesAnalysisStats,
     addCalendarEvent,
     updateCalendarEvent,
     deleteCalendarEvent,
-    loadCalendarEvents
+    loadCalendarEvents,
+    loadRawSalesData,
+    cleanupZeroSalesEntries
   }
 
   return (

@@ -421,9 +421,6 @@ const Dashboard = () => {
       case 'staff':
         window.location.href = `/staff?store=${store.id}`
         break
-      case 'reports':
-        window.location.href = `/sales-analysis?store=${store.id}`
-        break
       case 'pay-calculator':
         window.location.href = `/pay-calculator?store=${store.id}`
         break
@@ -932,13 +929,6 @@ const Dashboard = () => {
                           >
                             <Users className="w-4 h-4 mr-2" />
                             Staff
-                          </button>
-                          <button
-                            onClick={() => handleStoreAction('reports', store)}
-                            className="flex items-center justify-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-sm font-medium text-gray-700 hover:text-blue-600"
-                          >
-                            <BarChart3 className="w-4 h-4 mr-2" />
-                            Reports
                           </button>
                           <button
                             onClick={() => handleStoreAction('pay-calculator', store)}

@@ -9,7 +9,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        navigateFallback: '/offline.html'
+        navigateFallback: process.env.NODE_ENV === 'production' ? '/scrub-shop-road-app/offline.html' : '/offline.html'
       },
       manifest: {
         name: 'Scrub Shop Road App',

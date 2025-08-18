@@ -590,6 +590,21 @@ class SupabaseAPI {
       if (profile) {
         userData.name = profile.name
         userData.role = profile.role
+        userData.staff_id = profile.staff_id
+      }
+
+      // Check if user is linked to a staff member
+      if (profile?.staff_id) {
+        const { data: staffMember } = await supabase
+          .from('staff')
+          .select('*')
+          .eq('id', profile.staff_id)
+          .single()
+
+        if (staffMember) {
+          userData.staffMember = staffMember
+          userData.name = staffMember.name || userData.name
+        }
       }
 
       return { success: true, data: userData }
@@ -620,19 +635,25 @@ class SupabaseAPI {
         return { success: false, error: error.message }
       }
 
-      // Create user profile in our users table
+      // The trigger function should handle user profile creation automatically
+      // But if it fails, we'll try to create it manually
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([{
-            email: data.user.email,
-            name: name,
-            role: 'user',
-            is_active: true
-          }])
+        try {
+          const { error: profileError } = await supabase
+            .from('users')
+            .insert([{
+              id: data.user.id,
+              email: data.user.email,
+              name: name,
+              role: 'user',
+              is_active: true
+            }])
 
-        if (profileError) {
-          console.warn('Could not create user profile:', profileError)
+          if (profileError && profileError.code !== '23505') { // Ignore duplicate key errors
+            console.warn('Could not create user profile:', profileError)
+          }
+        } catch (profileError) {
+          console.warn('Profile creation failed, but auth succeeded:', profileError)
         }
       }
 
@@ -685,6 +706,29 @@ class SupabaseAPI {
     }
   }
 
+  // Resend confirmation email
+  async resendConfirmationEmail(email) {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' }
+      }
+
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email
+      })
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to resend confirmation email:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
   // Update user profile
   async updateProfile(userId, profileData) {
     try {
@@ -706,6 +750,55 @@ class SupabaseAPI {
       return { success: true, data }
     } catch (error) {
       console.error('Failed to update profile:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Link user to staff member
+  async linkUserToStaff(userId, staffId) {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' }
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .update({ staff_id: staffId })
+        .eq('id', userId)
+        .select()
+        .single()
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Failed to link user to staff:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Get unlinked users (users without staff_id)
+  async getUnlinkedUsers() {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' }
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .is('staff_id', null)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      return { success: true, data: data || [] }
+    } catch (error) {
+      console.error('Failed to get unlinked users:', error)
       return { success: false, error: error.message }
     }
   }
@@ -733,11 +826,30 @@ class SupabaseAPI {
         return { success: true, data: mockUsers }
       }
 
-      const { data, error } = await supabase
+      // First check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        return { success: true, data: [] }
+      }
+
+      // Get current user's role to determine what they can see
+      const { data: currentUser } = await supabase
         .from('users')
-        .select('*')
-        .eq('is_active', true)
-        .order('name')
+        .select('role')
+        .eq('email', user.email)
+        .single()
+
+      let query = supabase.from('users').select('*')
+
+      // If user is admin, they can see all users
+      if (currentUser?.role === 'admin') {
+        query = query.eq('is_active', true).order('name')
+      } else {
+        // Regular users can only see themselves
+        query = query.eq('email', user.email)
+      }
+
+      const { data, error } = await query
 
       if (error) throw new Error(error.message)
 
@@ -1064,285 +1176,6 @@ class SupabaseAPI {
       return { success: true, data: newComment }
     } catch (error) {
       console.error('Failed to add task comment:', error)
-      return { success: false, error: error.message }
-    }
-  }
-
-  // Sales Analysis Management
-  async addSalesAnalysisBatch(salesData) {
-    try {
-      if (!supabase) {
-        // Mock implementation for development
-
-        return { success: true, data: salesData.map((item, index) => ({ ...item, id: Date.now() + index })) }
-      }
-
-      const { data, error } = await supabase
-        .from('sales_analysis')
-        .insert(salesData)
-        .select()
-
-      if (error) throw new Error(error.message)
-
-      return { success: true, data: data || [] }
-    } catch (error) {
-      console.error('Failed to add sales analysis batch:', error)
-      return { success: false, error: error.message }
-    }
-  }
-
-  async getSalesAnalysis(options = {}) {
-    try {
-
-      
-      if (!supabase) {
-        const mockData = []
-        return { success: true, data: mockData }
-      }
-
-
-      // Use pagination to get all data beyond the 1000 limit
-      let allData = []
-      let page = 0
-      const pageSize = 1000
-      let hasMore = true
-
-      while (hasMore) {
-
-        
-        let query = supabase
-          .from('sales_analysis')
-          .select('*')
-          .order('invoice_date', { ascending: false })
-          .range(page * pageSize, (page + 1) * pageSize - 1)
-
-        // Apply filters
-        if (options.storeIds && options.storeIds.length > 0) {
-          query = query.in('store_id', options.storeIds)
-        } else if (options.storeId) {
-          query = query.eq('store_id', options.storeId)
-        }
-        if (options.startDate) {
-          query = query.gte('invoice_date', options.startDate)
-        }
-        if (options.endDate) {
-          query = query.lte('invoice_date', options.endDate)
-        }
-        if (options.vendor) {
-          query = query.eq('vendor', options.vendor)
-        }
-        if (options.department) {
-          query = query.eq('department', options.department)
-        }
-
-        const { data, error } = await query
-
-        if (error) {
-          console.error('🔍 [getSalesAnalysis] Database error:', error)
-          throw new Error(error.message)
-        }
-
-
-
-        if (data && data.length > 0) {
-          allData = allData.concat(data)
-          page++
-          
-          // Stop if we got less than pageSize (means we're at the end)
-          if (data.length < pageSize) {
-
-            hasMore = false
-          }
-          
-          // Safety check to prevent infinite loops
-          if (page > 10) {
-            console.warn('🔍 [getSalesAnalysis] Stopping pagination after 10 pages to prevent infinite loop')
-            hasMore = false
-          }
-        } else {
-          
-          hasMore = false
-        }
-      }
-
-
-      return { success: true, data: allData }
-    } catch (error) {
-      console.error('🔍 [getSalesAnalysis] Failed to get sales analysis:', error)
-      return { success: false, error: error.message, data: [] }
-    }
-  }
-
-  async getSalesAnalysisStats(options = {}) {
-    try {
-
-      
-      if (!supabase) {
-        return {
-          success: true,
-          data: {
-            totalSales: 0,
-            totalCost: 0,
-            totalProfit: 0,
-            totalItems: 0,
-            avgProfitMargin: 0,
-            topVendors: [],
-            topDepartments: []
-          }
-        }
-      }
-
-
-      // Get basic stats with pagination to handle large datasets
-      let allSalesData = []
-      let page = 0
-      const pageSize = 1000
-      let hasMore = true
-
-      while (hasMore) {
-
-        
-        const { data, error } = await supabase
-          .from('sales_analysis')
-          .select('*')
-          .range(page * pageSize, (page + 1) * pageSize - 1)
-
-        if (error) {
-          console.error('📊 [getSalesAnalysisStats] Database error:', error)
-          throw new Error(error.message)
-        }
-
-
-
-        if (data && data.length > 0) {
-          allSalesData = allSalesData.concat(data)
-          page++
-          
-          // Stop if we got less than pageSize (means we're at the end)
-          if (data.length < pageSize) {
-
-            hasMore = false
-          }
-          
-          // Safety check to prevent infinite loops
-          if (page > 10) {
-            console.warn('📊 [getSalesAnalysisStats] Stopping pagination after 10 pages to prevent infinite loop')
-            hasMore = false
-          }
-        } else {
-          
-          hasMore = false
-        }
-      }
-
-
-      const salesData = allSalesData
-
-      // Calculate stats
-      const stats = {
-        totalSales: 0,
-        totalCost: 0,
-        totalProfit: 0,
-        totalItems: 0,
-        vendors: {},
-        departments: {}
-      }
-
-      salesData.forEach(item => {
-        const actual = parseFloat(item.actual) || 0
-        const cost = parseFloat(item.cost) || 0
-        const soldQty = parseInt(item.sold_qty) || 0
-
-        stats.totalSales += actual * soldQty
-        stats.totalCost += cost * soldQty
-        stats.totalItems += soldQty
-
-        // Track vendors
-        if (item.vendor) {
-          if (!stats.vendors[item.vendor]) {
-            stats.vendors[item.vendor] = 0
-          }
-          stats.vendors[item.vendor] += actual * soldQty
-        }
-
-        // Track departments
-        if (item.department) {
-          if (!stats.departments[item.department]) {
-            stats.departments[item.department] = 0
-          }
-          stats.departments[item.department] += actual * soldQty
-        }
-      })
-
-      stats.totalProfit = stats.totalSales - stats.totalCost
-      stats.avgProfitMargin = stats.totalSales > 0 ? (stats.totalProfit / stats.totalSales) * 100 : 0
-
-      // Get top vendors and departments
-      const topVendors = Object.entries(stats.vendors)
-        .map(([vendor, sales]) => ({ vendor, sales }))
-        .sort((a, b) => b.sales - a.sales)
-        .slice(0, 5)
-
-      const topDepartments = Object.entries(stats.departments)
-        .map(([department, sales]) => ({ department, sales }))
-        .sort((a, b) => b.sales - a.sales)
-        .slice(0, 5)
-
-      return {
-        success: true,
-        data: {
-          ...stats,
-          topVendors,
-          topDepartments
-        }
-      }
-    } catch (error) {
-      console.error('Failed to get sales analysis stats:', error)
-      return { success: false, error: error.message }
-    }
-  }
-
-  async deleteSalesAnalysis(recordId) {
-    try {
-      if (!supabase) {
-        return { success: true }
-      }
-
-      const { error } = await supabase
-        .from('sales_analysis')
-        .delete()
-        .eq('id', recordId)
-
-      if (error) throw new Error(error.message)
-
-      return { success: true }
-    } catch (error) {
-      console.error('Failed to delete sales analysis record:', error)
-      return { success: false, error: error.message }
-    }
-  }
-
-  async clearSalesAnalysis(storeId = null) {
-    try {
-      if (!supabase) {
-        return { success: true }
-      }
-
-      let query = supabase
-        .from('sales_analysis')
-        .delete()
-
-      if (storeId) {
-        query = query.eq('store_id', storeId)
-      }
-
-      const { error } = await query
-
-      if (error) throw new Error(error.message)
-
-      return { success: true }
-    } catch (error) {
-      console.error('Failed to clear sales analysis:', error)
       return { success: false, error: error.message }
     }
   }

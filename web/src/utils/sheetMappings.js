@@ -46,6 +46,15 @@ export const aggregateSalesByStoreAndDate = (salesData) => {
       return // Skip entries without dates
     }
     
+    // Skip entries with $0 or negative sales
+    const salesTax = parseFloat(sale.salesTax || 0) || 0
+    const netSales = parseFloat(sale.netSales || 0) || 0
+    const grossSales = parseFloat(sale.grossSales || 0) || 0
+    
+    if (netSales <= 0 || grossSales <= 0) {
+      return // Skip entries with invalid sales amounts
+    }
+    
     // Normalize date to YYYY-MM-DD format for proper aggregation
     let normalizedDate = date
     if (date.includes(' ')) {
@@ -67,11 +76,7 @@ export const aggregateSalesByStoreAndDate = (salesData) => {
       }
     }
     
-    // Sum the numeric fields
-    const salesTax = parseFloat(sale.salesTax || 0) || 0
-    const netSales = parseFloat(sale.netSales || 0) || 0
-    const grossSales = parseFloat(sale.grossSales || 0) || 0
-    
+    // Sum the numeric fields (we already validated they're > 0)
     aggregated[key].salesTax += salesTax
     aggregated[key].netSales += netSales
     aggregated[key].grossSales += grossSales

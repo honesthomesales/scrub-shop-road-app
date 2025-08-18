@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Users, Mail, Phone, Calendar, FileText, CheckCircle, XCircle, DollarSign, MapPin, Target } from 'lucide-react'
+import { Plus, Edit, Trash2, Users, Mail, Phone, Calendar, FileText, CheckCircle, XCircle, DollarSign, MapPin, Target, Link } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { STAFF_ROLE_OPTIONS, STAFF_STATUS_OPTIONS, STAFF_PAY_TYPE_OPTIONS, getDefaultStaffEntry } from '../utils/sheetMappings'
 import { formatDate } from '../utils/dateUtils'
 import { cn } from '../utils/cn'
 import supabaseAPI from '../services/supabaseAPI'
 import StaffBonusTiers from '../components/StaffBonusTiers'
+import UserStaffLinker from '../components/UserStaffLinker'
 
 const Staff = () => {
-  const { staffData, addStaffEntry, updateStaffEntry, deleteStaffEntry, loading, error } = useApp()
+  const { staffData, addStaffEntry, updateStaffEntry, deleteStaffEntry, loading, error, user } = useApp()
   const [showModal, setShowModal] = useState(false)
   const [editingStaff, setEditingStaff] = useState(null)
   const [formData, setFormData] = useState(getDefaultStaffEntry())
   const [stores, setStores] = useState([])
   const [showBonusTiersModal, setShowBonusTiersModal] = useState(false)
   const [selectedStaffForBonus, setSelectedStaffForBonus] = useState(null)
+  const [showUserLinker, setShowUserLinker] = useState(false)
 
   const handleAddNew = () => {
     setEditingStaff(null)
@@ -144,13 +146,24 @@ const Staff = () => {
             Manage your staff members and their roles
           </p>
         </div>
-        <button
-          onClick={handleAddNew}
-          className="btn-primary"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Staff Member
-        </button>
+        <div className="flex space-x-2">
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => setShowUserLinker(true)}
+              className="btn-outline"
+            >
+              <Link className="w-4 h-4 mr-2" />
+              Link Users
+            </button>
+          )}
+          <button
+            onClick={handleAddNew}
+            className="btn-primary"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Staff Member
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -646,6 +659,27 @@ const Staff = () => {
                 // Optionally refresh staff data or show success message
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* User Staff Linker Modal */}
+      {showUserLinker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-secondary-900">
+                Link Users to Staff Members
+              </h3>
+              <button
+                onClick={() => setShowUserLinker(false)}
+                className="text-secondary-400 hover:text-secondary-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <UserStaffLinker />
           </div>
         </div>
       )}

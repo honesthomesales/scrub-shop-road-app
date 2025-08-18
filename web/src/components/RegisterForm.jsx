@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useApp } from '../contexts/AppContext'
+import EmailConfirmation from './EmailConfirmation'
 
 export default function RegisterForm({ onSuccess, onSwitchToLogin }) {
   const [email, setEmail] = useState('')
@@ -9,6 +10,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false)
   const { signUp } = useApp()
 
   const handleSubmit = async (e) => {
@@ -34,8 +36,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }) {
     try {
       const result = await signUp(email, password, name)
       if (result.success) {
-        setMessage('Registration successful! Please check your email to verify your account.')
-        // Don't automatically log in - user needs to verify email first
+        setShowEmailConfirmation(true)
       } else {
         setError(result.error || 'Registration failed')
       }
@@ -45,6 +46,11 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Show email confirmation screen if registration was successful
+  if (showEmailConfirmation) {
+    return <EmailConfirmation email={email} onConfirmed={onSuccess} />
   }
 
   return (
