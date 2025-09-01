@@ -3,9 +3,26 @@ import { useApp } from '../contexts/AppContext'
 import VenueTable from '../components/VenueTable'
 import { getDefaultVenueEntry } from '../utils/sheetMappings'
 import { cn } from '../utils/cn'
+import { useVenuesSDKProbe } from '../hooks/useVenuesSDKProbe'
+import { ENV, assertEnv } from '../lib/envGuard'
+
+const __missing = assertEnv()
+
+// Debug dump: see exactly what Vite injected
+// NOTE: This runs at module load, once
+// eslint-disable-next-line no-console
+console.groupCollapsed('import.meta.env dump')
+// eslint-disable-next-line no-console
+console.log(import.meta.env)
+console.groupEnd()
 
 const Venues = () => {
   const { addVenueEntry, updateVenueEntry, deleteVenueEntry, loading } = useApp()
+  
+  const sdkProbe = useVenuesSDKProbe();
+  const showSDKBadge = ENV.USE_SHARED_SDK === '1';
+  
+  const safe = (s) => (s ? String(s).slice(0, 40) + (String(s).length > 40 ? '…' : '') : '')
   
   const [showModal, setShowModal] = useState(false)
   const [editingVenue, setEditingVenue] = useState(null)
@@ -139,6 +156,26 @@ const Venues = () => {
             Manage venue information, contacts, and event details
           </p>
         </div>
+
+                 {/* SDK Status Badge */}
+         {showSDKBadge && (
+           <div className="flex items-center gap-2 text-xs">
+             <span className={cn(
+               'inline-flex items-center rounded px-2 py-1',
+               sdkProbe.kind === 'ok' ? 'bg-green-100 text-green-800' :
+               sdkProbe.kind === 'err' ? 'bg-red-100 text-red-800' :
+               sdkProbe.kind === 'off' ? 'bg-gray-100 text-gray-600' :
+               'bg-yellow-100 text-yellow-800'
+             )}>
+               {sdkProbe.kind === 'ok' ? `SDK ✓ venues: ${sdkProbe.count ?? 0}` :
+                sdkProbe.kind === 'err' ? `SDK ⚠ ${sdkProbe.msg || 'error'}` :
+                sdkProbe.kind === 'off' ? 'SDK (flag=off)' :
+                'SDK (loading...)'}
+             </span>
+           </div>
+         )}
+
+
 
         {/* Venues Table */}
         <VenueTable
@@ -335,10 +372,10 @@ const Venues = () => {
               </form>
             </div>
           </div>
-        )}
-      </div>
-    </div>
-  )
-}
+                 )}
+       </div>
+     </div>
+   )
+ }
 
 export default Venues 

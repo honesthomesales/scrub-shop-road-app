@@ -21,12 +21,22 @@ const Calendar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8 print-header">
-          <h1 className="text-3xl font-bold text-secondary-900">
-            Calendar
-          </h1>
-          <p className="mt-2 text-secondary-600">
-            Schedule and manage events, venues, and worker assignments for Trailer and Camper operations
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-secondary-900">
+                Calendar v1.9
+              </h1>
+              <p className="mt-2 text-secondary-600">
+                Schedule and manage events, venues, and worker assignments for Trailer and Camper operations
+              </p>
+            </div>
+            <button
+              onClick={() => window.print()}
+              className="btn-outline bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 print:hidden"
+            >
+              🖨️ Print Calendar
+            </button>
+          </div>
         </div>
 
         {/* Calendar View */}

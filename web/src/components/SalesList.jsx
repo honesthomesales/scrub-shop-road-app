@@ -5,7 +5,7 @@ import { formatDate, formatCurrency, getMonthName, getNextMonth, getPreviousMont
 import { SALES_STATUS_OPTIONS } from '../utils/sheetMappings'
 import { cn } from '../utils/cn'
 
-const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
+const SalesList = ({ onAddSale, onEditSale, onDeleteSale, hideDatePicker = false }) => {
   const { rawSalesData, currentMonth, setCurrentMonth, venuesData } = useApp()
   const [filteredSales, setFilteredSales] = useState([])
   const [selectedSale, setSelectedSale] = useState(null)
@@ -76,46 +76,48 @@ const SalesList = ({ onAddSale, onEditSale, onDeleteSale }) => {
 
   return (
     <div className="space-y-6">
-      {/* Month Navigation */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={handlePreviousMonth}
-            className="btn-outline"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            Previous Month
-          </button>
+      {/* Month Navigation - Only show if not hidden */}
+      {!hideDatePicker && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handlePreviousMonth}
+              className="btn-outline"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Previous Month
+            </button>
+            
+            <h2 className="text-xl font-semibold text-secondary-900">
+              {getMonthName(currentMonth)} ({currentMonth.getFullYear()})
+            </h2>
+            
+            <button
+              onClick={handleNextMonth}
+              className="btn-outline"
+            >
+              Next Month
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
           
-          <h2 className="text-xl font-semibold text-secondary-900">
-            {getMonthName(currentMonth)} ({currentMonth.getFullYear()})
-          </h2>
-          
-          <button
-            onClick={handleNextMonth}
-            className="btn-outline"
-          >
-            Next Month
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setCurrentMonth(new Date(2024, 6, 1))} // July 2024
+              className="btn-outline text-sm"
+            >
+              Go to July 2024
+            </button>
+            <button
+              onClick={onAddSale}
+              className="btn-primary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Sale
+            </button>
+          </div>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setCurrentMonth(new Date(2024, 6, 1))} // July 2024
-            className="btn-outline text-sm"
-          >
-            Go to July 2024
-          </button>
-          <button
-            onClick={onAddSale}
-            className="btn-primary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Sale
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Sales List */}
       <div className="card">

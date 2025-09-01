@@ -9,13 +9,12 @@ import {
 const fmtCurrency = (v) =>
   v.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-function getCurrentMonthData(rows) {
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+function getCurrentMonthData(rows, selectedMonth) {
+  const currentMonth = selectedMonth.getMonth();
+  const currentYear = selectedMonth.getFullYear();
   
   console.log('SalesCharts: Processing rows:', rows?.length || 0);
-  console.log('SalesCharts: Current month/year:', currentMonth, currentYear);
+  console.log('SalesCharts: Selected month/year:', currentMonth, currentYear);
   
   const filtered = rows.filter(row => {
     if (!row.date) {
@@ -37,7 +36,7 @@ function getCurrentMonthData(rows) {
     return matchesMonth;
   });
   
-  console.log('SalesCharts: Filtered to current month:', filtered.length);
+  console.log('SalesCharts: Filtered to selected month:', filtered.length);
   return filtered;
 }
 
@@ -100,11 +99,12 @@ const palette = [
 const colorFor = (i) => palette[i % palette.length];
 
 // ---- component ----
-export default function SalesCharts({ rows }) {
+export default function SalesCharts({ rows, currentMonth = new Date() }) {
   console.log('SalesCharts: Received rows:', rows?.length || 0, 'Sample:', rows?.slice(0, 3));
+  console.log('SalesCharts: Current month prop:', currentMonth);
   
-  // Filter to current month only
-  const currentMonthRows = useMemo(() => getCurrentMonthData(rows), [rows]);
+  // Filter to selected month only
+  const currentMonthRows = useMemo(() => getCurrentMonthData(rows, currentMonth), [rows, currentMonth]);
   
   const barData = useMemo(() => groupTotalsByStore(currentMonthRows), [currentMonthRows]);
   const { data: stackedData, stores } = useMemo(() => buildStackedByDate(currentMonthRows), [currentMonthRows]);
@@ -112,16 +112,14 @@ export default function SalesCharts({ rows }) {
   console.log('SalesCharts: Bar data:', barData);
   console.log('SalesCharts: Stacked data:', stackedData?.length || 0, 'Stores:', stores);
 
-  // Add month/year to chart titles
-  const now = new Date();
-  const monthName = now.toLocaleDateString('en-US', { month: 'long' });
-  const year = now.getFullYear();
+  // Add month to chart titles
+  const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long' });
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Bar: Monthly Gross by Store */}
       <div className="rounded-2xl border p-4">
-        <h3 className="text-lg font-semibold mb-2">Monthly Gross by Store - {monthName} {year}</h3>
+        <h3 className="text-lg font-semibold mb-2">Monthly Gross by Store - {monthName}</h3>
         {barData.length > 0 ? (
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={barData} margin={{ left: 8, right: 8, bottom: 20 }}>
@@ -140,14 +138,14 @@ export default function SalesCharts({ rows }) {
           </ResponsiveContainer>
         ) : (
           <div className="h-80 flex items-center justify-center text-gray-500">
-            No sales data for {monthName} {year}
+            No sales data for {monthName}
           </div>
         )}
       </div>
 
       {/* Stacked Bar: Daily Gross by Store */}
       <div className="rounded-2xl border p-4">
-        <h3 className="text-lg font-semibold mb-2">Daily Gross by Store - {monthName} {year}</h3>
+        <h3 className="text-lg font-semibold mb-2">Daily Gross by Store - {monthName}</h3>
         {stackedData.length > 0 ? (
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={stackedData} margin={{ left: 8, right: 8, bottom: 20 }}>
@@ -180,7 +178,7 @@ export default function SalesCharts({ rows }) {
           </ResponsiveContainer>
         ) : (
           <div className="h-80 flex items-center justify-center text-gray-500">
-            No sales data for {monthName} {year}
+            No sales data for {monthName}
           </div>
         )}
       </div>

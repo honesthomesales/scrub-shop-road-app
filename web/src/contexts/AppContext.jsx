@@ -11,11 +11,18 @@ const initialState = {
   staffData: [],
   tasksData: [],
   messagesData: [],
+  messageGroups: [],
+  usersData: [],
+  taskComments: [],
+  selectedTask: null,
+  selectedGroup: null,
+  currentUser: null,
   calendarEvents: [],
   currentMonth: new Date(),
   loading: false,
   error: null,
-  user: null
+  user: null,
+  isAuthenticated: false
 }
 
 // Action types
@@ -331,37 +338,26 @@ export function AppProvider({ children }) {
       if (isInitialized) {
         // Check authentication status and get user data
         const authResult = await checkAuth()
-        console.log('Auth check result:', authResult)
         
-        // Load data with timeout to prevent hanging
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Data loading timeout')), 10000)
-        )
-        
+        // Load critical data first
         try {
-          await Promise.race([
-            Promise.all([
-              loadSalesData(),
-              loadVenuesData(),
-              loadStaffData()
-            ]),
-            timeoutPromise
+          await Promise.all([
+            loadSalesData(),
+            loadVenuesData(),
+            loadStaffData()
           ])
           
-          // Load staff and groups data separately (non-critical)
+          // Load non-critical data separately (don't block the app if these fail)
           loadStaffAndGroups()
-          
-          // Load tasks separately (non-critical)
           loadTasks()
         } catch (timeoutError) {
-          console.warn('Data loading timed out, continuing with app:', timeoutError)
           // Continue with app even if data loading fails
         }
+        
+        dispatch({ type: ACTIONS.SET_LOADING, payload: false })
       }
     } catch (error) {
-      console.error('Failed to initialize app:', error)
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
-    } finally {
       dispatch({ type: ACTIONS.SET_LOADING, payload: false })
     }
   }
@@ -370,7 +366,6 @@ export function AppProvider({ children }) {
     try {
       // Use trailer_history table since that's where all the data is
       const tableName = 'trailer_history';
-      console.log(`Loading sales data from table: ${tableName}`);
       
       const result = await supabaseAPI.readTable(tableName)
       if (result.success) {
@@ -398,7 +393,6 @@ export function AppProvider({ children }) {
     try {
       // Use trailer_history table since that's where all the data is
       const tableName = 'trailer_history';
-      console.log(`Loading raw sales data from table: ${tableName}`);
       
       const result = await supabaseAPI.readTable(tableName)
       if (result.success) {
@@ -418,89 +412,67 @@ export function AppProvider({ children }) {
 
   const cleanupZeroSalesEntries = async () => {
     try {
-      console.log('Starting cleanup of zero sales entries...');
+      // Use the getSupabase function from supabaseAPI
+      const supabase = supabaseAPI.getSupabase();
       
-      // Import the supabase client directly
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        'https://kvsbrrmzedadyffqtcdq.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2c2Jycm16ZWRhZHlmZnF0Y2RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxOTQxNzQsImV4cCI6MjA2Nzc3MDE3NH0.S3DSc-15No3SUr2Zmw_Qf7GQ4xABMYhMtN7LwvDDAiw'
-      );
+      if (!supabase) {
+        return { success: false, error: 'Supabase client not available' };
+      }
       
       // Use trailer_history table since that's where all the data is
       const tableName = 'trailer_history';
-      console.log(`Using table: ${tableName} for cleanup`);
       
       // First, let's check what data exists in the table
       const { data: allData, error: checkError } = await supabase
         .from(tableName)
-        .select('id, net_sales, gross_sales, date')
-        .limit(10);
+        .select('*')
+        .limit(5);
       
       if (checkError) {
-        console.error('Error checking table data:', checkError);
         return { success: false, error: `Table check error: ${checkError.message}` };
       }
-      
-      console.log('Sample data from table:', allData);
       
       // Get all entries with $0 or negative sales using only columns that definitely exist
       const { data: zeroSalesEntries, error: queryError } = await supabase
         .from(tableName)
-        .select('id, net_sales, gross_sales, date')
-        .or('net_sales.eq.0,gross_sales.eq.0,net_sales.lt.0,gross_sales.lt.0')
+        .select('id, net_sales, gross_sales')
+        .or('net_sales.lte.0,gross_sales.lte.0');
       
       if (queryError) {
-        console.error('Error querying zero sales entries:', queryError);
         return { success: false, error: `Query error: ${queryError.message}` };
       }
-      
-      console.log(`Found ${zeroSalesEntries?.length || 0} zero sales entries to clean up`);
-      console.log('Zero sales entries:', zeroSalesEntries);
       
       if (zeroSalesEntries && zeroSalesEntries.length > 0) {
         // Delete each entry individually
         const deletePromises = zeroSalesEntries.map(async (entry) => {
-          console.log(`Deleting entry ID ${entry.id}: net_sales=${entry.net_sales}, gross_sales=${entry.gross_sales}`);
-          
           const { error: deleteError } = await supabase
             .from(tableName)
             .delete()
-            .eq('id', entry.id)
+            .eq('id', entry.id);
           
           if (deleteError) {
-            console.error(`Error deleting entry ${entry.id}:`, deleteError);
             return { success: false, error: deleteError.message };
           }
-          
-          return { success: true, id: entry.id };
+          return { success: true };
         });
         
         const results = await Promise.all(deletePromises);
         const successful = results.filter(r => r.success).length;
         const failed = results.filter(r => !r.success).length;
         
-        console.log(`Cleanup completed: ${successful} deleted, ${failed} failed`);
-        
         // Reload the data after cleanup
-        await loadRawSalesData();
-        
-        if (failed > 0) {
-          return { 
-            success: false, 
-            error: `${successful} entries cleaned up, but ${failed} failed to delete` 
-          };
-        }
+        await loadSalesData();
         
         return { 
           success: true, 
-          message: `${successful} zero sales entries cleaned up successfully` 
+          message: `Cleanup completed: ${successful} deleted, ${failed} failed`,
+          deleted: successful,
+          failed: failed
         };
       } else {
         return { success: true, message: 'No zero sales entries found to clean up' };
       }
     } catch (error) {
-      console.error('Cleanup error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -733,15 +705,8 @@ export function AppProvider({ children }) {
         // Auto-link user to staff member by email if not already linked
         if (!userData.staffMember) {
           try {
-            // Import the supabase client directly
-            const { createClient } = await import('@supabase/supabase-js');
-            const supabase = createClient(
-              'https://kvsbrrmzedadyffqtcdq.supabase.co',
-              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2c2Jycm16ZWRhZHlmZnF0Y2RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxOTQxNzQsImV4cCI6MjA2Nzc3MDE3NH0.S3DSc-15No3SUr2Zmw_Qf7GQ4xABMYhMtN7LwvDDAiw'
-            );
-            
-            // Check if there's a staff member with this email
-            const { data: staffMembers } = await supabase
+            // Use the existing supabaseAPI instance instead of creating a new client
+            const { data: staffMembers } = await supabaseAPI.supabase
               .from('staff')
               .select('*')
               .eq('email', email)
@@ -749,7 +714,7 @@ export function AppProvider({ children }) {
             
             if (staffMembers) {
               // Update the user profile with staff_id
-              await supabase
+              await supabaseAPI.supabase
                 .from('users')
                 .update({ staff_id: staffMembers.id })
                 .eq('email', email)
@@ -810,15 +775,8 @@ export function AppProvider({ children }) {
         // Auto-link user to staff member by email if not already linked
         if (!userData.staffMember) {
           try {
-            // Import the supabase client directly
-            const { createClient } = await import('@supabase/supabase-js');
-            const supabase = createClient(
-              'https://kvsbrrmzedadyffqtcdq.supabase.co',
-              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2c2Jycm16ZWRhZHlmZnF0Y2RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxOTQxNzQsImV4cCI6MjA2Nzc3MDE3NH0.S3DSc-15No3SUr2Zmw_Qf7GQ4xABMYhMtN7LwvDDAiw'
-            );
-            
-            // Check if there's a staff member with this email
-            const { data: staffMembers } = await supabase
+            // Use the existing supabaseAPI instance instead of creating a new client
+            const { data: staffMembers } = await supabaseAPI.supabase
               .from('staff')
               .select('*')
               .eq('email', userData.email)
@@ -826,32 +784,34 @@ export function AppProvider({ children }) {
             
             if (staffMembers) {
               // Update the user profile with staff_id
-              await supabase
+              await supabaseAPI.supabase
                 .from('users')
                 .update({ staff_id: staffMembers.id })
                 .eq('email', userData.email)
-              
+               
               userData.staffMember = staffMembers
               userData.name = staffMembers.name || userData.name
               userData.staff_id = staffMembers.id
-              
+               
               // Set this user as the current user automatically
               dispatch({ type: ACTIONS.SET_CURRENT_USER, payload: staffMembers })
-              console.log('Auto-set current user to staff member:', staffMembers.name)
             }
           } catch (error) {
-            console.log('No staff member found for email:', userData.email)
+            // Staff member not found, that's okay
           }
         }
         
         setUser(userData)
+        setIsAuthenticated(true)
         return true
       } else {
         setUser(null)
+        setIsAuthenticated(false)
         return false
       }
     } catch (error) {
       setUser(null)
+      setIsAuthenticated(false)
       return false
     }
   }
@@ -1069,8 +1029,9 @@ export function AppProvider({ children }) {
       
       if (result.success) {
         // Transform the saved data back to calendar event format
+        // Use the actual database ID from the result
         const savedEvent = {
-          id: result.data.id,
+          id: result.data.id, // Use actual database ID
           title: eventData.title,
           date: eventData.date,
           backgroundColor: eventData.isWorkDay ? '#fefce8' : '#dcfce7',
@@ -1081,7 +1042,8 @@ export function AppProvider({ children }) {
             worker: eventData.workers.join(', '),
             hours: eventData.hours,
             venueId: eventData.venueId,
-            venue: state.venuesData.find(v => v.id === eventData.venueId)
+            venue: state.venuesData.find(v => v.id === eventData.venueId),
+            dbId: result.data.id // Store database ID for reference
           }
         }
         
@@ -1096,6 +1058,16 @@ export function AppProvider({ children }) {
 
   const updateCalendarEvent = React.useCallback(async (eventId, eventData) => {
     try {
+      console.log('updateCalendarEvent called with:', { eventId, eventData });
+      
+      // All events are now editable, including generated sales events
+      
+      // Check if this is a new event (no database ID) or an existing one
+      const isNewEvent = !eventData.extendedProps?.dbId && 
+                        (typeof eventId === 'string' && eventId.includes('-'));
+      
+      console.log('isNewEvent:', isNewEvent, 'dbId from extendedProps:', eventData.extendedProps?.dbId);
+      
       // For Work Day events, store additional info in common_venue_name
       let venueName = eventData.isWorkDay ? 'WORK DAY' : eventData.venue || ''
       
@@ -1117,12 +1089,37 @@ export function AppProvider({ children }) {
         Store: eventData.isWorkDay ? 99 : (state.currentSheet === 'TRAILER_HISTORY' ? 5 : 7)
       }
       
-      const result = await supabaseAPI.updateRow('trailer_history', eventId, sheetData)
+      console.log('sheetData to save:', sheetData);
+      
+      let result;
+      let dbId;
+      
+      if (isNewEvent) {
+        console.log('Creating new event...');
+        // Create new event in database
+        result = await supabaseAPI.addRow('trailer_history', sheetData)
+        if (result.success) {
+          dbId = result.data.id // Get the new database ID
+          console.log('New event created with dbId:', dbId);
+        }
+      } else {
+        console.log('Updating existing event...');
+        // Update existing event
+        const existingDbId = eventData.extendedProps?.dbId || eventId;
+        console.log('existingDbId:', existingDbId);
+        if (!existingDbId || isNaN(existingDbId)) {
+          console.log('Invalid existingDbId, returning error');
+          return { success: false, error: 'Invalid event ID for database update' };
+        }
+        result = await supabaseAPI.updateRow('trailer_history', existingDbId, sheetData)
+        dbId = existingDbId;
+        console.log('Update result:', result);
+      }
       
       if (result.success) {
         // Transform the saved data back to calendar event format
         const updatedEvent = {
-          id: eventId,
+          id: eventId, // Keep the original calendar ID for the UI
           title: eventData.title,
           date: eventData.date,
           backgroundColor: eventData.isWorkDay ? '#fefce8' : '#dcfce7',
@@ -1133,22 +1130,37 @@ export function AppProvider({ children }) {
             worker: eventData.workers.join(', '),
             hours: eventData.hours,
             venueId: eventData.venueId,
-            venue: state.venuesData.find(v => v.id === eventData.venueId)
+            venue: state.venuesData.find(v => v.id === eventData.venueId),
+            dbId: dbId // Store the actual database ID
           }
         }
         
+        console.log('Returning updated event:', updatedEvent);
         return { success: true, data: updatedEvent }
       } else {
+        console.log('Database operation failed:', result.error);
         return { success: false, error: result.error }
       }
     } catch (error) {
+      console.error('Error in updateCalendarEvent:', error);
       return { success: false, error: error.message }
     }
   }, [state.currentSheet, state.venuesData])
 
-  const deleteCalendarEvent = React.useCallback(async (eventId) => {
+  const deleteCalendarEvent = React.useCallback(async (eventId, eventData) => {
     try {
-      const result = await supabaseAPI.deleteRow('trailer_history', eventId)
+      // All events are now deletable, including generated sales events
+      
+      // Ensure we have a valid numeric ID for database operations
+      const dbId = typeof eventId === 'string' && eventId.includes('-') 
+        ? eventData.extendedProps?.dbId || eventData.id 
+        : eventId;
+      
+      if (!dbId || isNaN(dbId)) {
+        return { success: false, error: 'Invalid event ID for database deletion' };
+      }
+      
+      const result = await supabaseAPI.deleteRow('trailer_history', dbId)
       
       if (result.success) {
         return { success: true }
@@ -1193,7 +1205,8 @@ export function AppProvider({ children }) {
               worker: workers.join(', '),
               hours: hours,
               venueId: null,
-              venue: null
+              venue: null,
+              dbId: record.id // Store the database ID for editing/deleting
             }
           }
         })

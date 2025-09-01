@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useApp } from '../contexts/AppContext'
 import SalesList from '../components/SalesList'
 import SalesCharts from '../components/SalesCharts'
 import { getDefaultSalesEntry, SALES_STATUS_OPTIONS } from '../utils/sheetMappings'
 import { cn } from '../utils/cn'
-import { parseDateString, formatDateInput } from '../utils/dateUtils'
+import { parseDateString, formatDateInput, getMonthName, getNextMonth, getPreviousMonth } from '../utils/dateUtils'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 const DailySales = () => {
   const { 
@@ -15,8 +16,32 @@ const DailySales = () => {
     venuesData,
     rawSalesData,
     loading,
-    cleanupZeroSalesEntries
+    cleanupZeroSalesEntries,
+    currentMonth,
+    setCurrentMonth
   } = useApp()
+  
+  // Filter sales data by current month for charts
+  const [filteredSalesData, setFilteredSalesData] = useState([])
+  
+  useEffect(() => {
+    const filtered = rawSalesData.filter(sale => {
+      const saleDate = parseDateString(sale.date)
+      if (!saleDate) return false
+      
+      return saleDate.getMonth() === currentMonth.getMonth() && 
+             saleDate.getFullYear() === currentMonth.getFullYear()
+    })
+    setFilteredSalesData(filtered)
+  }, [rawSalesData, currentMonth])
+  
+  const handlePreviousMonth = () => {
+    setCurrentMonth(getPreviousMonth(currentMonth))
+  }
+
+  const handleNextMonth = () => {
+    setCurrentMonth(getNextMonth(currentMonth))
+  }
   
   // Debug logging
   console.log('DailySales component rendering with:', {
@@ -224,11 +249,46 @@ const DailySales = () => {
           </div>
         </div>
 
+        {/* Date Picker */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handlePreviousMonth}
+                className="btn-outline"
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Previous Month
+              </button>
+              
+              <h2 className="text-xl font-semibold text-secondary-900">
+                {getMonthName(currentMonth)} {currentMonth.getFullYear()}
+              </h2>
+              
+              <button
+                onClick={handleNextMonth}
+                className="btn-outline"
+              >
+                Next Month
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </button>
+            </div>
+            
+            <button
+              onClick={handleAddSale}
+              className="btn-primary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Sale
+            </button>
+          </div>
+        </div>
+
         {/* Sales Charts */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-secondary-900 mb-4">Sales Analytics</h2>
           {(() => {
-            const chartData = rawSalesData
+            const chartData = filteredSalesData
               .filter(sale => sale.date && sale.grossSales > 0)
               .map(sale => ({
                 date: sale.date,
@@ -241,7 +301,7 @@ const DailySales = () => {
             console.log('DailySales: Chart data sample:', chartData.slice(0, 3));
             
             return (
-              <SalesCharts rows={chartData} />
+              <SalesCharts rows={chartData} currentMonth={currentMonth} />
             );
           })()}
         </div>
@@ -251,6 +311,7 @@ const DailySales = () => {
           onAddSale={handleAddSale}
           onEditSale={handleEditSale}
           onDeleteSale={handleDeleteSale}
+          hideDatePicker={true}
         />
 
         {/* Add/Edit Sale Modal */}

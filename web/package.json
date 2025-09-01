@@ -1,7 +1,8 @@
 {
-    "name": "scrub-shop-road-app-web",
+    "name": "scrub-shop-web",
     "version": "1.0.0",
     "description": "Web application for Scrub Shop Road App - Sales tracking and venue management",
+    "private": true,
     "type": "module",
     "homepage": "https://honesthomesales.github.io/scrub-shop-road-app",
     "scripts": {
@@ -20,6 +21,7 @@
         "@fullcalendar/interaction": "^6.1.8",
         "@fullcalendar/react": "^6.1.8",
         "@fullcalendar/timegrid": "^6.1.8",
+        "@scrub-shop/shared-sdk": "file:../packages/shared-sdk",
         "@supabase/supabase-js": "^2.50.5",
         "clsx": "^1.2.1",
         "date-fns": "^2.30.0",

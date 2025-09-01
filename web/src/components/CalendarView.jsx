@@ -432,7 +432,19 @@ const CalendarView = () => {
 
         
         if (rawSalesData.length > 0) {
-          const salesDataWithoutWorkDays = rawSalesData.filter(sale => sale.venue !== 'WORK DAY')
+          // Filter out Work Day entries and other non-sales entries
+          const salesDataWithoutWorkDays = rawSalesData.filter(sale => {
+            // Exclude WORK DAY entries
+            if (sale.venue === 'WORK DAY') return false;
+            
+            // Exclude entries with no sales value or zero sales - these should be editable
+            if (!sale.grossSales || parseFloat(sale.grossSales) <= 0) return false;
+            
+            // Exclude entries that look like Work Day entries (no actual sales)
+            if (sale.venue && sale.venue.toLowerCase().includes('work day')) return false;
+            
+            return true;
+          });
   
           
           if (salesDataWithoutWorkDays.length > 0) {
@@ -509,7 +521,7 @@ const CalendarView = () => {
               }
               
               const event = {
-                id: `sale-${group.date}-${group.venue}-${index}`,
+                id: `generated-sale-${group.date}-${group.venue}-${index}`,
                 title: `Sale: ${group.venue}`,
                 date: group.date,
                 backgroundColor: backgroundColor,
@@ -526,7 +538,9 @@ const CalendarView = () => {
                   entryCount: group.sales.length,
                   confirmedCount: group.confirmedCount,
                   unconfirmedCount: group.unconfirmedCount,
-                  status: statusLabel
+                  status: statusLabel,
+                  isGeneratedEvent: false, // Allow editing of all events
+                  salesData: group.sales // Store all sales data for this event
                 }
               }
 
@@ -565,35 +579,90 @@ const CalendarView = () => {
 
   const handleEventClick = (clickInfo) => {
     const event = clickInfo.event
+    const extendedProps = event.extendedProps || {}
     
-    // Check if this is a double-click by using a timeout
+    
+    
+    // All events are now editable
+    // Previously blocked generated sales events, but now allowing full editing
+    
+    // Double click to edit
     if (clickInfo.jsEvent.detail === 2) {
-      // This is a double-click
-      const { extendedProps } = event
-      
-      // Handle both new workers array and legacy worker string
+      // Extract worker information from extendedProps
       let workersArray = []
       if (extendedProps.workers && Array.isArray(extendedProps.workers)) {
         workersArray = extendedProps.workers
-      } else if (extendedProps.worker) {
-        // Split the worker string by comma and trim whitespace
+      } else if (extendedProps.worker && typeof extendedProps.worker === 'string') {
         workersArray = extendedProps.worker.split(',').map(w => w.trim()).filter(w => w)
+      }
+      
+      // Fix date format - ensure we get just the date part without time
+      let eventDate = event.startStr || event.date || ''
+      if (eventDate && eventDate.includes('T')) {
+        eventDate = eventDate.split('T')[0]
       }
       
       // Auto-populate the edit form with existing data
       setEditingEvent(event)
       setNewEvent({
         title: event.title || '',
-        date: event.startStr || event.date || '',
+        date: eventDate,
         workers: workersArray,
         hours: extendedProps.hours || '',
         venueId: extendedProps.venueId || '',
         isWorkDay: extendedProps.type === 'workday' || event.title?.toLowerCase().includes('work day')
       })
+      
+      // If this is a sale event, try to find and set the venue
+      if (extendedProps.type === 'sale' && extendedProps.venue) {
+        // Find the venue by name in venuesData
+        const foundVenue = venuesData.find(v => 
+          v.promo && v.promo.toLowerCase() === extendedProps.venue.toLowerCase()
+        )
+        if (foundVenue) {
+          setNewEvent(prev => ({
+            ...prev,
+            venueId: foundVenue.id
+          }))
+        }
+      }
+      
       setShowEditModal(true)
     } else {
-      // Single click - could show event details or do nothing
-
+             // Single click - could show event details or do nothing
+       
+       // Allow single-click to edit Work Day events
+       if (extendedProps.type === 'workday') {
+        
+        // Extract worker information from extendedProps
+        let workersArray = []
+        if (extendedProps.workers && Array.isArray(extendedProps.workers)) {
+          workersArray = extendedProps.workers
+        } else if (extendedProps.worker && typeof extendedProps.worker === 'string') {
+          workersArray = extendedProps.worker.split(',').map(w => w.trim()).filter(w => w)
+        }
+        
+        // Fix date format - ensure we get just the date part without time
+        let eventDate = event.startStr || event.date || ''
+        if (eventDate && eventDate.includes('T')) {
+          eventDate = eventDate.split('T')[0]
+        }
+        
+        
+        
+        // Auto-populate the edit form with existing data
+        setEditingEvent(event)
+        setNewEvent({
+          title: event.title || '',
+          date: eventDate,
+          workers: workersArray,
+          hours: extendedProps.hours || '',
+          venueId: extendedProps.venueId || '',
+          isWorkDay: true
+        })
+        
+                 setShowEditModal(true)
+      }
     }
   }
 
@@ -605,8 +674,8 @@ const CalendarView = () => {
       return
     }
 
-    try {
-      // Prepare event data for database
+         try {
+       // Prepare event data for database
       const eventData = {
         title: newEvent.title,
         date: newEvent.date,
@@ -614,26 +683,18 @@ const CalendarView = () => {
         hours: newEvent.hours,
         venueId: newEvent.venueId,
         venue: venuesData.find(v => v.id === newEvent.venueId)?.promo || '',
-        isWorkDay: newEvent.isWorkDay
+        isWorkDay: newEvent.isWorkDay,
+        extendedProps: editingEvent.extendedProps || {} // Pass the extendedProps to determine if it's a new or existing event
       }
 
-      // Save to database
+             // Save to database
       const result = await updateCalendarEvent(editingEvent.id, eventData)
       
       if (result.success) {
-        // Refresh calendar events from database to ensure consistency
-        const refreshResult = await loadCalendarEvents()
-        if (refreshResult.success) {
-          setEvents(prevEvents => {
-            const salesEvents = prevEvents.filter(event => event.extendedProps?.type === 'sale')
-            return [...refreshResult.data, ...salesEvents]
-          })
-        } else {
-          // Fallback: update the event in the local state
-          setEvents(events.map(event => 
-            event.id === editingEvent.id ? result.data : event
-          ))
-        }
+        console.log('Update successful, result data:', result.data);
+        console.log('Current events before update:', events);
+        
+        // Close modal and reset form first
         setShowEditModal(false)
         setEditingEvent(null)
         setNewEvent({
@@ -644,6 +705,34 @@ const CalendarView = () => {
           venueId: '',
           isWorkDay: true
         })
+        
+        // Update events state with the result data
+        setEvents(prevEvents => {
+          console.log('Previous events in setState callback:', prevEvents);
+          const salesEvents = prevEvents.filter(event => event.extendedProps?.type === 'sale')
+          const updatedEvents = prevEvents.map(event => {
+            // Check both the calendar event ID and the database ID
+            if (event.id === editingEvent.id || 
+                event.extendedProps?.dbId === editingEvent.extendedProps?.dbId) {
+              console.log('Updating event in state:', event.id, 'with new data:', result.data);
+              return result.data;
+            }
+            return event;
+          });
+          console.log('Updated events state:', updatedEvents);
+          return updatedEvents;
+        })
+        
+        // Force FullCalendar to refresh
+        if (calendarRef.current) {
+          const calendarApi = calendarRef.current.getApi();
+          try {
+            calendarApi.refetchEvents();
+            console.log('Forced calendar refresh');
+          } catch (error) {
+            console.log('Calendar refresh error:', error);
+          }
+        }
       } else {
         alert(`Error updating event: ${result.error}`)
       }
@@ -674,17 +763,7 @@ const CalendarView = () => {
         const result = await deleteCalendarEvent(editingEvent.id)
         
         if (result.success) {
-          // Refresh calendar events from database to ensure consistency
-          const refreshResult = await loadCalendarEvents()
-          if (refreshResult.success) {
-            setEvents(prevEvents => {
-              const salesEvents = prevEvents.filter(event => event.extendedProps?.type === 'sale')
-              return [...refreshResult.data, ...salesEvents]
-            })
-          } else {
-            // Fallback: remove the event from the local state
-            setEvents(events.filter(event => event.id !== editingEvent.id))
-          }
+          // Close modal and reset form first
           setShowEditModal(false)
           setEditingEvent(null)
           setNewEvent({
@@ -695,6 +774,9 @@ const CalendarView = () => {
             venueId: '',
             isWorkDay: true
           })
+          
+          // Remove the deleted event from the events state
+          setEvents(prevEvents => prevEvents.filter(event => event.id !== editingEvent.id))
         } else {
           alert(`Error deleting event: ${result.error}`)
         }
@@ -720,24 +802,15 @@ const CalendarView = () => {
         hours: newEvent.hours,
         venueId: newEvent.venueId,
         venue: venuesData.find(v => v.id === newEvent.venueId)?.promo || '',
-        isWorkDay: newEvent.isWorkDay
+        isWorkDay: newEvent.isWorkDay,
+        extendedProps: {} // New events don't have extendedProps yet
       }
 
       // Save to database
       const result = await addCalendarEvent(eventData)
       
       if (result.success) {
-        // Refresh calendar events from database to ensure consistency
-        const refreshResult = await loadCalendarEvents()
-        if (refreshResult.success) {
-          setEvents(prevEvents => {
-            const salesEvents = prevEvents.filter(event => event.extendedProps?.type === 'sale')
-            return [...refreshResult.data, ...salesEvents]
-          })
-        } else {
-          // Fallback: add the saved event to the local state
-          setEvents([...events, result.data])
-        }
+        // Close modal and reset form first
         setShowAddModal(false)
         setNewEvent({
           title: 'Work Day',
@@ -747,6 +820,9 @@ const CalendarView = () => {
           venueId: '',
           isWorkDay: true
         })
+        
+        // Add the new event to the events state
+        setEvents(prevEvents => [...prevEvents, result.data])
       } else {
         alert(`Error adding event: ${result.error}`)
       }

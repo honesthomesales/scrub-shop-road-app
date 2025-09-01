@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { formatCurrency, getShortMonthName, parseDateString } from '../utils/dateUtils'
 
-const DashboardChart = ({ salesData, currentSheet, selectedYears = [new Date().getFullYear()] }) => {
+const DashboardChart = ({ salesData, currentSheet, selectedYears = [new Date().getFullYear()], selectedStores = [] }) => {
   const [showAllYears, setShowAllYears] = useState(false)
   
   // Generate chart data from actual sales data
@@ -34,6 +34,46 @@ const DashboardChart = ({ salesData, currentSheet, selectedYears = [new Date().g
 
   const chartData = useMemo(() => generateChartData(), [salesData, selectedYears])
 
+  // Calculate dynamic Y-axis domain based on actual data values
+  const yAxisDomain = useMemo(() => {
+    if (!chartData || chartData.length === 0) return [0, 100000]
+    
+    // Find the maximum value across all years and months
+    let maxValue = 0
+    chartData.forEach(monthData => {
+      selectedYears.forEach(year => {
+        const value = monthData[year] || 0
+        if (value > maxValue) {
+          maxValue = value
+        }
+      })
+    })
+    
+    // Add 10% padding above the highest value, but ensure minimum range
+    const paddedMax = Math.max(maxValue * 1.1, maxValue + 10000)
+    
+    return [0, paddedMax]
+  }, [chartData, selectedYears])
+
+  // Generate dynamic header based on selections
+  const generateHeader = () => {
+    const yearText = selectedYears.length === 1 
+      ? selectedYears[0] 
+      : selectedYears.length === 2 
+        ? `Last ${selectedYears.length} Years` 
+        : `Last ${selectedYears.length} Years`
+    
+    const storeText = selectedStores.length === 0 
+      ? 'All Stores' 
+      : selectedStores.length === 1 
+        ? selectedStores[0] 
+        : `${selectedStores.length} Stores`
+    
+    const sheetText = currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'
+    
+    return `Gross Sales: ${yearText} - ${storeText} (${sheetText})`
+  }
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -54,7 +94,7 @@ const DashboardChart = ({ salesData, currentSheet, selectedYears = [new Date().g
     <div className="card">
       <div className="card-header flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-semibold text-secondary-900">
-          Gross Sales: {selectedYears.length > 1 ? `${selectedYears.length} Years` : selectedYears[0]} ({currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'})
+          {generateHeader()}
         </h3>
         {selectedYears.length > 1 && (
           <button
@@ -79,7 +119,7 @@ const DashboardChart = ({ salesData, currentSheet, selectedYears = [new Date().g
                 stroke="#64748b"
                 fontSize={12}
                 tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                domain={[0, 500000]}
+                domain={yAxisDomain}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />

@@ -25,15 +25,13 @@ import ScrubShopLogo from './ScrubShopLogo'
 
 const Header = () => {
   const location = useLocation()
-  const { currentSheet, setCurrentSheet, currentUser, setCurrentUser, staffData } = useApp()
+  const { currentSheet, setCurrentSheet, currentUser, setCurrentUser, staffData, user } = useApp()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showRoadMenu, setShowRoadMenu] = useState(false)
   const [showAdminMenu, setShowAdminMenu] = useState(false)
   const userMenuRef = useRef(null)
   const roadMenuRef = useRef(null)
   const adminMenuRef = useRef(null)
-
-
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -54,6 +52,18 @@ const Header = () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
+
+  // Auto-select current user based on logged-in user
+  useEffect(() => {
+    if (staffData.length > 0 && !currentUser && user && user.email) {
+      const matchingStaff = staffData.find(staff => 
+        staff.email && staff.email.toLowerCase() === user.email.toLowerCase()
+      )
+      if (matchingStaff) {
+        setCurrentUser(matchingStaff)
+      }
+    }
+  }, [staffData, currentUser, user])
 
   const isActive = (path) => {
     if (path === '/') {

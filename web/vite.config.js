@@ -1,45 +1,34 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
-  plugins: [
-    react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        navigateFallback: process.env.NODE_ENV === 'production' ? '/scrub-shop-road-app/offline.html' : '/offline.html'
-      },
-      manifest: {
-        name: 'Scrub Shop Road App',
-        short_name: 'Scrub Shop',
-        description: 'Sales tracking and venue management for Scrub Shop',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'portrait',
-        scope: '/',
-        start_url: '/',
-        icons: [
-          {
-            src: '/icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
-          }
-        ]
-      }
-    })
-  ],
-  base: process.env.NODE_ENV === 'production' ? '/scrub-shop-road-app/' : '/',
-  server: {
-    port: 3000,
-    host: '0.0.0.0', // Allow external connections
-    open: true
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true
-  }
-}) 
+export default ({ mode }) => {
+  // Load all envs, including those without VITE_ (so we can filter ourselves)
+  const raw = loadEnv(mode, process.cwd(), '') // don't filter; we'll filter below
+
+  // Keep only VITE_* to expose to the client
+  const viteOnly = Object.fromEntries(
+    Object.entries(raw).filter(([k]) => k.startsWith('VITE_'))
+  )
+
+  // Create define mappings that *add* concrete strings for each VITE_* key on import.meta.env
+  // This is a fallback-inject: if Vite already injects them, this matches that behavior.
+  const defineEnv = Object.fromEntries(
+    Object.entries(viteOnly).map(([k, v]) => [
+      `import.meta.env.${k}`, JSON.stringify(v ?? '')
+    ])
+  )
+
+  return defineConfig({
+    plugins: [react()],
+    envPrefix: ['VITE_'],
+    base: '',         // adjust in GH Pages workflow if needed
+    server: { fs: { allow: ['..'] } },
+    resolve: { preserveSymlinks: false },
+
+    // Important: DO NOT override import.meta.env wholesale.
+    // We only add concrete values for the VITE_* keys we care about.
+    define: {
+      ...defineEnv
+    }
+  })
+} 

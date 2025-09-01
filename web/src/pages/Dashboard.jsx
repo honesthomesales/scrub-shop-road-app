@@ -238,7 +238,23 @@ const Dashboard = () => {
     return `${selectedStores.length} Stores Selected`
   }
 
-  // Calculate summary statistics using debounced filters
+  // Generate month options for dropdown
+  const monthOptions = [
+    { value: 0, label: 'January' },
+    { value: 1, label: 'February' },
+    { value: 2, label: 'March' },
+    { value: 3, label: 'April' },
+    { value: 4, label: 'May' },
+    { value: 5, label: 'June' },
+    { value: 6, label: 'July' },
+    { value: 7, label: 'August' },
+    { value: 8, label: 'September' },
+    { value: 9, label: 'October' },
+    { value: 10, label: 'November' },
+    { value: 11, label: 'December' }
+  ];
+
+  // Calculate stats for selected years and month
   const calculateStats = useCallback(() => {
     const filteredData = getFilteredData()
     const now = new Date();
@@ -264,24 +280,58 @@ const Dashboard = () => {
       let averagePerSale;
       
       if (year === currentYear) {
-        // For current year, use data from January through the last completed month
-        const lastCompletedMonth = Math.max(0, currentMonth - 1); // Previous month (0-indexed)
-        monthsToCount = lastCompletedMonth + 1; // Number of completed months (1-indexed)
-        
-        // Get sales for all months from January through the last completed month
-        const completedMonthsSales = yearSales.filter(sale => {
+        // For current year, check if current month has substantial data
+        const currentMonthSales = yearSales.filter(sale => {
           const saleDate = parseDateString(sale.date);
-          return saleDate && saleDate.getMonth() <= lastCompletedMonth;
+          return saleDate && saleDate.getMonth() === currentMonth;
         });
         
-        const completedMonthsGross = completedMonthsSales.reduce((sum, sale) => sum + (sale.grossSales || 0), 0);
-        const completedMonthsPositiveSales = completedMonthsSales.filter(sale => (sale.grossSales || 0) > 0).length;
+        const currentMonthGross = currentMonthSales.reduce((sum, sale) => sum + (sale.grossSales || 0), 0);
         
-        // Per month average = Total gross sales for completed months ÷ number of completed months
-        monthlyAverage = monthsToCount > 0 ? Math.round(completedMonthsGross / monthsToCount) : 0;
+        // Debug logging
+        console.log(`Dashboard Debug - Year: ${year}, Current Month: ${currentMonth} (${monthOptions[currentMonth]?.label})`);
+        console.log(`Dashboard Debug - Current Month Sales Count: ${currentMonthSales.length}`);
+        console.log(`Dashboard Debug - Current Month Gross: $${currentMonthGross.toLocaleString()}`);
+        console.log(`Dashboard Debug - Threshold: $1000, Should Include: ${currentMonthGross > 1000}`);
         
-        // Per sale average = Total gross sales for completed months ÷ number of positive sales in completed months
-        averagePerSale = completedMonthsPositiveSales > 0 ? Math.round(completedMonthsGross / completedMonthsPositiveSales) : 0;
+        // If current month has substantial data (more than $1000), include it
+        // Otherwise, use data from January through the last completed month
+        if (currentMonthGross > 1000) {
+          monthsToCount = currentMonth + 1; // Include current month (1-indexed)
+          
+          // Get sales for all months from January through current month
+          const allMonthsSales = yearSales.filter(sale => {
+            const saleDate = parseDateString(sale.date);
+            return saleDate && saleDate.getMonth() <= currentMonth;
+          });
+          
+          const allMonthsGross = allMonthsSales.reduce((sum, sale) => sum + (sale.grossSales || 0), 0);
+          const allMonthsPositiveSales = allMonthsSales.filter(sale => (sale.grossSales || 0) > 0).length;
+          
+          console.log(`Dashboard Debug - Including current month: ${monthsToCount} months total`);
+          console.log(`Dashboard Debug - All months gross: $${allMonthsGross.toLocaleString()}`);
+          
+          monthlyAverage = monthsToCount > 0 ? Math.round(allMonthsGross / monthsToCount) : 0;
+          averagePerSale = allMonthsPositiveSales > 0 ? Math.round(allMonthsGross / allMonthsPositiveSales) : 0;
+        } else {
+          // Use data from January through the last completed month
+          const lastCompletedMonth = Math.max(0, currentMonth - 1); // Previous month (0-indexed)
+          monthsToCount = lastCompletedMonth + 1; // Number of completed months (1-indexed)
+          
+          console.log(`Dashboard Debug - Excluding current month: ${monthsToCount} months (Jan - ${monthOptions[lastCompletedMonth]?.label})`);
+          
+          // Get sales for all months from January through the last completed month
+          const completedMonthsSales = yearSales.filter(sale => {
+            const saleDate = parseDateString(sale.date);
+            return saleDate && saleDate.getMonth() <= lastCompletedMonth;
+          });
+          
+          const completedMonthsGross = completedMonthsSales.reduce((sum, sale) => sum + (sale.grossSales || 0), 0);
+          const completedMonthsPositiveSales = completedMonthsSales.filter(sale => (sale.grossSales || 0) > 0).length;
+          
+          monthlyAverage = monthsToCount > 0 ? Math.round(completedMonthsGross / monthsToCount) : 0;
+          averagePerSale = completedMonthsPositiveSales > 0 ? Math.round(completedMonthsGross / completedMonthsPositiveSales) : 0;
+        }
       } else {
         // For past years, use all 12 months
         monthsToCount = 12;
@@ -325,23 +375,7 @@ const Dashboard = () => {
 
   // Calculate stats whenever debounced filters change
   const stats = useMemo(() => calculateStats(), [calculateStats]);
-
-  // Generate month options for dropdown
-  const monthOptions = [
-    { value: 0, label: 'January' },
-    { value: 1, label: 'February' },
-    { value: 2, label: 'March' },
-    { value: 3, label: 'April' },
-    { value: 4, label: 'May' },
-    { value: 5, label: 'June' },
-    { value: 6, label: 'July' },
-    { value: 7, label: 'August' },
-    { value: 8, label: 'September' },
-    { value: 9, label: 'October' },
-    { value: 10, label: 'November' },
-    { value: 11, label: 'December' }
-  ];
-
+  
   const getSelectedMonthName = () => {
     return monthOptions.find(option => option.value === selectedMonth)?.label || 'Unknown';
   };
@@ -669,56 +703,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Sales This Month Card */}
-          <div className="card flex flex-col justify-between min-h-[200px]" style={{minWidth: '0', maxWidth: '40rem'}}>
-            <div className="card-body flex flex-col justify-between h-full">
-              <div className="flex items-center h-full">
-                <div className="flex-shrink-0 flex items-center h-full pr-2">
-                  <Calendar className="h-10 w-10 text-primary-600" />
-                </div>
-                <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
-                  <div className="flex items-center justify-between mb-2 min-w-0">
-                    <p className="text-base font-bold text-primary-700 whitespace-nowrap">
-                      Month Sales [{currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'} Only]
-                    </p>
-                    <div className="flex-shrink-0">
-                      <select
-                        value={selectedMonth}
-                        onChange={handleMonthChange}
-                        className="text-xs border border-secondary-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        style={{maxWidth: '8rem'}}
-                      >
-                        {monthOptions.map(option => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  {isFiltering ? (
-                    <div className="space-y-2">
-                      <div className="animate-pulse bg-gray-200 h-6 w-32 rounded"></div>
-                      <div className="animate-pulse bg-gray-200 h-6 w-40 rounded"></div>
-                      <div className="animate-pulse bg-gray-200 h-6 w-48 rounded"></div>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap" style={{minHeight: '2.5rem'}}>
-                        Confirmed: {stats.confirmedMonthSalesCount}
-                      </p>
-                      <p className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap" style={{minHeight: '2.5rem'}}>
-                        Completed Sales: {stats.positiveMonthSalesCount}
-                      </p>
-                      <p className="text-lg font-bold text-secondary-900 flex items-center whitespace-nowrap" style={{minHeight: '2.5rem'}}>
-                        Total Gross Sales ({getSelectedMonthName()} {stats.primaryYear}): ${stats.monthTotalGross.toLocaleString()}
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Month Sales Card - REMOVED */}
 
           {/* Average Card */}
           <div className="card flex flex-col justify-between min-h-[200px]" style={{minWidth: '0', maxWidth: '22rem'}}>
@@ -728,7 +713,7 @@ const Dashboard = () => {
                   <TrendingUp className="h-10 w-10 text-primary-600" />
                 </div>
                 <div className="flex-1 flex flex-col justify-center">
-                  <p className="text-base font-bold text-primary-700 mb-2 whitespace-nowrap">Average</p>
+                  <p className="text-base font-bold text-primary-700 mb-2 whitespace-nowrap">Gross Sales</p>
                   {isFiltering ? (
                     <div className="text-xs w-full">
                       <div className="grid grid-cols-3 gap-2 mb-1">
@@ -746,6 +731,19 @@ const Dashboard = () => {
                     </div>
                   ) : (
                     <div className="text-xs w-full">
+                      {/* Average Sales Per Month - Prominent Display */}
+                      <div className="mb-3 p-2 bg-primary-50 rounded border border-primary-200">
+                        <div className="text-center">
+                          <div className="text-primary-700 font-bold text-sm mb-1">Average Sales Per Month</div>
+                          <div className="text-secondary-900 font-bold text-lg">
+                            ${stats.selectedYearsData[stats.primaryYear]?.monthlyAverage?.toLocaleString() || '0'}
+                          </div>
+                          <div className="text-primary-600 text-xs">
+                            Based on {stats.selectedYearsData[stats.primaryYear]?.monthsToCount || 0} month{(stats.selectedYearsData[stats.primaryYear]?.monthsToCount || 0) !== 1 ? 's' : ''} with ≥28 days
+                          </div>
+                        </div>
+                      </div>
+                      
                       <div className="grid grid-cols-3 gap-2 mb-1">
                         <div></div>
                         <div className="text-primary-700 font-bold whitespace-nowrap text-base">Per Sale</div>
@@ -800,7 +798,12 @@ const Dashboard = () => {
               </div>
             </div>
           ) : (
-            <DashboardChart salesData={getFilteredData()} currentSheet={currentSheet} selectedYears={debouncedYears} />
+            <DashboardChart 
+              salesData={getFilteredData()} 
+              currentSheet={currentSheet} 
+              selectedYears={debouncedYears} 
+              selectedStores={debouncedStores}
+            />
           )}
         </div>
 
@@ -808,7 +811,7 @@ const Dashboard = () => {
         <div className="card">
           <div className="card-header">
             <h3 className="text-lg font-semibold text-secondary-900">
-              Monthly Sales Statistics - Last 3 Years
+              Monthly Sales Statistics - Last {debouncedYears.length} Year{debouncedYears.length !== 1 ? 's' : ''}
             </h3>
           </div>
           <div className="card-body">

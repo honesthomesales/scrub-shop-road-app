@@ -27,8 +27,14 @@ const Bonuses = () => {
       try {
         const storesResult = await supabaseAPI.getStores()
         if (storesResult.success) {
-          setStores(storesResult.data)
-          await calculatePayrollForAllStores(storesResult.data)
+          // Filter out road stores (Spartanburg, Greenville, Columbia) from bonus calculations
+          const bonusStores = storesResult.data.filter(store => 
+            store.name !== 'Spartanburg' && 
+            store.name !== 'Greenville' && 
+            store.name !== 'Columbia'
+          )
+          setStores(bonusStores)
+          await calculatePayrollForAllStores(bonusStores)
         }
       } catch (error) {
         console.error('Error fetching data:', error)

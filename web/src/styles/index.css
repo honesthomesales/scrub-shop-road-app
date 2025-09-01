@@ -128,10 +128,111 @@
   }
   
   /* Print-specific calendar container */
+.print-calendar {
+  min-height: auto !important;
+  background: #fff !important;
+}
+
+/* Hide all navigation and headers when printing */
+@media print {
+  /* Hide the entire header section */
+  .print-calendar .print-header {
+    display: none !important;
+  }
+  
+  /* Hide any navigation elements */
+  nav, .nav, .navigation {
+    display: none !important;
+  }
+  
+  /* Hide the page wrapper padding */
+  .print-calendar .max-w-7xl {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Ensure calendar takes full page */
   .print-calendar {
     min-height: auto !important;
-    background: #fff !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
+  
+  /* Force calendar to fit on one page */
+  .fc {
+    font-size: 10px !important;
+  }
+  
+  .fc .fc-daygrid-day {
+    min-height: 60px !important;
+  }
+  
+  .fc .fc-daygrid-day-frame {
+    min-height: 60px !important;
+    padding: 1px !important;
+  }
+  
+  .fc .fc-event {
+    font-size: 8px !important;
+    padding: 0 1px !important;
+    margin: 1px 0 !important;
+  }
+  
+  .fc .fc-event-title {
+    font-size: 8px !important;
+    line-height: 1.1 !important;
+  }
+  
+  /* Ensure the calendar container uses full width */
+  .fc .fc-view-harness {
+    height: auto !important;
+  }
+  
+  /* Remove any margins that might cause page breaks */
+  * {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Force single page layout */
+  .fc .fc-daygrid-body {
+    page-break-inside: avoid !important;
+  }
+  
+  /* Ensure calendar fits on one page */
+  .fc .fc-daygrid {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  
+  /* Compact day headers */
+  .fc .fc-col-header {
+    height: auto !important;
+  }
+  
+  .fc .fc-col-header-cell {
+    padding: 2px !important;
+    font-size: 9px !important;
+  }
+  
+  /* Compact day cells */
+  .fc .fc-daygrid-day-number {
+    font-size: 9px !important;
+    padding: 1px !important;
+  }
+  
+  /* Hide any unnecessary elements during print */
+  .btn, button {
+    display: none !important;
+  }
+  
+  /* Ensure the calendar container is compact */
+  .fc .fc-view-harness {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+}
   
   /* Compact header for print */
   .print-header h1 {
@@ -163,6 +264,87 @@
   .fc .fc-event-title {
     font-size: 9px !important;
     line-height: 1.2 !important;
+  }
+  
+  /* Ensure calendar grid displays full week */
+  .fc .fc-daygrid-body {
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+  
+  .fc .fc-daygrid-day {
+    width: 14.2857% !important; /* 100% / 7 days */
+    min-width: 14.2857% !important;
+    max-width: 14.2857% !important;
+  }
+  
+  /* Force calendar to show all days */
+  .fc .fc-daygrid-day-frame {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+  
+  /* Ensure calendar container doesn't overflow */
+  .fc .fc-scroller {
+    overflow: visible !important;
+    width: 100% !important;
+  }
+  
+  /* Force full width on calendar wrapper */
+  .fc .fc-view-harness {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+  
+  /* Additional rules to prevent calendar cutoff */
+  .fc .fc-daygrid-body {
+    width: 100% !important;
+    table-layout: fixed !important;
+    overflow: visible !important;
+  }
+  
+  .fc .fc-daygrid-day {
+    width: 14.2857% !important; /* 100% / 7 days */
+    min-width: 14.2857% !important;
+    max-width: 14.2857% !important;
+    overflow: visible !important;
+  }
+  
+  .fc .fc-daygrid-day-frame {
+    width: 100% !important;
+    min-width: 100% !important;
+    overflow: visible !important;
+  }
+  
+  .fc .fc-scroller {
+    overflow: visible !important;
+    width: 100% !important;
+  }
+  
+  .fc .fc-view-harness {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+  
+  /* Force table to show all columns */
+  .fc table {
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+  
+  .fc th, .fc td {
+    width: 14.2857% !important;
+    min-width: 14.2857% !important;
+    max-width: 14.2857% !important;
+  }
+  
+  /* Ensure no horizontal scrolling in print */
+  .fc .fc-scroller-horizontal {
+    overflow: visible !important;
+  }
+  
+  .fc .fc-scroller-vertical {
+    overflow: visible !important;
   }
 }
 
