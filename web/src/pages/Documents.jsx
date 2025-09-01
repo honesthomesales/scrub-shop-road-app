@@ -1,37 +1,72 @@
-import React, { useState } from 'react'
-import { FileText, Download, Eye } from 'lucide-react'
+import React, { useState, useRef } from 'react'
+import { FileText, Download, Eye, Upload, Plus } from 'lucide-react'
 
 const Documents = () => {
   const [selectedDocument, setSelectedDocument] = useState(null)
-
-  const documents = [
+  const [documents, setDocuments] = useState([
     {
       id: 'summary',
       title: '1 Page Summary',
       description: 'Quick reference guide for daily operations',
       filename: '1-page-summary.pdf',
-      icon: FileText
+      icon: FileText,
+      isUploaded: false
     },
     {
       id: 'handbook',
       title: 'Road Handbook',
       description: 'Complete operational procedures and guidelines',
       filename: 'road-handbook.pdf',
-      icon: FileText
+      icon: FileText,
+      isUploaded: false
     }
-  ]
+  ])
+  const fileInputRef = useRef(null)
 
   const handleViewDocument = (document) => {
-    setSelectedDocument(document)
+    if (document.isUploaded) {
+      setSelectedDocument(document)
+    } else {
+      alert('Please upload a PDF file first')
+    }
   }
 
   const handleDownloadDocument = (document) => {
-    const link = document.createElement('a')
-    link.href = `${window.location.origin}/documents/${document.filename}`
-    link.download = document.filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    if (document.isUploaded) {
+      const link = document.createElement('a')
+      link.href = document.fileUrl
+      link.download = document.filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } else {
+      alert('Please upload a PDF file first')
+    }
+  }
+
+  const handleFileUpload = (event, documentId) => {
+    const file = event.target.files[0]
+    if (file && file.type === 'application/pdf') {
+      const fileUrl = URL.createObjectURL(file)
+      setDocuments(prevDocs => 
+        prevDocs.map(doc => 
+          doc.id === documentId 
+            ? { ...doc, isUploaded: true, fileUrl, uploadedFile: file }
+            : doc
+        )
+      )
+      alert('PDF uploaded successfully!')
+    } else {
+      alert('Please select a valid PDF file')
+    }
+  }
+
+  const handleUploadClick = (documentId) => {
+    fileInputRef.current = document.createElement('input')
+    fileInputRef.current.type = 'file'
+    fileInputRef.current.accept = '.pdf'
+    fileInputRef.current.onchange = (e) => handleFileUpload(e, documentId)
+    fileInputRef.current.click()
   }
 
   const closeViewer = () => {
@@ -63,21 +98,38 @@ const Documents = () => {
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{doc.title}</h3>
                     <p className="text-gray-600 mb-4">{doc.description}</p>
                     <div className="flex space-x-3">
-                      <button
-                        onClick={() => handleViewDocument(doc)}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleDownloadDocument(doc)}
-                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </button>
+                      {doc.isUploaded ? (
+                        <>
+                          <button
+                            onClick={() => handleViewDocument(doc)}
+                            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleDownloadDocument(doc)}
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Download
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleUploadClick(doc.id)}
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload PDF
+                        </button>
+                      )}
                     </div>
+                    {doc.isUploaded && (
+                      <div className="mt-2 text-sm text-green-600">
+                        ✓ PDF uploaded and ready
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -103,7 +155,7 @@ const Documents = () => {
             </div>
                                 <div className="flex-1 p-4">
                       <iframe
-                        src={`${window.location.origin}/documents/${selectedDocument.filename}`}
+                        src={selectedDocument.fileUrl}
                         className="w-full h-full border-0 rounded"
                         title={selectedDocument.title}
                       />
