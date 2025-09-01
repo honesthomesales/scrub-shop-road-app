@@ -15,6 +15,7 @@ import SalesUpload from './pages/SalesUpload'
 import Scheduler from './pages/Scheduler'
 import Bonuses from './pages/Bonuses'
 import HolidayManager from './pages/HolidayManager'
+import Documents from './pages/Documents'
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
                 <Route path="/admin/sales-upload" element={<SalesUpload />} />
                 <Route path="/pay-calculator" element={<PayCalculator />} />
                 <Route path="/holiday-manager" element={<HolidayManager />} />
+                <Route path="/documents" element={<Documents />} />
               </Routes>
             </main>
           </ProtectedRoute>
