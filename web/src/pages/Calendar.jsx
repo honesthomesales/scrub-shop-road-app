@@ -24,7 +24,7 @@ const Calendar = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-secondary-900">
-                Calendar v1.9
+                Calendar v2.0
               </h1>
               <p className="mt-2 text-secondary-600">
                 Schedule and manage events, venues, and worker assignments for Trailer and Camper operations
