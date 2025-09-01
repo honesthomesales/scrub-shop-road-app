@@ -20,6 +20,7 @@ export const PAGE_PERMISSIONS = {
   '/venues': [ROLES.MANAGER, ROLES.WORKER],
   '/calendar': [ROLES.MANAGER, ROLES.WORKER],
   '/bonuses': [ROLES.MANAGER],
+  '/documents': [ROLES.MANAGER, ROLES.WORKER],
   
   // ADMIN navigation
   '/staff': [ROLES.MANAGER],
