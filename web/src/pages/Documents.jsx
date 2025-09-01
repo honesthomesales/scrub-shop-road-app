@@ -27,7 +27,7 @@ const Documents = () => {
 
   const handleDownloadDocument = (document) => {
     const link = document.createElement('a')
-    link.href = `${window.location.origin}/documents/${document.filename}`
+    link.href = `${window.location.origin}/${document.filename}`
     link.download = document.filename
     document.body.appendChild(link)
     link.click()
@@ -101,13 +101,13 @@ const Documents = () => {
                 </svg>
               </button>
             </div>
-            <div className="flex-1 p-4">
-              <iframe
-                src={`${window.location.origin}/documents/${selectedDocument.filename}`}
-                className="w-full h-full border-0 rounded"
-                title={selectedDocument.title}
-              />
-            </div>
+                                <div className="flex-1 p-4">
+                      <iframe
+                        src={`${window.location.origin}/${selectedDocument.filename}`}
+                        className="w-full h-full border-0 rounded"
+                        title={selectedDocument.title}
+                      />
+                    </div>
             <div className="flex items-center justify-between p-4 border-t border-gray-200">
               <p className="text-sm text-gray-600">{selectedDocument.description}</p>
               <button
