@@ -1,13 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
-
+// Dynamic import to avoid build-time dependencies
 let _client = null
+let _createClient = null
 
 function isLikelyJwt(key) {
   // very loose check: must look like three base64url segments
   return typeof key === 'string' && key.split('.').length === 3
 }
 
-export function initSupabase({ url, anonKey }) {
+export async function initSupabase({ url, anonKey }) {
   const cleanUrl = (url || '').trim()
   const cleanKey = (anonKey || '').trim()
 
@@ -21,12 +21,21 @@ export function initSupabase({ url, anonKey }) {
   }
 
   if (!_client) {
-    _client = createClient(cleanUrl, cleanKey, { 
-      auth: { 
-        persistSession: false,
-        storageKey: 'scrub-shop-shared-sdk' // Use unique storage key to avoid conflicts
-      } 
-    })
+    try {
+      // Dynamic import to avoid build-time dependencies
+      const { createClient } = await import('@supabase/supabase-js')
+      _createClient = createClient
+      
+      _client = createClient(cleanUrl, cleanKey, { 
+        auth: { 
+          persistSession: false,
+          storageKey: 'scrub-shop-shared-sdk' // Use unique storage key to avoid conflicts
+        } 
+      })
+    } catch (error) {
+      console.error('[shared-sdk] Failed to import @supabase/supabase-js:', error)
+      throw new Error('Supabase client library not available')
+    }
   }
   return _client
 }
