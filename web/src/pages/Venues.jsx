@@ -4,17 +4,7 @@ import VenueTable from '../components/VenueTable'
 import { getDefaultVenueEntry } from '../utils/sheetMappings'
 import { cn } from '../utils/cn'
 import { useVenuesSDKProbe } from '../hooks/useVenuesSDKProbe'
-import { ENV, assertEnv } from '../lib/envGuard'
-
-const __missing = assertEnv()
-
-// Debug dump: see exactly what Vite injected
-// NOTE: This runs at module load, once
-// eslint-disable-next-line no-console
-console.groupCollapsed('import.meta.env dump')
-// eslint-disable-next-line no-console
-console.log(import.meta.env)
-console.groupEnd()
+import { ENV } from '../lib/envGuard'
 
 const Venues = () => {
   const { addVenueEntry, updateVenueEntry, deleteVenueEntry, loading } = useApp()
