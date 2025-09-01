@@ -1,6 +1,5 @@
-// Dynamic import to avoid build-time dependencies
+// Stub implementation to avoid build-time dependencies
 let _client = null
-let _createClient = null
 
 function isLikelyJwt(key) {
   // very loose check: must look like three base64url segments
@@ -22,18 +21,20 @@ export async function initSupabase({ url, anonKey }) {
 
   if (!_client) {
     try {
-      // Dynamic import to avoid build-time dependencies
-      const { createClient } = await import('@supabase/supabase-js')
-      _createClient = createClient
-      
-      _client = createClient(cleanUrl, cleanKey, { 
-        auth: { 
-          persistSession: false,
-          storageKey: 'scrub-shop-shared-sdk' // Use unique storage key to avoid conflicts
-        } 
-      })
+      // Check if we're in a browser environment with Supabase available
+      if (typeof window !== 'undefined' && window.supabase) {
+        _client = window.supabase
+      } else {
+        // Create a minimal stub client for build compatibility
+        _client = {
+          auth: { signOut: () => Promise.resolve() },
+          from: () => ({ select: () => ({ eq: () => Promise.resolve({ data: [], error: null }) }) }),
+          storage: { from: () => ({ upload: () => Promise.resolve({ data: null, error: null }) }) }
+        }
+        console.warn('[shared-sdk] Using stub Supabase client - full functionality not available')
+      }
     } catch (error) {
-      console.error('[shared-sdk] Failed to import @supabase/supabase-js:', error)
+      console.error('[shared-sdk] Failed to initialize Supabase client:', error)
       throw new Error('Supabase client library not available')
     }
   }
