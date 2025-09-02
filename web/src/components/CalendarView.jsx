@@ -57,15 +57,8 @@ const CalendarView = () => {
           return transformed
         })
         
-        // Filter by current sheet (Trailer vs Camper)
-        const storeName = currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'
-        
-        const filtered = transformedData.filter(sale => {
-          const saleStore = sale.store
-          return saleStore === storeName
-        })
-        
-        return filtered
+        // Return all transformed data for calendar view
+        return transformedData
       }
       return []
     } catch (error) {
@@ -75,12 +68,8 @@ const CalendarView = () => {
 
   // Get filtered sales data for the current sheet
   const getFilteredSalesData = () => {
-    // Filter salesData by current sheet (Trailer vs Camper)
-    const storeName = currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'
-    return salesData.filter(sale => {
-      const saleStore = sale.store
-      return saleStore === storeName
-    })
+    // Return all sales data for calendar view
+    return salesData
   }
 
   // Try different possible venue ID field names
@@ -900,10 +889,7 @@ const CalendarView = () => {
     alert(`Show details for venue: ${venue.promo}`);
   }
 
-  const handleSheetToggle = () => {
-    const newSheet = currentSheet === 'TRAILER_HISTORY' ? 'CAMPER_HISTORY' : 'TRAILER_HISTORY'
-    setCurrentSheet(newSheet)
-  }
+
 
   // Month navigation functions
   const goToPreviousMonth = () => {
@@ -982,15 +968,7 @@ const CalendarView = () => {
       {/* Calendar Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-4">
-          {/* Calendar Type Toggle */}
-          <button
-            onClick={handleSheetToggle}
-            className="flex items-center px-4 py-2 text-sm font-medium bg-primary-100 text-primary-700 hover:bg-primary-200 rounded-md transition-colors duration-200 border border-primary-300"
-          >
-            <span>
-              {currentSheet === 'TRAILER_HISTORY' ? '🚛 Trailer' : '🏕️ Camper'}
-            </span>
-          </button>
+
 
           {/* View Toggle */}
           <div className="flex bg-secondary-100 rounded-lg p-1">

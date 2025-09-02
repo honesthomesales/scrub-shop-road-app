@@ -240,15 +240,14 @@ const Scheduler = () => {
                     <Calendar className="w-4 h-4 mr-2" />
                     Weekly Calendar
                   </button>
-                  {store.name !== 'Camper' && store.name !== 'Trailer' && (
-                    <button
-                      onClick={() => handleStoreAction('auto-scheduler', store)}
-                      className="flex items-center justify-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-sm font-medium text-gray-700 hover:text-blue-600 col-span-2"
-                    >
-                      <Zap className="w-4 h-4 mr-2" />
-                      Auto Schedule
-                    </button>
-                  )}
+                  <button
+                    onClick={() => alert('AUTO SCHEDULE coming soon')}
+                    className="flex items-center justify-center p-3 bg-gray-100 rounded-lg shadow-sm text-sm font-medium text-gray-500 col-span-2 cursor-not-allowed"
+                    disabled
+                  >
+                    <Zap className="w-4 h-4 mr-2" />
+                    AUTO SCHEDULE coming soon
+                  </button>
                 </div>
               </div>
             )}

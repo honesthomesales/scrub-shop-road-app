@@ -27,7 +27,7 @@ const Calendar = () => {
                 Calendar v2.0
               </h1>
               <p className="mt-2 text-secondary-600">
-                Schedule and manage events, venues, and worker assignments for Trailer and Camper operations
+                Schedule and manage events, venues, and worker assignments for all store operations
               </p>
             </div>
             <button
