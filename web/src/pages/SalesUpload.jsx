@@ -2,8 +2,10 @@ import React, { useState, useRef } from 'react'
 import { Upload, FileText, CheckCircle, AlertCircle, X, Eye, Download } from 'lucide-react'
 import Papa from 'papaparse'
 import supabaseAPI from '../services/supabaseAPI'
+import { useApp } from '../contexts/AppContext'
 
 const SalesUpload = () => {
+  const { loadSalesData } = useApp()
   const [file, setFile] = useState(null)
   const [previewData, setPreviewData] = useState([])
   const [isUploading, setIsUploading] = useState(false)
@@ -232,6 +234,11 @@ const SalesUpload = () => {
             skipped: skippedRows
           })
           setIsUploading(false)
+          
+          // Refresh dashboard data to show latest numbers
+          if (uploaded > 0) {
+            loadSalesData()
+          }
         },
         error: (error) => {
           setUploadResult({
@@ -356,6 +363,11 @@ const SalesUpload = () => {
           const result = await supabaseAPI.importTrailerHistory(transformedData)
           setTrailerUploadResult(result)
           setIsTrailerUploading(false)
+          
+          // Refresh dashboard data to show latest numbers
+          if (result.success && result.processed > 0) {
+            loadSalesData()
+          }
         },
         error: (error) => {
           setTrailerUploadResult({ success: false, error: error.message })

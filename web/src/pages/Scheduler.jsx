@@ -207,7 +207,7 @@ const Scheduler = () => {
 
       {/* Store List with Hover Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {stores.map((store) => (
+        {stores.filter(store => store.name !== 'Trailer' && store.name !== 'Camper').map((store) => (
           <div 
             key={store.id} 
             className="relative bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200"
@@ -407,7 +407,7 @@ const HolidayManagerView = ({ onBack }) => {
 
       {/* Stores Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {stores.map((store) => {
+        {stores.filter(store => store.name !== 'Trailer' && store.name !== 'Camper').map((store) => {
           const storeHolidays = holidays[store.id] || []
           
           return (

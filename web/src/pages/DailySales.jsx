@@ -224,14 +224,46 @@ const DailySales = () => {
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-center space-x-4">
               <h1 className="text-3xl font-bold text-secondary-900">
                 Daily Sales
               </h1>
-              <p className="mt-2 text-secondary-600">
-                Manage sales entries for {currentSheet === 'TRAILER_HISTORY' ? 'Trailer' : 'Camper'} operations
-              </p>
+              
+              {/* Month Navigation */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handlePreviousMonth}
+                  className="btn-outline"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Previous Month
+                </button>
+                
+                <span className="text-lg font-semibold text-secondary-700">
+                  {getMonthName(currentMonth)} {currentMonth.getFullYear()}
+                </span>
+                
+                <button
+                  onClick={handleNextMonth}
+                  className="btn-outline"
+                >
+                  Next Month
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </button>
+              </div>
             </div>
+            
+            <button
+              onClick={handleAddSale}
+              className="btn-primary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Sale
+            </button>
+          </div>
+          
+          {/* Clean $0 Entries and Month to Date Sales */}
+          <div className="mt-6 flex items-center space-x-4">
             <button
               onClick={handleCleanupZeroSales}
               disabled={isCleaning}
@@ -246,47 +278,42 @@ const DailySales = () => {
                 '🧹 Clean $0 Entries'
               )}
             </button>
-          </div>
-        </div>
-
-        {/* Date Picker */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handlePreviousMonth}
-                className="btn-outline"
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Previous Month
-              </button>
-              
-              <h2 className="text-xl font-semibold text-secondary-900">
-                {getMonthName(currentMonth)} {currentMonth.getFullYear()}
-              </h2>
-              
-              <button
-                onClick={handleNextMonth}
-                className="btn-outline"
-              >
-                Next Month
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </button>
-            </div>
             
-            <button
-              onClick={handleAddSale}
-              className="btn-primary"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Sale
-            </button>
+            {/* Total Month to Date Sales Box */}
+            <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 shadow-sm">
+              <div className="text-sm text-gray-600">Total Month to Date Sales</div>
+              <div className="text-xl font-bold text-primary-600">
+                ${(() => {
+                  const today = new Date()
+                  const currentMonthValue = currentMonth.getMonth()
+                  const currentYearValue = currentMonth.getFullYear()
+                  
+                  const monthToDateSales = filteredSalesData
+                    .filter(sale => {
+                      const saleDate = parseDateString(sale.date)
+                      if (!saleDate) return false
+                      const saleMonth = saleDate.getMonth()
+                      const saleYear = saleDate.getFullYear()
+                      const saleDay = saleDate.getDate()
+                      
+                      return saleMonth === currentMonthValue && 
+                             saleYear === currentYearValue &&
+                             saleDay <= today.getDate()
+                    })
+                    .reduce((sum, sale) => sum + (parseFloat(sale.grossSales) || 0), 0)
+                  
+                  return monthToDateSales.toLocaleString('en-US', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                  })
+                })()}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Sales Charts */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-secondary-900 mb-4">Sales Analytics</h2>
           {(() => {
             const chartData = filteredSalesData
               .filter(sale => sale.date && sale.grossSales > 0)
