@@ -1,0 +1,6383 @@
+[
+  {
+    "db_layout": {
+      "views": [
+        {
+          "table_name": "RENT_collected_by_month"
+        },
+        {
+          "table_name": "RENT_expected_by_month"
+        },
+        {
+          "table_name": "RENT_noi_by_month"
+        },
+        {
+          "table_name": "RENT_period_balances"
+        },
+        {
+          "table_name": "RENT_periods_remaining"
+        },
+        {
+          "table_name": "RENT_rent_periods_with_lease"
+        },
+        {
+          "table_name": "active_invoices"
+        },
+        {
+          "table_name": "deprecated_invoices"
+        },
+        {
+          "table_name": "employee_links_view"
+        },
+        {
+          "table_name": "invitation_details"
+        },
+        {
+          "table_name": "invoice_summary"
+        },
+        {
+          "table_name": "link_request_details"
+        },
+        {
+          "table_name": "rent_collected_by_month"
+        }
+      ],
+      "columns": [
+        {
+          "data_type": "date",
+          "table_name": "RENT_collected_by_month",
+          "column_name": "month",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_collected_by_month",
+          "column_name": "collected_rent",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_collected_by_month",
+          "column_name": "collected_late_fees",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_expected_by_month",
+          "column_name": "month",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_expected_by_month",
+          "column_name": "expected_rent",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_expected_by_month",
+          "column_name": "expected_late_fees",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_expenses",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_expenses",
+          "column_name": "property_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_expenses",
+          "column_name": "lease_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying",
+          "table_name": "RENT_expenses",
+          "column_name": "category",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(12,2)",
+          "table_name": "RENT_expenses",
+          "column_name": "amount",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_expenses",
+          "column_name": "expense_date",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_expenses",
+          "column_name": "memo",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_expenses",
+          "column_name": "attachment_url",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_expenses",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_expenses",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_late_fee_policies",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_late_fee_policies",
+          "column_name": "lease_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "RENT_late_fee_policies",
+          "column_name": "grace_days",
+          "is_nullable": "NO",
+          "column_default": "5"
+        },
+        {
+          "data_type": "numeric(12,2)",
+          "table_name": "RENT_late_fee_policies",
+          "column_name": "flat_fee",
+          "is_nullable": "NO",
+          "column_default": "0"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "RENT_late_fee_policies",
+          "column_name": "auto_apply",
+          "is_nullable": "NO",
+          "column_default": "true"
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_late_fee_policies",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_late_fee_policies",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_late_fee_policies",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_leases",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "uuid_generate_v4()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_leases",
+          "column_name": "property_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_leases",
+          "column_name": "tenant_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_leases",
+          "column_name": "lease_start_date",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_leases",
+          "column_name": "lease_end_date",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_leases",
+          "column_name": "rent",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "RENT_leases",
+          "column_name": "rent_cadence",
+          "is_nullable": "YES",
+          "column_default": "'monthly'::character varying"
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_leases",
+          "column_name": "move_in_fee",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_leases",
+          "column_name": "late_fee_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_leases",
+          "column_name": "lease_pdf_url",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "RENT_leases",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": "'active'::character varying"
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_leases",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_leases",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_leases",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "integer",
+          "table_name": "RENT_leases",
+          "column_name": "rent_due_day",
+          "is_nullable": "YES",
+          "column_default": "1"
+        },
+        {
+          "data_type": "smallint",
+          "table_name": "RENT_leases",
+          "column_name": "due_weekday",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_leases",
+          "column_name": "period_anchor_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_noi_by_month",
+          "column_name": "month",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_noi_by_month",
+          "column_name": "property_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_noi_by_month",
+          "column_name": "income_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_noi_by_month",
+          "column_name": "expense_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_noi_by_month",
+          "column_name": "noi",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_payment_allocations",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_payment_allocations",
+          "column_name": "payment_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_payment_allocations",
+          "column_name": "rent_period_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_payment_allocations",
+          "column_name": "amount_to_rent",
+          "is_nullable": "YES",
+          "column_default": "0"
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_payment_allocations",
+          "column_name": "amount_to_late_fee",
+          "is_nullable": "YES",
+          "column_default": "0"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_payment_allocations",
+          "column_name": "applied_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_payment_allocations",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_payment_allocations",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_payments",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "uuid_generate_v4()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_payments",
+          "column_name": "property_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_payments",
+          "column_name": "tenant_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_payments",
+          "column_name": "lease_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_payments",
+          "column_name": "payment_date",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_payments",
+          "column_name": "amount",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(50)",
+          "table_name": "RENT_payments",
+          "column_name": "payment_type",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(50)",
+          "table_name": "RENT_payments",
+          "column_name": "payment_method",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "RENT_payments",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": "'completed'::character varying"
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_payments",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_payments",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_payments",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_payments",
+          "column_name": "date_paid",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_period_balances",
+          "column_name": "id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_period_balances",
+          "column_name": "tenant_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_period_balances",
+          "column_name": "property_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_period_balances",
+          "column_name": "lease_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_period_balances",
+          "column_name": "period_due_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_period_balances",
+          "column_name": "amount_paid",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_period_balances",
+          "column_name": "late_fee_applied",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "RENT_period_balances",
+          "column_name": "late_fee_waived",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_period_balances",
+          "column_name": "due_date_override",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_period_balances",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_period_balances",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_period_balances",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_period_balances",
+          "column_name": "rent_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "RENT_period_balances",
+          "column_name": "rent_cadence",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "RENT_period_balances",
+          "column_name": "lease_status",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_period_balances",
+          "column_name": "total_due",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_period_balances",
+          "column_name": "remaining_due",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_periods_remaining",
+          "column_name": "id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_periods_remaining",
+          "column_name": "lease_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_periods_remaining",
+          "column_name": "tenant_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_periods_remaining",
+          "column_name": "property_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_periods_remaining",
+          "column_name": "period_due_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_periods_remaining",
+          "column_name": "rent_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_periods_remaining",
+          "column_name": "amount_paid",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_periods_remaining",
+          "column_name": "late_fee_applied",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "RENT_periods_remaining",
+          "column_name": "remaining_due",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_properties",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "uuid_generate_v4()"
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "RENT_properties",
+          "column_name": "name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_properties",
+          "column_name": "address",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(100)",
+          "table_name": "RENT_properties",
+          "column_name": "city",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(2)",
+          "table_name": "RENT_properties",
+          "column_name": "state",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(10)",
+          "table_name": "RENT_properties",
+          "column_name": "zip_code",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "RENT_properties",
+          "column_name": "bedrooms",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(3,1)",
+          "table_name": "RENT_properties",
+          "column_name": "bathrooms",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "RENT_properties",
+          "column_name": "square_feet",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "RENT_properties",
+          "column_name": "year_built",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(12,2)",
+          "table_name": "RENT_properties",
+          "column_name": "purchase_price",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_properties",
+          "column_name": "purchase_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(12,2)",
+          "table_name": "RENT_properties",
+          "column_name": "current_value",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "RENT_properties",
+          "column_name": "is_for_sale",
+          "is_nullable": "YES",
+          "column_default": "false"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "RENT_properties",
+          "column_name": "is_for_rent",
+          "is_nullable": "YES",
+          "column_default": "true"
+        },
+        {
+          "data_type": "character varying(100)",
+          "table_name": "RENT_properties",
+          "column_name": "insurance_policy_number",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(100)",
+          "table_name": "RENT_properties",
+          "column_name": "insurance_provider",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_properties",
+          "column_name": "insurance_premium",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "RENT_properties",
+          "column_name": "owner_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_properties",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_properties",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "property_type",
+          "table_name": "RENT_properties",
+          "column_name": "property_type",
+          "is_nullable": "YES",
+          "column_default": "'house'::property_type"
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "RENT_properties",
+          "column_name": "Sell_Price",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "RENT_properties",
+          "column_name": "Interest_Rate",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "real",
+          "table_name": "RENT_properties",
+          "column_name": "property_tax",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "RENT_properties",
+          "column_name": "purchase_payment",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying",
+          "table_name": "RENT_properties",
+          "column_name": "Map_ID",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_properties",
+          "column_name": "monthly_rent",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_properties",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_rent_periods",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_rent_periods",
+          "column_name": "tenant_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_rent_periods",
+          "column_name": "property_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_rent_periods",
+          "column_name": "lease_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_rent_periods",
+          "column_name": "period_due_date",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_rent_periods",
+          "column_name": "amount_paid",
+          "is_nullable": "YES",
+          "column_default": "0"
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_rent_periods",
+          "column_name": "late_fee_applied",
+          "is_nullable": "YES",
+          "column_default": "0"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "RENT_rent_periods",
+          "column_name": "late_fee_waived",
+          "is_nullable": "YES",
+          "column_default": "false"
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_rent_periods",
+          "column_name": "due_date_override",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_rent_periods",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_rent_periods",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_rent_periods",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "tenant_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "property_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "lease_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "period_due_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "rent_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "rent_cadence",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "amount_paid",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "late_fee_applied",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "late_fee_waived",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "due_date_override",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_rent_periods_with_lease",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_tenants",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "uuid_generate_v4()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "RENT_tenants",
+          "column_name": "property_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(100)",
+          "table_name": "RENT_tenants",
+          "column_name": "first_name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(100)",
+          "table_name": "RENT_tenants",
+          "column_name": "last_name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "RENT_tenants",
+          "column_name": "email",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "RENT_tenants",
+          "column_name": "phone",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "RENT_tenants",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_tenants",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "RENT_tenants",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "RENT_tenants",
+          "column_name": "is_active",
+          "is_nullable": "YES",
+          "column_default": "true"
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_tenants",
+          "column_name": "lease_start_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_tenants",
+          "column_name": "lease_end_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "RENT_tenants",
+          "column_name": "currently_paid_up_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "active_invoices",
+          "column_name": "id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "active_invoices",
+          "column_name": "job_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "active_invoices",
+          "column_name": "job_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "active_invoices",
+          "column_name": "customer_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "active_invoices",
+          "column_name": "customer_email",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "active_invoices",
+          "column_name": "customer_phone",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "active_invoices",
+          "column_name": "customer_address",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "active_invoices",
+          "column_name": "job_description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "active_invoices",
+          "column_name": "due_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "active_invoices",
+          "column_name": "due_time",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "active_invoices",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "active_invoices",
+          "column_name": "total_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "active_invoices",
+          "column_name": "line_items",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "active_invoices",
+          "column_name": "business_info",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "active_invoices",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "active_invoices",
+          "column_name": "is_deprecated",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "active_invoices",
+          "column_name": "deprecated_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "active_invoices",
+          "column_name": "original_completion_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "activity_log",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "uuid_generate_v4()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "activity_log",
+          "column_name": "type",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "activity_log",
+          "column_name": "task_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "activity_log",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "activity_log",
+          "column_name": "details",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "activity_log",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "timezone('utc'::text, now())"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "agent_events",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "agent_events",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "agent_events",
+          "column_name": "mode",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "agent_events",
+          "column_name": "transcript",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "agent_events",
+          "column_name": "plan_json",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "agent_events",
+          "column_name": "executed",
+          "is_nullable": "NO",
+          "column_default": "false"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "agent_events",
+          "column_name": "success",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "agent_events",
+          "column_name": "error",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "agent_events",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "integer",
+          "table_name": "app_config",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "nextval('app_config_id_seq'::regclass)"
+        },
+        {
+          "data_type": "character varying(100)",
+          "table_name": "app_config",
+          "column_name": "key_name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "app_config",
+          "column_name": "key_value",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "app_config",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "app_config",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "app_config",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "assistant_turns",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "assistant_turns",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "assistant_turns",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "assistant_turns",
+          "column_name": "org_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "assistant_turns",
+          "column_name": "transcript",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "assistant_turns",
+          "column_name": "intent",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "assistant_turns",
+          "column_name": "confidence",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "assistant_turns",
+          "column_name": "slots",
+          "is_nullable": "NO",
+          "column_default": "'{}'::jsonb"
+        },
+        {
+          "data_type": "text[]",
+          "table_name": "assistant_turns",
+          "column_name": "missing_slots",
+          "is_nullable": "NO",
+          "column_default": "'{}'::text[]"
+        },
+        {
+          "data_type": "text",
+          "table_name": "assistant_turns",
+          "column_name": "tool",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text[]",
+          "table_name": "assistant_turns",
+          "column_name": "followups",
+          "is_nullable": "NO",
+          "column_default": "'{}'::text[]"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "assistant_turns",
+          "column_name": "executed",
+          "is_nullable": "NO",
+          "column_default": "false"
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "assistant_turns",
+          "column_name": "execution_result",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "assistant_turns",
+          "column_name": "correlation_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "comments",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "uuid_generate_v4()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "comments",
+          "column_name": "task_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "comments",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "comments",
+          "column_name": "text",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "comments",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "timezone('utc'::text, now())"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "company_members",
+          "column_name": "company_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "company_members",
+          "column_name": "user_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "company_members",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "customer_feedback",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "customer_feedback",
+          "column_name": "customer_name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "customer_feedback",
+          "column_name": "customer_phone",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "customer_feedback",
+          "column_name": "customer_email",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "customer_feedback",
+          "column_name": "customer_address",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "customer_feedback",
+          "column_name": "service_provider_user_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "customer_feedback",
+          "column_name": "service_provider_name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "customer_feedback",
+          "column_name": "job_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "customer_feedback",
+          "column_name": "job_completion_date",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "customer_feedback",
+          "column_name": "payment_rating",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "customer_feedback",
+          "column_name": "communication_rating",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "customer_feedback",
+          "column_name": "respect_rating",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "customer_feedback",
+          "column_name": "cleanliness_rating",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(2,1)",
+          "table_name": "customer_feedback",
+          "column_name": "overall_rating",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "customer_feedback",
+          "column_name": "comments",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "customer_feedback",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "customer_feedback",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "deprecated_invoices",
+          "column_name": "id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "deprecated_invoices",
+          "column_name": "job_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "deprecated_invoices",
+          "column_name": "job_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "deprecated_invoices",
+          "column_name": "customer_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "deprecated_invoices",
+          "column_name": "customer_email",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "deprecated_invoices",
+          "column_name": "customer_phone",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "deprecated_invoices",
+          "column_name": "customer_address",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "deprecated_invoices",
+          "column_name": "job_description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "deprecated_invoices",
+          "column_name": "due_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "deprecated_invoices",
+          "column_name": "due_time",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "deprecated_invoices",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "deprecated_invoices",
+          "column_name": "total_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "deprecated_invoices",
+          "column_name": "line_items",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "deprecated_invoices",
+          "column_name": "business_info",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "deprecated_invoices",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "deprecated_invoices",
+          "column_name": "is_deprecated",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "deprecated_invoices",
+          "column_name": "deprecated_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "deprecated_invoices",
+          "column_name": "original_completion_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "employee_invitations",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "nextval('employee_invitations_id_seq'::regclass)"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "employee_invitations",
+          "column_name": "inviter_user_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "employee_invitations",
+          "column_name": "inviter_business_owner_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "employee_invitations",
+          "column_name": "invitee_email",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "employee_invitations",
+          "column_name": "invited_role_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "employee_invitations",
+          "column_name": "invitation_token",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "employee_invitations",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": "'pending'::character varying"
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "employee_invitations",
+          "column_name": "expires_at",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "employee_invitations",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "employee_invitations",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "integer",
+          "table_name": "employee_link_requests",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "nextval('employee_link_requests_id_seq'::regclass)"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "employee_link_requests",
+          "column_name": "requester_user_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "employee_link_requests",
+          "column_name": "requester_business_owner_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "employee_link_requests",
+          "column_name": "requested_user_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "employee_link_requests",
+          "column_name": "requested_role_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "employee_link_requests",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": "'pending'::character varying"
+        },
+        {
+          "data_type": "text",
+          "table_name": "employee_link_requests",
+          "column_name": "request_message",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "employee_link_requests",
+          "column_name": "response_message",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "employee_link_requests",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "employee_link_requests",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "employee_link_requests",
+          "column_name": "responded_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "employee_links_view",
+          "column_name": "id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "employee_links_view",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "employee_links_view",
+          "column_name": "business_owner_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "employee_links_view",
+          "column_name": "role_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(50)",
+          "table_name": "employee_links_view",
+          "column_name": "role_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "employee_links_view",
+          "column_name": "business_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "employee_links_view",
+          "column_name": "business_owner_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "employee_links_view",
+          "column_name": "employee_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "employee_links_view",
+          "column_name": "is_active",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "employee_links_view",
+          "column_name": "hire_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "employee_links_view",
+          "column_name": "termination_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "employee_links_view",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "employee_links_view",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "employee_roles",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "nextval('employee_roles_id_seq'::regclass)"
+        },
+        {
+          "data_type": "character varying(50)",
+          "table_name": "employee_roles",
+          "column_name": "role_name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "employee_roles",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "employee_roles",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "integer",
+          "table_name": "employees",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "nextval('employees_id_seq'::regclass)"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "employees",
+          "column_name": "user_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "employees",
+          "column_name": "business_owner_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "employees",
+          "column_name": "role_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "employees",
+          "column_name": "is_active",
+          "is_nullable": "YES",
+          "column_default": "true"
+        },
+        {
+          "data_type": "date",
+          "table_name": "employees",
+          "column_name": "hire_date",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_DATE"
+        },
+        {
+          "data_type": "date",
+          "table_name": "employees",
+          "column_name": "termination_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "employees",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "employees",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "integer",
+          "table_name": "expense_types",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "nextval('expense_types_id_seq'::regclass)"
+        },
+        {
+          "data_type": "character varying(100)",
+          "table_name": "expense_types",
+          "column_name": "name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "expense_types",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "expense_types",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "expense_types",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "expense_types",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "expenses",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "expenses",
+          "column_name": "user_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "expenses",
+          "column_name": "expense_type_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "expenses",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "expenses",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "gmail_tokens",
+          "column_name": "user_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "gmail_tokens",
+          "column_name": "refresh_token",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "gmail_tokens",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "intent_observations",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "intent_observations",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "intent_observations",
+          "column_name": "org_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "intent_observations",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "intent_observations",
+          "column_name": "transcript",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "intent_observations",
+          "column_name": "intent",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "intent_observations",
+          "column_name": "confidence",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text[]",
+          "table_name": "intent_observations",
+          "column_name": "missing_slots",
+          "is_nullable": "NO",
+          "column_default": "'{}'::text[]"
+        },
+        {
+          "data_type": "text[]",
+          "table_name": "intent_observations",
+          "column_name": "warnings",
+          "is_nullable": "NO",
+          "column_default": "'{}'::text[]"
+        },
+        {
+          "data_type": "uuid[]",
+          "table_name": "intent_observations",
+          "column_name": "fired_validation_ids",
+          "is_nullable": "NO",
+          "column_default": "'{}'::uuid[]"
+        },
+        {
+          "data_type": "text",
+          "table_name": "intent_observations",
+          "column_name": "resolver_question",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "intent_observations",
+          "column_name": "parsed_payload",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "intent_observations",
+          "column_name": "blocked",
+          "is_nullable": "NO",
+          "column_default": "false"
+        },
+        {
+          "data_type": "uuid[]",
+          "table_name": "intent_observations",
+          "column_name": "blocked_by",
+          "is_nullable": "NO",
+          "column_default": "'{}'::uuid[]"
+        },
+        {
+          "data_type": "text",
+          "table_name": "intent_observations",
+          "column_name": "context_tz",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "intent_observations",
+          "column_name": "context_now_iso",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "intent_observations",
+          "column_name": "correlation_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "intent_requirements",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "intent_requirements",
+          "column_name": "intent",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "intent_requirements",
+          "column_name": "required_slots",
+          "is_nullable": "NO",
+          "column_default": "'[]'::jsonb"
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "intent_requirements",
+          "column_name": "optional_slots",
+          "is_nullable": "NO",
+          "column_default": "'[]'::jsonb"
+        },
+        {
+          "data_type": "text[]",
+          "table_name": "intent_requirements",
+          "column_name": "ask_order",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "intent_requirements",
+          "column_name": "followup_template",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(4,3)",
+          "table_name": "intent_requirements",
+          "column_name": "min_confidence",
+          "is_nullable": "NO",
+          "column_default": "0.60"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "intent_requirements",
+          "column_name": "enabled",
+          "is_nullable": "NO",
+          "column_default": "true"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "intent_requirements",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "intent_requirements",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "intent_validations",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "intent_validations",
+          "column_name": "intent",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "intent_validations",
+          "column_name": "validator",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "intent_validations",
+          "column_name": "config",
+          "is_nullable": "NO",
+          "column_default": "'{}'::jsonb"
+        },
+        {
+          "data_type": "text",
+          "table_name": "intent_validations",
+          "column_name": "message",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "intent_validations",
+          "column_name": "severity",
+          "is_nullable": "NO",
+          "column_default": "'warn'::text"
+        },
+        {
+          "data_type": "integer",
+          "table_name": "intent_validations",
+          "column_name": "priority",
+          "is_nullable": "NO",
+          "column_default": "100"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "intent_validations",
+          "column_name": "enabled",
+          "is_nullable": "NO",
+          "column_default": "true"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "intent_validations",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "intent_validations",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "integer",
+          "table_name": "invitation_details",
+          "column_name": "id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "invitation_details",
+          "column_name": "inviter_user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "invitation_details",
+          "column_name": "inviter_business_owner_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "invitation_details",
+          "column_name": "invitee_email",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "invitation_details",
+          "column_name": "invited_role_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "invitation_details",
+          "column_name": "invitation_token",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "invitation_details",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "invitation_details",
+          "column_name": "expires_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "invitation_details",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "invitation_details",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(50)",
+          "table_name": "invitation_details",
+          "column_name": "invited_role_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "invitation_details",
+          "column_name": "inviter_business_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "invitation_details",
+          "column_name": "inviter_email",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "invoice_summary",
+          "column_name": "total_invoices",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "invoice_summary",
+          "column_name": "active_invoices",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "invoice_summary",
+          "column_name": "deprecated_invoices",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "invoice_summary",
+          "column_name": "total_active_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "invoice_summary",
+          "column_name": "total_all_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "invoices",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "invoices",
+          "column_name": "job_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "invoices",
+          "column_name": "job_name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "invoices",
+          "column_name": "customer_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "invoices",
+          "column_name": "customer_email",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "invoices",
+          "column_name": "customer_phone",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "invoices",
+          "column_name": "customer_address",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "invoices",
+          "column_name": "job_description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "invoices",
+          "column_name": "due_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "invoices",
+          "column_name": "due_time",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "invoices",
+          "column_name": "status",
+          "is_nullable": "NO",
+          "column_default": "'Job Complete'::text"
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "invoices",
+          "column_name": "total_amount",
+          "is_nullable": "NO",
+          "column_default": "0"
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "invoices",
+          "column_name": "line_items",
+          "is_nullable": "NO",
+          "column_default": "'[]'::jsonb"
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "invoices",
+          "column_name": "business_info",
+          "is_nullable": "NO",
+          "column_default": "'{}'::jsonb"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "invoices",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "invoices",
+          "column_name": "is_deprecated",
+          "is_nullable": "NO",
+          "column_default": "false"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "invoices",
+          "column_name": "deprecated_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "invoices",
+          "column_name": "original_completion_date",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "text[]",
+          "table_name": "invoices",
+          "column_name": "receipt_ids",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "invoices",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "invoices",
+          "column_name": "pay_provider",
+          "is_nullable": "YES",
+          "column_default": "'cashapp'::text"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "invoices",
+          "column_name": "pay_token",
+          "is_nullable": "YES",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "invoices",
+          "column_name": "pay_token_created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "jobs",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "jobs",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "job_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "customer_info",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "phone",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "email",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "address",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "job_description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "jobs",
+          "column_name": "due_date",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_DATE"
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "due_time",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "status",
+          "is_nullable": "NO",
+          "column_default": "'New'::text"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "jobs",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "jobs",
+          "column_name": "payment_info",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "project_type",
+          "is_nullable": "YES",
+          "column_default": "'single_job'::text"
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "jobs",
+          "column_name": "total_project_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "jobs",
+          "column_name": "project_start_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "jobs",
+          "column_name": "project_end_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "project_status",
+          "is_nullable": "YES",
+          "column_default": "'active'::text"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "jobs",
+          "column_name": "is_estimate",
+          "is_nullable": "NO",
+          "column_default": "false"
+        },
+        {
+          "data_type": "estimate_status",
+          "table_name": "jobs",
+          "column_name": "estimate_status",
+          "is_nullable": "NO",
+          "column_default": "'draft'::estimate_status"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "jobs",
+          "column_name": "estimate_expires_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "jobs",
+          "column_name": "estimate_sent_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "jobs",
+          "column_name": "estimate_accepted_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "jobs",
+          "column_name": "estimate_declined_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "estimate_public_token",
+          "is_nullable": "YES",
+          "column_default": "encode(gen_random_bytes(16), 'hex'::text)"
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "estimate_pdf_url",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "estimate_notes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "jobs",
+          "column_name": "Full Job Description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "jobs",
+          "column_name": "taxable",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "jobs",
+          "column_name": "Assigned_To",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "jobs",
+          "column_name": "completion_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "line_items",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "line_items",
+          "column_name": "job_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "line_items",
+          "column_name": "description",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "line_items",
+          "column_name": "quantity",
+          "is_nullable": "NO",
+          "column_default": "1"
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "line_items",
+          "column_name": "price",
+          "is_nullable": "NO",
+          "column_default": "0"
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "line_items",
+          "column_name": "total",
+          "is_nullable": "NO",
+          "column_default": "0"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "line_items",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "line_items",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "line_items",
+          "column_name": "receipt_multiplier_applied",
+          "is_nullable": "YES",
+          "column_default": "false"
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "line_items",
+          "column_name": "original_receipt_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "line_items",
+          "column_name": "milestone_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "line_items",
+          "column_name": "line_item_type",
+          "is_nullable": "YES",
+          "column_default": "'standard'::text"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "line_items",
+          "column_name": "taxable",
+          "is_nullable": "YES",
+          "column_default": "false"
+        },
+        {
+          "data_type": "integer",
+          "table_name": "link_request_details",
+          "column_name": "id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "link_request_details",
+          "column_name": "requester_user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "link_request_details",
+          "column_name": "requester_business_owner_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "link_request_details",
+          "column_name": "requested_user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "link_request_details",
+          "column_name": "requested_role_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "link_request_details",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "link_request_details",
+          "column_name": "request_message",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "link_request_details",
+          "column_name": "response_message",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "link_request_details",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "link_request_details",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "link_request_details",
+          "column_name": "responded_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(50)",
+          "table_name": "link_request_details",
+          "column_name": "requested_role_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "link_request_details",
+          "column_name": "requester_business_name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "link_request_details",
+          "column_name": "requester_email",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "link_request_details",
+          "column_name": "requested_email",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_approvals",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_approvals",
+          "column_name": "milestone_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestone_approvals",
+          "column_name": "approval_type",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestone_approvals",
+          "column_name": "customer_email",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestone_approvals",
+          "column_name": "approval_token",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "milestone_approvals",
+          "column_name": "approved",
+          "is_nullable": "YES",
+          "column_default": "false"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_approvals",
+          "column_name": "approved_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestone_approvals",
+          "column_name": "approval_notes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_approvals",
+          "column_name": "expires_at",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_approvals",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_change_orders",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_change_orders",
+          "column_name": "milestone_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestone_change_orders",
+          "column_name": "change_order_number",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestone_change_orders",
+          "column_name": "description",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "milestone_change_orders",
+          "column_name": "additional_amount",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "milestone_change_orders",
+          "column_name": "approved_by_customer",
+          "is_nullable": "YES",
+          "column_default": "false"
+        },
+        {
+          "data_type": "date",
+          "table_name": "milestone_change_orders",
+          "column_name": "approved_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestone_change_orders",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": "'pending'::text"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_change_orders",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_change_orders",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_dependencies",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_dependencies",
+          "column_name": "milestone_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_dependencies",
+          "column_name": "depends_on_milestone_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_dependencies",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_invoices",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_invoices",
+          "column_name": "milestone_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_invoices",
+          "column_name": "invoice_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "milestone_invoices",
+          "column_name": "amount",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "milestone_invoices",
+          "column_name": "invoice_date",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestone_invoices",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": "'pending'::text"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_invoices",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_invoices",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_progress",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_progress",
+          "column_name": "milestone_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "milestone_progress",
+          "column_name": "progress_date",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "milestone_progress",
+          "column_name": "completion_percentage",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestone_progress",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_progress",
+          "column_name": "created_by",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_progress",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_time_entries",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestone_time_entries",
+          "column_name": "milestone_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_time_entries",
+          "column_name": "start_time",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_time_entries",
+          "column_name": "end_time",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "milestone_time_entries",
+          "column_name": "duration_minutes",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestone_time_entries",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "milestone_time_entries",
+          "column_name": "hourly_rate",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_time_entries",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestone_time_entries",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "milestones",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "integer",
+          "table_name": "milestones",
+          "column_name": "job_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestones",
+          "column_name": "name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestones",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "milestones",
+          "column_name": "estimated_amount",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "milestones",
+          "column_name": "actual_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "milestones",
+          "column_name": "completion_percentage",
+          "is_nullable": "YES",
+          "column_default": "0"
+        },
+        {
+          "data_type": "text",
+          "table_name": "milestones",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "column_default": "'pending'::text"
+        },
+        {
+          "data_type": "date",
+          "table_name": "milestones",
+          "column_name": "start_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "milestones",
+          "column_name": "due_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "milestones",
+          "column_name": "completed_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "milestones",
+          "column_name": "sort_order",
+          "is_nullable": "YES",
+          "column_default": "0"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestones",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "milestones",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "nextval('orchestrate_llm_logs_id_seq'::regclass)"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "trace_id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "org_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "endpoint",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "model",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "status_code",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "latency_ms",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "error",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "request_json",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "response_json",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "prompt_tokens",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "completion_tokens",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "total_tokens",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "orchestrate_llm_logs",
+          "column_name": "correlation_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "orchestrate_test_cases",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "orchestrate_test_cases",
+          "column_name": "name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "orchestrate_test_cases",
+          "column_name": "transcript",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "orchestrate_test_cases",
+          "column_name": "context",
+          "is_nullable": "NO",
+          "column_default": "'{}'::jsonb"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "orchestrate_test_cases",
+          "column_name": "org_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "orchestrate_test_cases",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "orchestrate_test_cases",
+          "column_name": "expected",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "orchestrate_test_cases",
+          "column_name": "enabled",
+          "is_nullable": "NO",
+          "column_default": "true"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "orchestrate_test_cases",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "orchestrate_test_cases",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "payment_events",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "nextval('payment_events_id_seq'::regclass)"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "payment_events",
+          "column_name": "invoice_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "payment_events",
+          "column_name": "kind",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "payment_events",
+          "column_name": "source",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "payment_events",
+          "column_name": "meta",
+          "is_nullable": "YES",
+          "column_default": "'{}'::jsonb"
+        },
+        {
+          "data_type": "inet",
+          "table_name": "payment_events",
+          "column_name": "ip",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "payment_events",
+          "column_name": "ua",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "payment_events",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "photos",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "photos",
+          "column_name": "job_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "photos",
+          "column_name": "line_item_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "photos",
+          "column_name": "photo_type",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "photos",
+          "column_name": "file_name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "photos",
+          "column_name": "local_path",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "photos",
+          "column_name": "original_photo_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "photos",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "photos",
+          "column_name": "amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "photos",
+          "column_name": "date_taken",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "photos",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "photos",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "photos",
+          "column_name": "vendor",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "photos",
+          "column_name": "total_amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "photos",
+          "column_name": "payment_method",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "photos",
+          "column_name": "expense_type",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "photos",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "photos",
+          "column_name": "milestone_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "photos",
+          "column_name": "photo_category",
+          "is_nullable": "YES",
+          "column_default": "'general'::text"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "photos",
+          "column_name": "reimbursement_requested",
+          "is_nullable": "YES",
+          "column_default": "false"
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "photos",
+          "column_name": "reimbursement_status",
+          "is_nullable": "YES",
+          "column_default": "'pending'::character varying"
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "photos",
+          "column_name": "reimbursement_amount",
+          "is_nullable": "YES",
+          "column_default": "NULL::numeric"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "receipts",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "receipts",
+          "column_name": "file_name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "receipts",
+          "column_name": "local_path",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "receipts",
+          "column_name": "original_photo_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "receipts",
+          "column_name": "amount",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "date",
+          "table_name": "receipts",
+          "column_name": "date",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "receipts",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "receipts",
+          "column_name": "category",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "receipts",
+          "column_name": "job_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "receipts",
+          "column_name": "line_item_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "bigint",
+          "table_name": "receipts",
+          "column_name": "invoice_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "receipts",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp without time zone",
+          "table_name": "receipts",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "date",
+          "table_name": "rent_collected_by_month",
+          "column_name": "month",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "rent_collected_by_month",
+          "column_name": "collected_rent",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric",
+          "table_name": "rent_collected_by_month",
+          "column_name": "collected_late_fees",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "rent_late_fee_defaults",
+          "column_name": "rent_cadence",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "rent_late_fee_defaults",
+          "column_name": "flat_fee",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "rent_other",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "date",
+          "table_name": "rent_other",
+          "column_name": "date",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "character varying(20)",
+          "table_name": "rent_other",
+          "column_name": "type",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "numeric(10,2)",
+          "table_name": "rent_other",
+          "column_name": "amount",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "rent_other",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "rent_other",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "rent_other",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "integer",
+          "table_name": "secure_job_hashes",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "nextval('secure_job_hashes_id_seq'::regclass)"
+        },
+        {
+          "data_type": "character varying(64)",
+          "table_name": "secure_job_hashes",
+          "column_name": "hash",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "secure_job_hashes",
+          "column_name": "job_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "secure_job_hashes",
+          "column_name": "expires_at",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "secure_job_hashes",
+          "column_name": "is_used",
+          "is_nullable": "YES",
+          "column_default": "false"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "secure_job_hashes",
+          "column_name": "used_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "secure_job_hashes",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "slot_aliases",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "slot_aliases",
+          "column_name": "intent",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "slot_aliases",
+          "column_name": "alias",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "slot_aliases",
+          "column_name": "canonical_slot",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "slot_aliases",
+          "column_name": "priority",
+          "is_nullable": "NO",
+          "column_default": "100"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "slot_aliases",
+          "column_name": "enabled",
+          "is_nullable": "NO",
+          "column_default": "true"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "slot_aliases",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "slot_aliases",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "slot_transforms",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "slot_transforms",
+          "column_name": "intent",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "slot_transforms",
+          "column_name": "slot",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "slot_transform_kind",
+          "table_name": "slot_transforms",
+          "column_name": "kind",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "slot_transforms",
+          "column_name": "config",
+          "is_nullable": "NO",
+          "column_default": "'{}'::jsonb"
+        },
+        {
+          "data_type": "integer",
+          "table_name": "slot_transforms",
+          "column_name": "priority",
+          "is_nullable": "NO",
+          "column_default": "100"
+        },
+        {
+          "data_type": "text",
+          "table_name": "slot_transforms",
+          "column_name": "stage",
+          "is_nullable": "NO",
+          "column_default": "'post_llm'::text"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "slot_transforms",
+          "column_name": "enabled",
+          "is_nullable": "NO",
+          "column_default": "true"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "slot_transforms",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "slot_transforms",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "team_members",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "team_members",
+          "column_name": "name",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "team_members",
+          "column_name": "email",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "team_members",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "todos",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "todos",
+          "column_name": "text",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "todos",
+          "column_name": "completed",
+          "is_nullable": "NO",
+          "column_default": "false"
+        },
+        {
+          "data_type": "date",
+          "table_name": "todos",
+          "column_name": "due_date",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "todos",
+          "column_name": "priority",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "todos",
+          "column_name": "manual_order",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "todos",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "todos",
+          "column_name": "assignee",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "todos",
+          "column_name": "status",
+          "is_nullable": "NO",
+          "column_default": "'todo'::text"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "user_preferences",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "user_preferences",
+          "column_name": "email_setup_complete",
+          "is_nullable": "YES",
+          "column_default": "false"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "user_preferences",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "user_preferences",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "user_preferences",
+          "column_name": "business_name",
+          "is_nullable": "YES",
+          "column_default": "'Your Business Name'::character varying"
+        },
+        {
+          "data_type": "text",
+          "table_name": "user_preferences",
+          "column_name": "business_address",
+          "is_nullable": "YES",
+          "column_default": "'123 Business Street, City, State 12345'::text"
+        },
+        {
+          "data_type": "character varying(50)",
+          "table_name": "user_preferences",
+          "column_name": "business_phone",
+          "is_nullable": "YES",
+          "column_default": "'(555) 123-4567'::character varying"
+        },
+        {
+          "data_type": "character varying(255)",
+          "table_name": "user_preferences",
+          "column_name": "business_email",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "user_preferences",
+          "column_name": "charge_tax",
+          "is_nullable": "YES",
+          "column_default": "true"
+        },
+        {
+          "data_type": "numeric(5,4)",
+          "table_name": "user_preferences",
+          "column_name": "tax_rate",
+          "is_nullable": "YES",
+          "column_default": "0.0800"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "user_preferences",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "user_preferences",
+          "column_name": "receipt_multiplier_enabled",
+          "is_nullable": "YES",
+          "column_default": "false"
+        },
+        {
+          "data_type": "numeric(5,4)",
+          "table_name": "user_preferences",
+          "column_name": "receipt_multiplier_rate",
+          "is_nullable": "YES",
+          "column_default": "1.2000"
+        },
+        {
+          "data_type": "text",
+          "table_name": "user_preferences",
+          "column_name": "cashapp_cashtag",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "user_preferences",
+          "column_name": "cashapp_enabled",
+          "is_nullable": "YES",
+          "column_default": "true"
+        },
+        {
+          "data_type": "text",
+          "table_name": "user_preferences",
+          "column_name": "logo",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "user_preferences",
+          "column_name": "Name",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "voice_corrections",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "voice_corrections",
+          "column_name": "user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "voice_corrections",
+          "column_name": "pattern",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "voice_corrections",
+          "column_name": "is_regex",
+          "is_nullable": "NO",
+          "column_default": "false"
+        },
+        {
+          "data_type": "text",
+          "table_name": "voice_corrections",
+          "column_name": "intent",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "table_name": "voice_corrections",
+          "column_name": "entities",
+          "is_nullable": "NO",
+          "column_default": "'{}'::jsonb"
+        },
+        {
+          "data_type": "text",
+          "table_name": "voice_corrections",
+          "column_name": "rewrite_regex",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "voice_corrections",
+          "column_name": "rewrite_replace",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "table_name": "voice_corrections",
+          "column_name": "hits",
+          "is_nullable": "NO",
+          "column_default": "0"
+        },
+        {
+          "data_type": "boolean",
+          "table_name": "voice_corrections",
+          "column_name": "active",
+          "is_nullable": "NO",
+          "column_default": "true"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "voice_corrections",
+          "column_name": "added_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "table_name": "voice_corrections",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "text",
+          "table_name": "voice_corrections",
+          "column_name": "original_text",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "voice_corrections",
+          "column_name": "normalized_text",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "table_name": "voice_corrections",
+          "column_name": "pattern_norm",
+          "is_nullable": "YES",
+          "column_default": null
+        }
+      ],
+      "rls_tables": [
+        {
+          "table_name": "RENT_expenses",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "RENT_late_fee_policies",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "RENT_leases",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "RENT_payment_allocations",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "RENT_payments",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "RENT_properties",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "RENT_rent_periods",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "RENT_tenants",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "activity_log",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "agent_events",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "app_config",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "assistant_turns",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "comments",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "company_members",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "customer_feedback",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "employee_invitations",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "employee_link_requests",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "employee_roles",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "employees",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "expense_types",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "expenses",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "gmail_tokens",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "intent_observations",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "intent_requirements",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "intent_validations",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "invoices",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "jobs",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "line_items",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "milestone_approvals",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "milestone_change_orders",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "milestone_dependencies",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "milestone_invoices",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "milestone_progress",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "milestone_time_entries",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "milestones",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "orchestrate_llm_logs",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "orchestrate_test_cases",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "payment_events",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "photos",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "receipts",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "rent_late_fee_defaults",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "rent_other",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "secure_job_hashes",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "slot_aliases",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "slot_transforms",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "team_members",
+          "rls_enabled": false,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "todos",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "user_preferences",
+          "rls_enabled": true,
+          "schema_name": "public"
+        },
+        {
+          "table_name": "voice_corrections",
+          "rls_enabled": true,
+          "schema_name": "public"
+        }
+      ],
+      "row_counts": [
+        {
+          "table_name": "RENT_expenses",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "RENT_late_fee_policies",
+          "approx_rows": 74
+        },
+        {
+          "table_name": "RENT_leases",
+          "approx_rows": 87
+        },
+        {
+          "table_name": "RENT_payment_allocations",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "RENT_payments",
+          "approx_rows": 975
+        },
+        {
+          "table_name": "RENT_properties",
+          "approx_rows": 86
+        },
+        {
+          "table_name": "RENT_rent_periods",
+          "approx_rows": 4277
+        },
+        {
+          "table_name": "RENT_tenants",
+          "approx_rows": 85
+        },
+        {
+          "table_name": "activity_log",
+          "approx_rows": 2
+        },
+        {
+          "table_name": "agent_events",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "app_config",
+          "approx_rows": 1
+        },
+        {
+          "table_name": "assistant_turns",
+          "approx_rows": 424
+        },
+        {
+          "table_name": "comments",
+          "approx_rows": 1
+        },
+        {
+          "table_name": "company_members",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "customer_feedback",
+          "approx_rows": 3
+        },
+        {
+          "table_name": "employee_invitations",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "employee_link_requests",
+          "approx_rows": 1
+        },
+        {
+          "table_name": "employee_roles",
+          "approx_rows": 3
+        },
+        {
+          "table_name": "employees",
+          "approx_rows": 5
+        },
+        {
+          "table_name": "expense_types",
+          "approx_rows": 10
+        },
+        {
+          "table_name": "expenses",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "gmail_tokens",
+          "approx_rows": 125
+        },
+        {
+          "table_name": "intent_observations",
+          "approx_rows": 126
+        },
+        {
+          "table_name": "intent_requirements",
+          "approx_rows": 5
+        },
+        {
+          "table_name": "intent_validations",
+          "approx_rows": 11
+        },
+        {
+          "table_name": "invoices",
+          "approx_rows": 16
+        },
+        {
+          "table_name": "jobs",
+          "approx_rows": 23
+        },
+        {
+          "table_name": "line_items",
+          "approx_rows": 39
+        },
+        {
+          "table_name": "milestone_approvals",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "milestone_change_orders",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "milestone_dependencies",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "milestone_invoices",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "milestone_progress",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "milestone_time_entries",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "milestones",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "orchestrate_llm_logs",
+          "approx_rows": 437
+        },
+        {
+          "table_name": "orchestrate_test_cases",
+          "approx_rows": 3
+        },
+        {
+          "table_name": "payment_events",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "photos",
+          "approx_rows": 16
+        },
+        {
+          "table_name": "receipts",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "rent_late_fee_defaults",
+          "approx_rows": 3
+        },
+        {
+          "table_name": "rent_other",
+          "approx_rows": 0
+        },
+        {
+          "table_name": "secure_job_hashes",
+          "approx_rows": 16
+        },
+        {
+          "table_name": "slot_aliases",
+          "approx_rows": 5
+        },
+        {
+          "table_name": "slot_transforms",
+          "approx_rows": 7
+        },
+        {
+          "table_name": "team_members",
+          "approx_rows": 2
+        },
+        {
+          "table_name": "todos",
+          "approx_rows": 4
+        },
+        {
+          "table_name": "user_preferences",
+          "approx_rows": 5
+        },
+        {
+          "table_name": "voice_corrections",
+          "approx_rows": 7
+        }
+      ],
+      "foreign_keys": [
+        {
+          "fk_name": "RENT_expenses_lease_id_fkey",
+          "to_table": "RENT_leases",
+          "to_column": "id",
+          "from_table": "RENT_expenses",
+          "from_column": "lease_id"
+        },
+        {
+          "fk_name": "RENT_expenses_property_id_fkey",
+          "to_table": "RENT_properties",
+          "to_column": "id",
+          "from_table": "RENT_expenses",
+          "from_column": "property_id"
+        },
+        {
+          "fk_name": "RENT_late_fee_policies_lease_id_fkey",
+          "to_table": "RENT_leases",
+          "to_column": "id",
+          "from_table": "RENT_late_fee_policies",
+          "from_column": "lease_id"
+        },
+        {
+          "fk_name": "RENT_leases_property_id_fkey",
+          "to_table": "RENT_properties",
+          "to_column": "id",
+          "from_table": "RENT_leases",
+          "from_column": "property_id"
+        },
+        {
+          "fk_name": "RENT_leases_tenant_id_fkey",
+          "to_table": "RENT_tenants",
+          "to_column": "id",
+          "from_table": "RENT_leases",
+          "from_column": "tenant_id"
+        },
+        {
+          "fk_name": "RENT_payment_allocations_payment_id_fkey",
+          "to_table": "RENT_payments",
+          "to_column": "id",
+          "from_table": "RENT_payment_allocations",
+          "from_column": "payment_id"
+        },
+        {
+          "fk_name": "RENT_payment_allocations_rent_period_id_fkey",
+          "to_table": "RENT_rent_periods",
+          "to_column": "id",
+          "from_table": "RENT_payment_allocations",
+          "from_column": "rent_period_id"
+        },
+        {
+          "fk_name": "RENT_payments_property_id_fkey",
+          "to_table": "RENT_properties",
+          "to_column": "id",
+          "from_table": "RENT_payments",
+          "from_column": "property_id"
+        },
+        {
+          "fk_name": "RENT_payments_tenant_id_fkey",
+          "to_table": "RENT_tenants",
+          "to_column": "id",
+          "from_table": "RENT_payments",
+          "from_column": "tenant_id"
+        },
+        {
+          "fk_name": "RENT_rent_periods_lease_id_fkey",
+          "to_table": "RENT_leases",
+          "to_column": "id",
+          "from_table": "RENT_rent_periods",
+          "from_column": "lease_id"
+        },
+        {
+          "fk_name": "RENT_rent_periods_property_id_fkey",
+          "to_table": "RENT_properties",
+          "to_column": "id",
+          "from_table": "RENT_rent_periods",
+          "from_column": "property_id"
+        },
+        {
+          "fk_name": "RENT_rent_periods_tenant_id_fkey",
+          "to_table": "RENT_tenants",
+          "to_column": "id",
+          "from_table": "RENT_rent_periods",
+          "from_column": "tenant_id"
+        },
+        {
+          "fk_name": "RENT_tenants_property_id_fkey",
+          "to_table": "RENT_properties",
+          "to_column": "id",
+          "from_table": "RENT_tenants",
+          "from_column": "property_id"
+        },
+        {
+          "fk_name": "activity_log_task_id_fkey",
+          "to_table": "todos",
+          "to_column": "id",
+          "from_table": "activity_log",
+          "from_column": "task_id"
+        },
+        {
+          "fk_name": "activity_log_user_id_fkey",
+          "to_table": "team_members",
+          "to_column": "id",
+          "from_table": "activity_log",
+          "from_column": "user_id"
+        },
+        {
+          "fk_name": "comments_task_id_fkey",
+          "to_table": "todos",
+          "to_column": "id",
+          "from_table": "comments",
+          "from_column": "task_id"
+        },
+        {
+          "fk_name": "comments_user_id_fkey",
+          "to_table": "team_members",
+          "to_column": "id",
+          "from_table": "comments",
+          "from_column": "user_id"
+        },
+        {
+          "fk_name": "company_members_user_fk",
+          "to_table": "user_preferences",
+          "to_column": "user_id",
+          "from_table": "company_members",
+          "from_column": "user_id"
+        },
+        {
+          "fk_name": "customer_feedback_job_id_fkey",
+          "to_table": "jobs",
+          "to_column": "id",
+          "from_table": "customer_feedback",
+          "from_column": "job_id"
+        },
+        {
+          "fk_name": "customer_feedback_service_provider_user_id_fkey",
+          "to_table": "user_preferences",
+          "to_column": "user_id",
+          "from_table": "customer_feedback",
+          "from_column": "service_provider_user_id"
+        },
+        {
+          "fk_name": "employee_invitations_invited_role_id_fkey",
+          "to_table": "employee_roles",
+          "to_column": "id",
+          "from_table": "employee_invitations",
+          "from_column": "invited_role_id"
+        },
+        {
+          "fk_name": "employee_invitations_inviter_business_owner_id_fkey",
+          "to_table": "user_preferences",
+          "to_column": "user_id",
+          "from_table": "employee_invitations",
+          "from_column": "inviter_business_owner_id"
+        },
+        {
+          "fk_name": "employee_invitations_inviter_user_id_fkey",
+          "to_table": "user_preferences",
+          "to_column": "user_id",
+          "from_table": "employee_invitations",
+          "from_column": "inviter_user_id"
+        },
+        {
+          "fk_name": "employee_link_requests_requested_role_id_fkey",
+          "to_table": "employee_roles",
+          "to_column": "id",
+          "from_table": "employee_link_requests",
+          "from_column": "requested_role_id"
+        },
+        {
+          "fk_name": "employee_link_requests_requested_user_id_fkey",
+          "to_table": "user_preferences",
+          "to_column": "user_id",
+          "from_table": "employee_link_requests",
+          "from_column": "requested_user_id"
+        },
+        {
+          "fk_name": "employee_link_requests_requester_business_owner_id_fkey",
+          "to_table": "user_preferences",
+          "to_column": "user_id",
+          "from_table": "employee_link_requests",
+          "from_column": "requester_business_owner_id"
+        },
+        {
+          "fk_name": "employee_link_requests_requester_user_id_fkey",
+          "to_table": "user_preferences",
+          "to_column": "user_id",
+          "from_table": "employee_link_requests",
+          "from_column": "requester_user_id"
+        },
+        {
+          "fk_name": "employees_business_owner_id_fkey",
+          "to_table": "user_preferences",
+          "to_column": "user_id",
+          "from_table": "employees",
+          "from_column": "business_owner_id"
+        },
+        {
+          "fk_name": "employees_role_id_fkey",
+          "to_table": "employee_roles",
+          "to_column": "id",
+          "from_table": "employees",
+          "from_column": "role_id"
+        },
+        {
+          "fk_name": "employees_user_id_fkey",
+          "to_table": "user_preferences",
+          "to_column": "user_id",
+          "from_table": "employees",
+          "from_column": "user_id"
+        },
+        {
+          "fk_name": "expense_types_user_id_fkey",
+          "to_table": "user_preferences",
+          "to_column": "user_id",
+          "from_table": "expense_types",
+          "from_column": "user_id"
+        },
+        {
+          "fk_name": "expenses_expense_type_id_fkey",
+          "to_table": "expense_types",
+          "to_column": "id",
+          "from_table": "expenses",
+          "from_column": "expense_type_id"
+        },
+        {
+          "fk_name": "expenses_user_id_fkey",
+          "to_table": "user_preferences",
+          "to_column": "user_id",
+          "from_table": "expenses",
+          "from_column": "user_id"
+        },
+        {
+          "fk_name": "invoices_job_id_fkey",
+          "to_table": "jobs",
+          "to_column": "id",
+          "from_table": "invoices",
+          "from_column": "job_id"
+        },
+        {
+          "fk_name": "line_items_job_id_fkey",
+          "to_table": "jobs",
+          "to_column": "id",
+          "from_table": "line_items",
+          "from_column": "job_id"
+        },
+        {
+          "fk_name": "line_items_milestone_id_fkey",
+          "to_table": "milestones",
+          "to_column": "id",
+          "from_table": "line_items",
+          "from_column": "milestone_id"
+        },
+        {
+          "fk_name": "milestone_approvals_milestone_id_fkey",
+          "to_table": "milestones",
+          "to_column": "id",
+          "from_table": "milestone_approvals",
+          "from_column": "milestone_id"
+        },
+        {
+          "fk_name": "milestone_change_orders_milestone_id_fkey",
+          "to_table": "milestones",
+          "to_column": "id",
+          "from_table": "milestone_change_orders",
+          "from_column": "milestone_id"
+        },
+        {
+          "fk_name": "milestone_dependencies_depends_on_milestone_id_fkey",
+          "to_table": "milestones",
+          "to_column": "id",
+          "from_table": "milestone_dependencies",
+          "from_column": "depends_on_milestone_id"
+        },
+        {
+          "fk_name": "milestone_dependencies_milestone_id_fkey",
+          "to_table": "milestones",
+          "to_column": "id",
+          "from_table": "milestone_dependencies",
+          "from_column": "milestone_id"
+        },
+        {
+          "fk_name": "milestone_invoices_invoice_id_fkey",
+          "to_table": "invoices",
+          "to_column": "id",
+          "from_table": "milestone_invoices",
+          "from_column": "invoice_id"
+        },
+        {
+          "fk_name": "milestone_invoices_milestone_id_fkey",
+          "to_table": "milestones",
+          "to_column": "id",
+          "from_table": "milestone_invoices",
+          "from_column": "milestone_id"
+        },
+        {
+          "fk_name": "milestone_progress_milestone_id_fkey",
+          "to_table": "milestones",
+          "to_column": "id",
+          "from_table": "milestone_progress",
+          "from_column": "milestone_id"
+        },
+        {
+          "fk_name": "milestone_time_entries_milestone_id_fkey",
+          "to_table": "milestones",
+          "to_column": "id",
+          "from_table": "milestone_time_entries",
+          "from_column": "milestone_id"
+        },
+        {
+          "fk_name": "milestones_job_id_fkey",
+          "to_table": "jobs",
+          "to_column": "id",
+          "from_table": "milestones",
+          "from_column": "job_id"
+        },
+        {
+          "fk_name": "payment_events_invoice_id_fkey",
+          "to_table": "invoices",
+          "to_column": "id",
+          "from_table": "payment_events",
+          "from_column": "invoice_id"
+        },
+        {
+          "fk_name": "photos_job_id_fkey",
+          "to_table": "jobs",
+          "to_column": "id",
+          "from_table": "photos",
+          "from_column": "job_id"
+        },
+        {
+          "fk_name": "photos_line_item_id_fkey",
+          "to_table": "line_items",
+          "to_column": "id",
+          "from_table": "photos",
+          "from_column": "line_item_id"
+        },
+        {
+          "fk_name": "photos_milestone_id_fkey",
+          "to_table": "milestones",
+          "to_column": "id",
+          "from_table": "photos",
+          "from_column": "milestone_id"
+        },
+        {
+          "fk_name": "receipts_job_id_fkey",
+          "to_table": "jobs",
+          "to_column": "id",
+          "from_table": "receipts",
+          "from_column": "job_id"
+        },
+        {
+          "fk_name": "secure_job_hashes_job_id_fkey",
+          "to_table": "jobs",
+          "to_column": "id",
+          "from_table": "secure_job_hashes",
+          "from_column": "job_id"
+        },
+        {
+          "fk_name": "todos_assignee_fkey",
+          "to_table": "team_members",
+          "to_column": "id",
+          "from_table": "todos",
+          "from_column": "assignee"
+        }
+      ],
+      "primary_keys": [
+        {
+          "table_name": "RENT_expenses",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "RENT_expenses_pkey"
+        },
+        {
+          "table_name": "RENT_late_fee_policies",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "RENT_late_fee_policies_pkey"
+        },
+        {
+          "table_name": "RENT_leases",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "leases_pkey"
+        },
+        {
+          "table_name": "RENT_payment_allocations",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "RENT_payment_allocations_pkey"
+        },
+        {
+          "table_name": "RENT_payments",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "payments_pkey"
+        },
+        {
+          "table_name": "RENT_properties",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "properties_pkey"
+        },
+        {
+          "table_name": "RENT_rent_periods",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "RENT_rent_periods_pkey"
+        },
+        {
+          "table_name": "RENT_tenants",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "tenants_pkey"
+        },
+        {
+          "table_name": "activity_log",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "activity_log_pkey"
+        },
+        {
+          "table_name": "agent_events",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "agent_events_pkey"
+        },
+        {
+          "table_name": "app_config",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "app_config_pkey"
+        },
+        {
+          "table_name": "assistant_turns",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "assistant_turns_pkey"
+        },
+        {
+          "table_name": "comments",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "comments_pkey"
+        },
+        {
+          "table_name": "company_members",
+          "column_names": [
+            "company_id",
+            "user_id"
+          ],
+          "constraint_name": "company_members_pk"
+        },
+        {
+          "table_name": "customer_feedback",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "customer_feedback_pkey"
+        },
+        {
+          "table_name": "employee_invitations",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "employee_invitations_pkey"
+        },
+        {
+          "table_name": "employee_link_requests",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "employee_link_requests_pkey"
+        },
+        {
+          "table_name": "employee_roles",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "employee_roles_pkey"
+        },
+        {
+          "table_name": "employees",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "employees_pkey"
+        },
+        {
+          "table_name": "expense_types",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "expense_types_pkey"
+        },
+        {
+          "table_name": "expenses",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "expenses_pkey"
+        },
+        {
+          "table_name": "gmail_tokens",
+          "column_names": [
+            "user_id"
+          ],
+          "constraint_name": "gmail_tokens_pkey"
+        },
+        {
+          "table_name": "intent_observations",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "intent_observations_pkey"
+        },
+        {
+          "table_name": "intent_requirements",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "intent_requirements_pkey"
+        },
+        {
+          "table_name": "intent_validations",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "intent_validations_pkey"
+        },
+        {
+          "table_name": "invoices",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "invoices_pkey"
+        },
+        {
+          "table_name": "jobs",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "Jobs_pkey"
+        },
+        {
+          "table_name": "line_items",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "line_items_pkey"
+        },
+        {
+          "table_name": "milestone_approvals",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "milestone_approvals_pkey"
+        },
+        {
+          "table_name": "milestone_change_orders",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "milestone_change_orders_pkey"
+        },
+        {
+          "table_name": "milestone_dependencies",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "milestone_dependencies_pkey"
+        },
+        {
+          "table_name": "milestone_invoices",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "milestone_invoices_pkey"
+        },
+        {
+          "table_name": "milestone_progress",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "milestone_progress_pkey"
+        },
+        {
+          "table_name": "milestone_time_entries",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "milestone_time_entries_pkey"
+        },
+        {
+          "table_name": "milestones",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "milestones_pkey"
+        },
+        {
+          "table_name": "orchestrate_llm_logs",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "orchestrate_llm_logs_pkey"
+        },
+        {
+          "table_name": "orchestrate_test_cases",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "orchestrate_test_cases_pkey"
+        },
+        {
+          "table_name": "payment_events",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "payment_events_pkey"
+        },
+        {
+          "table_name": "photos",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "photos_pkey"
+        },
+        {
+          "table_name": "receipts",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "receipts_pkey"
+        },
+        {
+          "table_name": "rent_late_fee_defaults",
+          "column_names": [
+            "rent_cadence"
+          ],
+          "constraint_name": "rent_late_fee_defaults_pkey"
+        },
+        {
+          "table_name": "rent_other",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "rent_other_pkey"
+        },
+        {
+          "table_name": "secure_job_hashes",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "secure_job_hashes_pkey"
+        },
+        {
+          "table_name": "slot_aliases",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "slot_aliases_pkey"
+        },
+        {
+          "table_name": "slot_transforms",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "slot_transforms_pkey"
+        },
+        {
+          "table_name": "team_members",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "team_members_pkey"
+        },
+        {
+          "table_name": "todos",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "todos_pkey"
+        },
+        {
+          "table_name": "user_preferences",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "user_preferences_pkey"
+        },
+        {
+          "table_name": "voice_corrections",
+          "column_names": [
+            "id"
+          ],
+          "constraint_name": "voice_corrections_pkey"
+        }
+      ],
+      "rls_policies": [
+        {
+          "cmd": "ALL",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "RENT_leases",
+          "policy_name": "Allow all operations on RENT_leases",
+          "schema_name": "public",
+          "using_expression": "true",
+          "with_check_expression": "true"
+        },
+        {
+          "cmd": "ALL",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "app_config",
+          "policy_name": "Allow all operations on app_config",
+          "schema_name": "public",
+          "using_expression": "true",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "SELECT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "app_config",
+          "policy_name": "Allow authenticated users to read app_config",
+          "schema_name": "public",
+          "using_expression": "(auth.role() = 'authenticated'::text)",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "SELECT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "app_config",
+          "policy_name": "Allow service role to read app_config",
+          "schema_name": "public",
+          "using_expression": "(auth.role() = 'service_role'::text)",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "SELECT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "customer_feedback",
+          "policy_name": "Allow read access to all customer feedback",
+          "schema_name": "public",
+          "using_expression": "(auth.role() = 'authenticated'::text)",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "INSERT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "customer_feedback",
+          "policy_name": "Allow users to insert their own feedback",
+          "schema_name": "public",
+          "using_expression": null,
+          "with_check_expression": "(auth.uid() = service_provider_user_id)"
+        },
+        {
+          "cmd": "UPDATE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "customer_feedback",
+          "policy_name": "Allow users to update their own feedback",
+          "schema_name": "public",
+          "using_expression": "((auth.uid() = service_provider_user_id) AND (created_at > (now() - '24:00:00'::interval)))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "ALL",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "expenses",
+          "policy_name": "Users can manage their own expenses",
+          "schema_name": "public",
+          "using_expression": "(auth.uid() = user_id)",
+          "with_check_expression": "(auth.uid() = user_id)"
+        },
+        {
+          "cmd": "ALL",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "invoices",
+          "policy_name": "Allow all operations for authenticated users",
+          "schema_name": "public",
+          "using_expression": "((auth.role() = 'authenticated'::text) OR (auth.role() = 'anon'::text))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "INSERT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_approvals",
+          "policy_name": "Users can insert their own milestone approvals",
+          "schema_name": "public",
+          "using_expression": null,
+          "with_check_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))"
+        },
+        {
+          "cmd": "UPDATE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_approvals",
+          "policy_name": "Users can update their own milestone approvals",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "SELECT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_approvals",
+          "policy_name": "Users can view their own milestone approvals",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "INSERT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_change_orders",
+          "policy_name": "Users can insert their own milestone change orders",
+          "schema_name": "public",
+          "using_expression": null,
+          "with_check_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))"
+        },
+        {
+          "cmd": "UPDATE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_change_orders",
+          "policy_name": "Users can update their own milestone change orders",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "SELECT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_change_orders",
+          "policy_name": "Users can view their own milestone change orders",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "DELETE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_dependencies",
+          "policy_name": "Users can delete their own milestone dependencies",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "INSERT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_dependencies",
+          "policy_name": "Users can insert their own milestone dependencies",
+          "schema_name": "public",
+          "using_expression": null,
+          "with_check_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))"
+        },
+        {
+          "cmd": "SELECT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_dependencies",
+          "policy_name": "Users can view their own milestone dependencies",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "INSERT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_invoices",
+          "policy_name": "Users can insert their own milestone invoices",
+          "schema_name": "public",
+          "using_expression": null,
+          "with_check_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))"
+        },
+        {
+          "cmd": "UPDATE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_invoices",
+          "policy_name": "Users can update their own milestone invoices",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "SELECT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_invoices",
+          "policy_name": "Users can view their own milestone invoices",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "DELETE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_progress",
+          "policy_name": "Users can delete their own milestone progress",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "INSERT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_progress",
+          "policy_name": "Users can insert their own milestone progress",
+          "schema_name": "public",
+          "using_expression": null,
+          "with_check_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))"
+        },
+        {
+          "cmd": "UPDATE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_progress",
+          "policy_name": "Users can update their own milestone progress",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "SELECT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_progress",
+          "policy_name": "Users can view their own milestone progress",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "DELETE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_time_entries",
+          "policy_name": "Users can delete their own milestone time entries",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "INSERT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_time_entries",
+          "policy_name": "Users can insert their own milestone time entries",
+          "schema_name": "public",
+          "using_expression": null,
+          "with_check_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))"
+        },
+        {
+          "cmd": "UPDATE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_time_entries",
+          "policy_name": "Users can update their own milestone time entries",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "SELECT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestone_time_entries",
+          "policy_name": "Users can view their own milestone time entries",
+          "schema_name": "public",
+          "using_expression": "(milestone_id IN ( SELECT m.id\n   FROM (milestones m\n     JOIN jobs j ON ((m.job_id = j.id)))\n  WHERE (j.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "DELETE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestones",
+          "policy_name": "Users can delete their own milestones",
+          "schema_name": "public",
+          "using_expression": "(job_id IN ( SELECT jobs.id\n   FROM jobs\n  WHERE (jobs.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "INSERT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestones",
+          "policy_name": "Users can insert their own milestones",
+          "schema_name": "public",
+          "using_expression": null,
+          "with_check_expression": "(job_id IN ( SELECT jobs.id\n   FROM jobs\n  WHERE (jobs.user_id = auth.uid())))"
+        },
+        {
+          "cmd": "UPDATE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestones",
+          "policy_name": "Users can update their own milestones",
+          "schema_name": "public",
+          "using_expression": "(job_id IN ( SELECT jobs.id\n   FROM jobs\n  WHERE (jobs.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "SELECT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "milestones",
+          "policy_name": "Users can view their own milestones",
+          "schema_name": "public",
+          "using_expression": "(job_id IN ( SELECT jobs.id\n   FROM jobs\n  WHERE (jobs.user_id = auth.uid())))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "ALL",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "secure_job_hashes",
+          "policy_name": "Allow all operations on secure_job_hashes",
+          "schema_name": "public",
+          "using_expression": "true",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "ALL",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "todos",
+          "policy_name": "Allow all",
+          "schema_name": "public",
+          "using_expression": "true",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "ALL",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "todos",
+          "policy_name": "Manage own todos",
+          "schema_name": "public",
+          "using_expression": "(user_id = (auth.uid())::text)",
+          "with_check_expression": "(user_id = (auth.uid())::text)"
+        },
+        {
+          "cmd": "ALL",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "user_preferences",
+          "policy_name": "Allow operations with user_id",
+          "schema_name": "public",
+          "using_expression": "(user_id IS NOT NULL)",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "DELETE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "voice_corrections",
+          "policy_name": "delete own corrections",
+          "schema_name": "public",
+          "using_expression": "((user_id IS NULL) OR (user_id = auth.uid()))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "INSERT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "voice_corrections",
+          "policy_name": "insert own corrections",
+          "schema_name": "public",
+          "using_expression": null,
+          "with_check_expression": "((user_id IS NULL) OR (user_id = auth.uid()))"
+        },
+        {
+          "cmd": "SELECT",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "voice_corrections",
+          "policy_name": "select own corrections",
+          "schema_name": "public",
+          "using_expression": "((user_id IS NULL) OR (user_id = auth.uid()))",
+          "with_check_expression": null
+        },
+        {
+          "cmd": "UPDATE",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "table_name": "voice_corrections",
+          "policy_name": "update own corrections",
+          "schema_name": "public",
+          "using_expression": "((user_id IS NULL) OR (user_id = auth.uid()))",
+          "with_check_expression": null
+        }
+      ]
+    }
+  }
+]

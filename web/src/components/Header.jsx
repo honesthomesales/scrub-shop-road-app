@@ -16,7 +16,8 @@ import {
   Car,
   Settings,
   Clock,
-  FileText
+  FileText,
+  DollarSign
 } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { cn } from '../utils/cn'
@@ -102,7 +103,8 @@ const Header = () => {
 
   const allAdminNavigation = [
     { name: 'Staff', href: '/staff', icon: Users },
-    { name: 'Sales Upload', href: '/admin/sales-upload', icon: Upload }
+    { name: 'Sales Upload', href: '/admin/sales-upload', icon: Upload },
+    { name: 'Expense Upload', href: '/admin/expense-upload', icon: DollarSign }
   ]
 
   // Filter navigation based on user role
@@ -219,7 +221,7 @@ const Header = () => {
                 <button
                   className={cn(
                     'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-                    (isActive('/staff') || isActive('/admin/sales-upload'))
+                    (isActive('/staff') || isActive('/admin/sales-upload') || isActive('/admin/expense-upload'))
                       ? 'bg-primary-100 text-primary-700'
                       : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
                   )}

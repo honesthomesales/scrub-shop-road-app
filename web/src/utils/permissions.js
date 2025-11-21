@@ -24,7 +24,8 @@ export const PAGE_PERMISSIONS = {
   
   // ADMIN navigation
   '/staff': [ROLES.MANAGER],
-  '/admin/sales-upload': [ROLES.MANAGER]
+  '/admin/sales-upload': [ROLES.MANAGER],
+  '/admin/expense-upload': [ROLES.MANAGER]
 }
 
 // Check if user has access to a specific page

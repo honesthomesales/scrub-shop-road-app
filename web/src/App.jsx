@@ -12,6 +12,7 @@ import DailySales from './pages/DailySales'
 import Messages from './pages/Messages'
 import PayCalculator from './pages/PayCalculator'
 import SalesUpload from './pages/SalesUpload'
+import ExpenseUpload from './pages/ExpenseUpload'
 import Scheduler from './pages/Scheduler'
 import Bonuses from './pages/Bonuses'
 import HolidayManager from './pages/HolidayManager'
@@ -37,6 +38,7 @@ function App() {
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/scheduler" element={<Scheduler />} />
                 <Route path="/admin/sales-upload" element={<SalesUpload />} />
+                <Route path="/admin/expense-upload" element={<ExpenseUpload />} />
                 <Route path="/pay-calculator" element={<PayCalculator />} />
                 <Route path="/holiday-manager" element={<HolidayManager />} />
                 <Route path="/documents" element={<Documents />} />
