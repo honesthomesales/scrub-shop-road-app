@@ -254,12 +254,14 @@ const ExpenseUpload = () => {
           </p>
         </div>
 
-        {/* Instructions */}
+        {/* File Upload Area */}
         <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6 mb-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">📋 Expected CSV Format</h2>
-          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Upload CSV File</h2>
+          
+          {/* Expected CSV Format */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800 mb-2">
-              <strong>Required columns:</strong>
+              <strong>Expected CSV Format - Required columns:</strong>
             </p>
             <ul className="text-sm text-blue-800 list-disc list-inside space-y-1">
               <li><strong>Date</strong> - Transaction date</li>
@@ -271,11 +273,6 @@ const ExpenseUpload = () => {
               <strong>Note:</strong> Receipt and Account # columns will be ignored. All expenses imported from this page will have source set to "AMEX".
             </p>
           </div>
-        </div>
-
-        {/* File Upload Area */}
-        <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6 mb-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Upload CSV File</h2>
           
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
