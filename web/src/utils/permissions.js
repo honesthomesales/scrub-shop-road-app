@@ -17,6 +17,7 @@ export const PAGE_PERMISSIONS = {
   
   // ROAD navigation
   '/daily-sales': [ROLES.MANAGER],
+  '/expenses': [ROLES.MANAGER],
   '/venues': [ROLES.MANAGER, ROLES.WORKER],
   '/calendar': [ROLES.MANAGER, ROLES.WORKER],
   '/bonuses': [ROLES.MANAGER],

@@ -13,6 +13,7 @@ import Messages from './pages/Messages'
 import PayCalculator from './pages/PayCalculator'
 import SalesUpload from './pages/SalesUpload'
 import ExpenseUpload from './pages/ExpenseUpload'
+import ExpensesDashboard from './pages/ExpensesDashboard'
 import Scheduler from './pages/Scheduler'
 import Bonuses from './pages/Bonuses'
 import HolidayManager from './pages/HolidayManager'
@@ -33,6 +34,7 @@ function App() {
                 <Route path="/venues" element={<Venues />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/bonuses" element={<Bonuses />} />
+                <Route path="/expenses" element={<ExpensesDashboard />} />
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/messages" element={<Messages />} />

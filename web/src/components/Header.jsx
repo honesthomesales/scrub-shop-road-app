@@ -95,6 +95,7 @@ const Header = () => {
 
   const allRoadNavigation = [
     { name: 'Daily Sales', href: '/daily-sales', icon: BarChart3 },
+    { name: 'Expenses', href: '/expenses', icon: DollarSign },
     { name: 'Venues', href: '/venues', icon: MapPin },
     { name: 'Calendar', href: '/calendar', icon: Calendar },
     { name: 'Bonuses', href: '/bonuses', icon: TrendingUp },
@@ -160,7 +161,7 @@ const Header = () => {
                 <button
                   className={cn(
                     'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-                    (isActive('/daily-sales') || isActive('/venues') || isActive('/calendar') || isActive('/bonuses') || isActive('/documents'))
+                    (isActive('/daily-sales') || isActive('/expenses') || isActive('/venues') || isActive('/calendar') || isActive('/bonuses') || isActive('/documents'))
                       ? 'bg-primary-100 text-primary-700'
                       : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
                   )}
