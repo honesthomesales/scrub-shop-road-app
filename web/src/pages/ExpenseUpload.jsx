@@ -502,13 +502,13 @@ const ExpenseUpload = () => {
             Expense Data Upload
           </h1>
           <p className="mt-2 text-secondary-600">
-            Upload CSV files to import Amex expense data
+            Upload CSV files to import from Amex, Truist or CAPITAL ONE
           </p>
         </div>
 
         {/* File Upload Area */}
         <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6 mb-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Upload CSV File</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Upload CSV File - AMEX</h2>
           
           {/* Expected CSV Format */}
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -682,7 +682,7 @@ const ExpenseUpload = () => {
 
         {/* Format 2: Transaction Date, Debit/Credit Upload Section */}
         <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6 mb-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Upload CSV File (Transaction Date Format)</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Upload CSV File - CAPITAL ONE</h2>
           
           {/* Expected CSV Format */}
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -696,7 +696,7 @@ const ExpenseUpload = () => {
               <li><strong>Credit</strong> - Credit amount (negative)</li>
             </ul>
             <p className="text-xs text-blue-600 mt-3">
-              <strong>Note:</strong> Card No., Category, and Posted Date columns will be ignored. Debit values are stored as positive amounts, Credit values as negative amounts. All expenses imported from this page will have source set to "AMEX".
+              <strong>Note:</strong> Card No., Category, and Posted Date columns will be ignored. Debit values are stored as positive amounts, Credit values as negative amounts. All expenses imported from this section will have source set to "CAPITAL ONE".
             </p>
           </div>
           
