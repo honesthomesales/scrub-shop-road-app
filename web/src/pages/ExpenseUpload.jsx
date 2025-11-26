@@ -20,6 +20,14 @@ const ExpenseUpload = () => {
   const [uploadResult2, setUploadResult2] = useState(null)
   const fileInputRef2 = useRef(null)
 
+  // Format 3: Truist - Transaction Date, Full description, Check/Serial #, Amount
+  const [file3, setFile3] = useState(null)
+  const [previewData3, setPreviewData3] = useState([])
+  const [isUploading3, setIsUploading3] = useState(false)
+  const [uploadProgress3, setUploadProgress3] = useState(0)
+  const [uploadResult3, setUploadResult3] = useState(null)
+  const fileInputRef3 = useRef(null)
+
   const handleFileSelect = (event) => {
     const selectedFile = event.target.files[0]
     if (selectedFile && (selectedFile.type === 'text/csv' || selectedFile.name.endsWith('.csv'))) {
@@ -493,6 +501,241 @@ const ExpenseUpload = () => {
     }
   }
 
+  // Format 3: Truist handlers
+  const handleFileSelect3 = (event) => {
+    const selectedFile = event.target.files[0]
+    if (selectedFile && (selectedFile.type === 'text/csv' || selectedFile.name.endsWith('.csv'))) {
+      setFile3(selectedFile)
+      parseCSV3(selectedFile)
+    } else {
+      alert('Please select a valid CSV file')
+    }
+  }
+
+  const parseCSV3 = (file) => {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const preview = results.data.slice(0, 10) // Show first 10 rows
+        setPreviewData3(preview)
+      },
+      error: (error) => {
+        alert('Error parsing CSV file: ' + error.message)
+      }
+    })
+  }
+
+  // Transform function for Format 3: Truist - Transaction Date, Full description, Check/Serial #, Amount
+  const transformRowFormat3 = (row) => {
+    // Map Truist CSV columns to our database fields
+    // Expected columns: Posted Date, Transaction Date, Transaction Type, Check/Serial #, Full description, Merchant name, Sub-category name, Amount, Daily Posted Balance
+    
+    // Try to find Transaction Date field
+    let dateValue = null
+    const dateFields = ['Transaction Date', 'Transaction date', 'transaction date', 'TRANSACTION DATE']
+    for (const field of dateFields) {
+      if (row[field]) {
+        dateValue = new Date(row[field])
+        if (!isNaN(dateValue.getTime())) {
+          break
+        }
+      }
+    }
+    
+    // Try to find Full description field
+    const descFields = ['Full description', 'Full Description', 'FULL DESCRIPTION', 'Full description', 'Description']
+    let description = null
+    for (const field of descFields) {
+      if (row[field]) {
+        description = row[field].trim()
+        break
+      }
+    }
+    
+    // Try to find Check/Serial # field
+    const checkFields = ['Check/Serial #', 'Check/Serial #', 'Check/Serial Number', 'Check Serial', 'Check/Serial']
+    let checkNbr = null
+    for (const field of checkFields) {
+      if (row[field]) {
+        checkNbr = String(row[field]).trim()
+        if (checkNbr) {
+          break
+        }
+      }
+    }
+    
+    // Try to find Amount field
+    const amountFields = ['Amount', 'amount', 'AMOUNT']
+    let amount = null
+    for (const field of amountFields) {
+      if (row[field]) {
+        // Remove currency symbols and commas
+        const cleanedAmount = String(row[field]).replace(/[$,]/g, '').trim()
+        amount = parseFloat(cleanedAmount)
+        if (!isNaN(amount)) {
+          break
+        }
+      }
+    }
+    
+    // VALIDATION: Skip rows with invalid data
+    if (!dateValue || isNaN(dateValue.getTime())) {
+      console.log('Skipping row - Invalid date:', row)
+      return null
+    }
+    
+    if (!amount || amount === 0) {
+      console.log('Skipping row - Invalid amount:', amount, 'from row:', row)
+      return null
+    }
+    
+    // Description is optional but recommended
+    if (!description) {
+      description = 'No description provided'
+    }
+    
+    return {
+      date: dateValue.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      description: description,
+      card_member: null, // Leave blank for Truist
+      amount: amount,
+      source: 'TRUIST',
+      check_nbr: checkNbr || null
+    }
+  }
+
+  const handleUpload3 = async () => {
+    if (!file3) {
+      alert('Please select a file')
+      return
+    }
+
+    setIsUploading3(true)
+    setUploadProgress3(0)
+    setUploadResult3(null)
+
+    try {
+      Papa.parse(file3, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          const transformedData = results.data.map(transformRowFormat3).filter(row => row) // Filter out null rows
+          
+          // Additional validation: Filter out any rows with invalid amounts
+          const finalValidData = transformedData.filter(row => {
+            const isValid = row.amount !== 0 && row.date
+            if (!isValid) {
+              console.log('Filtering out invalid row:', row)
+            }
+            return isValid
+          })
+          
+          // Calculate validation statistics
+          const totalRows = results.data.length
+          const validRows = finalValidData.length
+          const skippedRows = totalRows - validRows
+          
+          console.log(`Validation Results: ${validRows} valid rows, ${skippedRows} skipped rows out of ${totalRows} total`)
+          
+          if (validRows === 0) {
+            setUploadResult3({
+              success: false,
+              error: `No valid rows found. All ${totalRows} rows were skipped due to validation errors.`
+            })
+            setIsUploading3(false)
+            return
+          }
+          
+          // Upload in batches of 100
+          const batchSize = 100
+          let uploaded = 0
+          let failed = 0
+
+          const supabase = getSupabase()
+          if (!supabase) {
+            setUploadResult3({
+              success: false,
+              error: 'Supabase client not available'
+            })
+            setIsUploading3(false)
+            return
+          }
+
+          for (let i = 0; i < finalValidData.length; i += batchSize) {
+            const batch = finalValidData.slice(i, i + batchSize)
+            
+            try {
+              // Upload batch to expenses table
+              const { data, error } = await supabase
+                .from('expenses')
+                .insert(batch)
+                .select()
+              
+              if (error) {
+                failed += batch.length
+                console.error('Upload failed for batch:', error)
+              } else {
+                uploaded += batch.length
+              }
+              
+              setUploadProgress3((uploaded / finalValidData.length) * 100)
+            } catch (error) {
+              failed += batch.length
+              console.error('Upload error for batch:', error)
+            }
+          }
+
+          setUploadResult3({
+            success: true,
+            uploaded,
+            failed,
+            total: finalValidData.length,
+            skipped: skippedRows
+          })
+          setIsUploading3(false)
+        },
+        error: (error) => {
+          setUploadResult3({
+            success: false,
+            error: error.message
+          })
+          setIsUploading3(false)
+        }
+      })
+    } catch (error) {
+      console.error('Upload failed:', error)
+      setUploadResult3({
+        success: false,
+        error: error.message
+      })
+      setIsUploading3(false)
+    }
+  }
+
+  const handleDrop3 = (event) => {
+    event.preventDefault()
+    const droppedFile = event.dataTransfer.files[0]
+    if (droppedFile && (droppedFile.type === 'text/csv' || droppedFile.name.endsWith('.csv'))) {
+      setFile3(droppedFile)
+      parseCSV3(droppedFile)
+    }
+  }
+
+  const handleDragOver3 = (event) => {
+    event.preventDefault()
+  }
+
+  const clearUpload3 = () => {
+    setFile3(null)
+    setPreviewData3([])
+    setUploadResult3(null)
+    setUploadProgress3(0)
+    if (fileInputRef3.current) {
+      fileInputRef3.current.value = ''
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -821,7 +1064,7 @@ const ExpenseUpload = () => {
 
         {/* Format 2 Upload Result */}
         {uploadResult2 && (
-          <div className={`bg-white rounded-lg shadow-sm border p-6 ${
+          <div className={`bg-white rounded-lg shadow-sm border p-6 mb-6 ${
             uploadResult2.success ? 'border-green-200' : 'border-red-200'
           }`}>
             <div className="flex items-center">
@@ -847,6 +1090,180 @@ const ExpenseUpload = () => {
                 {uploadResult2.skipped > 0 && (
                   <p className="text-sm text-yellow-600 mt-1">
                     ⚠️ {uploadResult2.skipped} rows were skipped due to validation errors (invalid dates, amounts, etc.)
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Format 3: Truist Upload Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6 mb-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Upload CSV File - TRUIST</h2>
+          
+          {/* Expected CSV Format */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800 mb-2">
+              <strong>Expected CSV Format - Required columns:</strong>
+            </p>
+            <ul className="text-sm text-blue-800 list-disc list-inside space-y-1">
+              <li><strong>Transaction Date</strong> - Transaction date</li>
+              <li><strong>Full description</strong> - Expense description</li>
+              <li><strong>Check/Serial #</strong> - Check or serial number</li>
+              <li><strong>Amount</strong> - Expense amount</li>
+            </ul>
+            <p className="text-xs text-blue-600 mt-3">
+              <strong>Note:</strong> Posted Date, Transaction Type, Merchant name, Sub-category name, and Daily Posted Balance columns will be ignored. Card Member will be left blank. All expenses imported from this section will have source set to "TRUIST".
+            </p>
+          </div>
+          
+          <div
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              file3 ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-gray-400'
+            }`}
+            onDrop={handleDrop3}
+            onDragOver={handleDragOver3}
+          >
+            <input
+              ref={fileInputRef3}
+              type="file"
+              accept=".csv"
+              onChange={handleFileSelect3}
+              className="hidden"
+            />
+            
+            {!file3 ? (
+              <div>
+                <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-2 text-sm text-gray-600">
+                  Drag and drop a CSV file here, or{' '}
+                  <button
+                    onClick={() => fileInputRef3.current?.click()}
+                    className="text-primary-600 hover:text-primary-500 font-medium"
+                  >
+                    browse
+                  </button>
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Supports CSV files with Truist transaction data
+                </p>
+              </div>
+            ) : (
+              <div>
+                <FileText className="mx-auto h-12 w-12 text-primary-500" />
+                <p className="mt-2 text-sm font-medium text-gray-900">{file3.name}</p>
+                <p className="text-xs text-gray-500">
+                  {(file3.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+                <button
+                  onClick={clearUpload3}
+                  className="mt-2 text-sm text-red-600 hover:text-red-500"
+                >
+                  Remove file
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Format 3 Data Preview */}
+        {previewData3.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium text-gray-900">Data Preview</h2>
+              <span className="text-sm text-gray-500">
+                Showing first {previewData3.length} rows
+              </span>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    {Object.keys(previewData3[0] || {}).map(header => (
+                      <th
+                        key={header}
+                        className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {previewData3.map((row, index) => (
+                    <tr key={index}>
+                      {Object.values(row).map((value, cellIndex) => (
+                        <td
+                          key={cellIndex}
+                          className="px-3 py-2 text-sm text-gray-900 max-w-xs truncate"
+                          title={String(value)}
+                        >
+                          {String(value)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>Note:</strong> This shows the raw CSV data. The system will map Transaction Date, Full description, Check/Serial #, and Amount fields automatically.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Format 3 Upload Button */}
+        {file3 && (
+          <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6 mb-6">
+            <button
+              onClick={handleUpload3}
+              disabled={isUploading3}
+              className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isUploading3 ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Uploading... {uploadProgress3.toFixed(1)}%
+                </div>
+              ) : (
+                'Upload Expense Data'
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Format 3 Upload Result */}
+        {uploadResult3 && (
+          <div className={`bg-white rounded-lg shadow-sm border p-6 ${
+            uploadResult3.success ? 'border-green-200' : 'border-red-200'
+          }`}>
+            <div className="flex items-center">
+              {uploadResult3.success ? (
+                <CheckCircle className="h-6 w-6 text-green-500 mr-3" />
+              ) : (
+                <AlertCircle className="h-6 w-6 text-red-500 mr-3" />
+              )}
+              <div>
+                <h3 className={`text-lg font-medium ${
+                  uploadResult3.success ? 'text-green-900' : 'text-red-900'
+                }`}>
+                  {uploadResult3.success ? 'Upload Complete' : 'Upload Failed'}
+                </h3>
+                <p className={`text-sm ${
+                  uploadResult3.success ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {uploadResult3.success
+                    ? `Successfully uploaded ${uploadResult3.uploaded} records${uploadResult3.failed > 0 ? `, ${uploadResult3.failed} failed` : ''}`
+                    : uploadResult3.error
+                  }
+                </p>
+                {uploadResult3.skipped > 0 && (
+                  <p className="text-sm text-yellow-600 mt-1">
+                    ⚠️ {uploadResult3.skipped} rows were skipped due to validation errors (invalid dates, amounts, etc.)
                   </p>
                 )}
               </div>
