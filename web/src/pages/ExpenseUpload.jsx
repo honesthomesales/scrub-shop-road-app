@@ -256,11 +256,6 @@ const ExpenseUpload = () => {
             return
           }
           
-          // Upload in batches of 100
-          const batchSize = 100
-          let uploaded = 0
-          let failed = 0
-
           const supabase = getSupabase()
           if (!supabase) {
             setUploadResult({
@@ -271,8 +266,25 @@ const ExpenseUpload = () => {
             return
           }
 
-          for (let i = 0; i < finalValidData.length; i += batchSize) {
-            const batch = finalValidData.slice(i, i + batchSize)
+          // Check for duplicates before uploading
+          const { unique: uniqueData, duplicates: duplicateCount } = await filterDuplicates(finalValidData, supabase)
+          
+          if (uniqueData.length === 0) {
+            setUploadResult({
+              success: false,
+              error: `All ${finalValidData.length} rows are duplicates. No new records to upload.`
+            })
+            setIsUploading(false)
+            return
+          }
+
+          // Upload in batches of 100
+          const batchSize = 100
+          let uploaded = 0
+          let failed = 0
+
+          for (let i = 0; i < uniqueData.length; i += batchSize) {
+            const batch = uniqueData.slice(i, i + batchSize)
             
             try {
               // Upload batch to expenses table
@@ -288,7 +300,7 @@ const ExpenseUpload = () => {
                 uploaded += batch.length
               }
               
-              setUploadProgress((uploaded / finalValidData.length) * 100)
+              setUploadProgress((uploaded / uniqueData.length) * 100)
             } catch (error) {
               failed += batch.length
               console.error('Upload error for batch:', error)
@@ -300,7 +312,8 @@ const ExpenseUpload = () => {
             uploaded,
             failed,
             total: finalValidData.length,
-            skipped: skippedRows
+            skipped: skippedRows,
+            duplicates: duplicateCount
           })
           setIsUploading(false)
         },
@@ -343,6 +356,72 @@ const ExpenseUpload = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
+  }
+
+  // Helper function to normalize description for duplicate checking
+  const normalizeDescription = (desc) => {
+    if (!desc) return ''
+    return desc
+      .toUpperCase()
+      .replace(/[^A-Z0-9\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
+  // Helper function to check for duplicates and filter them out
+  const filterDuplicates = async (expenseData, supabase) => {
+    if (!expenseData || expenseData.length === 0) return { unique: [], duplicates: 0 }
+
+    // Get date range from the data
+    const dates = expenseData.map(e => e.date).filter(Boolean)
+    if (dates.length === 0) return { unique: expenseData, duplicates: 0 }
+
+    const minDate = dates.reduce((min, d) => d < min ? d : min)
+    const maxDate = dates.reduce((max, d) => d > max ? d : max)
+
+    // Fetch existing expenses in the date range
+    const { data: existingExpenses, error } = await supabase
+      .from('expenses')
+      .select('date, description, amount')
+      .gte('date', minDate)
+      .lte('date', maxDate)
+
+    if (error) {
+      console.error('Error checking for duplicates:', error)
+      // If we can't check, proceed with all data but log warning
+      return { unique: expenseData, duplicates: 0, error: 'Could not check for duplicates' }
+    }
+
+    // Create a Set of existing expense keys (date + normalized description + amount)
+    const existingKeys = new Set()
+    if (existingExpenses) {
+      existingExpenses.forEach(exp => {
+        const normalizedDesc = normalizeDescription(exp.description || '')
+        const amount = Math.abs(parseFloat(exp.amount) || 0).toFixed(2)
+        const key = `${exp.date}_${normalizedDesc}_${amount}`
+        existingKeys.add(key)
+      })
+    }
+
+    // Filter out duplicates
+    const unique = []
+    let duplicates = 0
+
+    expenseData.forEach(exp => {
+      const normalizedDesc = normalizeDescription(exp.description || '')
+      const amount = Math.abs(parseFloat(exp.amount) || 0).toFixed(2)
+      const key = `${exp.date}_${normalizedDesc}_${amount}`
+
+      if (existingKeys.has(key)) {
+        duplicates++
+      } else {
+        unique.push(exp)
+        // Add to set to prevent duplicates within the same batch
+        existingKeys.add(key)
+      }
+    })
+
+    return { unique, duplicates }
   }
 
   // Format 2 handlers
@@ -412,11 +491,6 @@ const ExpenseUpload = () => {
             return
           }
           
-          // Upload in batches of 100
-          const batchSize = 100
-          let uploaded = 0
-          let failed = 0
-
           const supabase = getSupabase()
           if (!supabase) {
             setUploadResult2({
@@ -427,8 +501,25 @@ const ExpenseUpload = () => {
             return
           }
 
-          for (let i = 0; i < finalValidData.length; i += batchSize) {
-            const batch = finalValidData.slice(i, i + batchSize)
+          // Check for duplicates before uploading
+          const { unique: uniqueData, duplicates: duplicateCount } = await filterDuplicates(finalValidData, supabase)
+          
+          if (uniqueData.length === 0) {
+            setUploadResult2({
+              success: false,
+              error: `All ${finalValidData.length} rows are duplicates. No new records to upload.`
+            })
+            setIsUploading2(false)
+            return
+          }
+
+          // Upload in batches of 100
+          const batchSize = 100
+          let uploaded = 0
+          let failed = 0
+
+          for (let i = 0; i < uniqueData.length; i += batchSize) {
+            const batch = uniqueData.slice(i, i + batchSize)
             
             try {
               // Upload batch to expenses table
@@ -444,7 +535,7 @@ const ExpenseUpload = () => {
                 uploaded += batch.length
               }
               
-              setUploadProgress2((uploaded / finalValidData.length) * 100)
+              setUploadProgress2((uploaded / uniqueData.length) * 100)
             } catch (error) {
               failed += batch.length
               console.error('Upload error for batch:', error)
@@ -456,7 +547,8 @@ const ExpenseUpload = () => {
             uploaded,
             failed,
             total: finalValidData.length,
-            skipped: skippedRows
+            skipped: skippedRows,
+            duplicates: duplicateCount
           })
           setIsUploading2(false)
         },
@@ -647,11 +739,6 @@ const ExpenseUpload = () => {
             return
           }
           
-          // Upload in batches of 100
-          const batchSize = 100
-          let uploaded = 0
-          let failed = 0
-
           const supabase = getSupabase()
           if (!supabase) {
             setUploadResult3({
@@ -662,8 +749,25 @@ const ExpenseUpload = () => {
             return
           }
 
-          for (let i = 0; i < finalValidData.length; i += batchSize) {
-            const batch = finalValidData.slice(i, i + batchSize)
+          // Check for duplicates before uploading
+          const { unique: uniqueData, duplicates: duplicateCount } = await filterDuplicates(finalValidData, supabase)
+          
+          if (uniqueData.length === 0) {
+            setUploadResult3({
+              success: false,
+              error: `All ${finalValidData.length} rows are duplicates. No new records to upload.`
+            })
+            setIsUploading3(false)
+            return
+          }
+
+          // Upload in batches of 100
+          const batchSize = 100
+          let uploaded = 0
+          let failed = 0
+
+          for (let i = 0; i < uniqueData.length; i += batchSize) {
+            const batch = uniqueData.slice(i, i + batchSize)
             
             try {
               // Upload batch to expenses table
@@ -679,7 +783,7 @@ const ExpenseUpload = () => {
                 uploaded += batch.length
               }
               
-              setUploadProgress3((uploaded / finalValidData.length) * 100)
+              setUploadProgress3((uploaded / uniqueData.length) * 100)
             } catch (error) {
               failed += batch.length
               console.error('Upload error for batch:', error)
@@ -691,7 +795,8 @@ const ExpenseUpload = () => {
             uploaded,
             failed,
             total: finalValidData.length,
-            skipped: skippedRows
+            skipped: skippedRows,
+            duplicates: duplicateCount
           })
           setIsUploading3(false)
         },
@@ -918,6 +1023,11 @@ const ExpenseUpload = () => {
                     ⚠️ {uploadResult.skipped} rows were skipped due to validation errors (invalid dates, amounts, etc.)
                   </p>
                 )}
+                {uploadResult.duplicates > 0 && (
+                  <p className="text-sm text-blue-600 mt-1">
+                    ℹ️ {uploadResult.duplicates} duplicate rows were found and skipped (same date, amount, and description already exist)
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -1092,6 +1202,11 @@ const ExpenseUpload = () => {
                     ⚠️ {uploadResult2.skipped} rows were skipped due to validation errors (invalid dates, amounts, etc.)
                   </p>
                 )}
+                {uploadResult2.duplicates > 0 && (
+                  <p className="text-sm text-blue-600 mt-1">
+                    ℹ️ {uploadResult2.duplicates} duplicate rows were found and skipped (same date, amount, and description already exist)
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -1264,6 +1379,11 @@ const ExpenseUpload = () => {
                 {uploadResult3.skipped > 0 && (
                   <p className="text-sm text-yellow-600 mt-1">
                     ⚠️ {uploadResult3.skipped} rows were skipped due to validation errors (invalid dates, amounts, etc.)
+                  </p>
+                )}
+                {uploadResult3.duplicates > 0 && (
+                  <p className="text-sm text-blue-600 mt-1">
+                    ℹ️ {uploadResult3.duplicates} duplicate rows were found and skipped (same date, amount, and description already exist)
                   </p>
                 )}
               </div>
