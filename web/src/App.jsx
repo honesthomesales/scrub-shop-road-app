@@ -14,6 +14,7 @@ import PayCalculator from './pages/PayCalculator'
 import SalesUpload from './pages/SalesUpload'
 import ExpenseUpload from './pages/ExpenseUpload'
 import ExpensesDashboard from './pages/ExpensesDashboard'
+import ExpenseReports from './pages/ExpenseReports'
 import Scheduler from './pages/Scheduler'
 import Bonuses from './pages/Bonuses'
 import HolidayManager from './pages/HolidayManager'
@@ -35,6 +36,7 @@ function App() {
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/bonuses" element={<Bonuses />} />
                 <Route path="/expenses" element={<ExpensesDashboard />} />
+                <Route path="/expense-reports" element={<ExpenseReports />} />
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/messages" element={<Messages />} />

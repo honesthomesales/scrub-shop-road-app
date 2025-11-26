@@ -123,7 +123,7 @@ const ExpensesDashboard = () => {
         existing.duplicates.push(exp)
         existing.count = existing.duplicates.length
       } else {
-        seen.set(key, { expense: exp, count: 1 })
+        seen.set(key, { expense: exp, count: 1, duplicates: null })
       }
     })
 
@@ -366,7 +366,49 @@ const ExpensesDashboard = () => {
 
             {/* Expense vs Sales Comparison */}
             <div className="bg-white rounded-lg shadow p-6 mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Expenses vs Sales Comparison</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Expenses vs Sales Comparison</h2>
+                <div className="text-sm text-gray-600">
+                  {selectedYears.length > 0 && `Showing ${selectedYears.join(', ')}`}
+                </div>
+              </div>
+              
+              {/* Summary Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {selectedYears.map(year => {
+                  const yearExpenses = expenseVsSalesData.reduce((sum, month) => sum + (month[`${year} Expenses`] || 0), 0)
+                  const yearSales = expenseVsSalesData.reduce((sum, month) => sum + (month[`${year} Sales`] || 0), 0)
+                  const yearNet = yearSales - yearExpenses
+                  const expenseRatio = yearSales > 0 ? (yearExpenses / yearSales) * 100 : 0
+                  
+                  return (
+                    <div key={year} className="bg-gray-50 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-gray-700 mb-2">{year}</h3>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Sales:</span>
+                          <span className="font-semibold text-green-600">{formatCurrency(yearSales)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Expenses:</span>
+                          <span className="font-semibold text-red-600">{formatCurrency(yearExpenses)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Net Profit:</span>
+                          <span className={`font-semibold ${yearNet >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatCurrency(yearNet)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm pt-1 border-t border-gray-200">
+                          <span className="text-gray-600">Expense Ratio:</span>
+                          <span className="font-semibold text-gray-900">{expenseRatio.toFixed(1)}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              
               <div className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={expenseVsSalesData}>
@@ -451,28 +493,68 @@ const ExpensesDashboard = () => {
             {/* Recurring Expenses */}
             {recurringExpenses.length > 0 && (
               <div className="bg-white rounded-lg shadow p-6 mb-8">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Recurring Expenses</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">Recurring Expenses</h2>
+                  <span className="text-sm text-gray-500">
+                    {recurringExpenses.length} recurring expense pattern(s) detected
+                  </span>
+                </div>
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Recurring expenses</strong> are expenses that appear multiple times with similar amounts and regular intervals (typically monthly). 
+                    These may be subscriptions, monthly bills, or regular payments.
+                  </p>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Count</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Occurrences</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Amount</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Spent</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Date</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Next Expected</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Frequency</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {recurringExpenses.slice(0, 10).map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.description}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{item.count}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(item.averageAmount)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{new Date(item.lastDate).toLocaleDateString()}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{new Date(item.nextExpectedDate).toLocaleDateString()}</td>
-                        </tr>
-                      ))}
+                      {recurringExpenses.slice(0, 20).map((item, index) => {
+                        const totalSpent = item.averageAmount * item.count
+                        const lastDate = new Date(item.lastDate)
+                        const nextExpected = new Date(item.nextExpectedDate)
+                        const daysUntilNext = Math.ceil((nextExpected - new Date()) / (1000 * 60 * 60 * 24))
+                        const isOverdue = daysUntilNext < 0
+                        
+                        // Calculate frequency
+                        const dates = item.expenses.map(e => new Date(e.date)).sort((a, b) => a - b)
+                        const intervals = []
+                        for (let i = 1; i < dates.length; i++) {
+                          intervals.push((dates[i] - dates[i-1]) / (1000 * 60 * 60 * 24))
+                        }
+                        const avgInterval = intervals.length > 0 
+                          ? intervals.reduce((sum, i) => sum + i, 0) / intervals.length 
+                          : 30
+                        const frequency = avgInterval >= 25 && avgInterval <= 35 ? 'Monthly' : 
+                                         avgInterval >= 10 && avgInterval <= 20 ? 'Bi-weekly' :
+                                         avgInterval >= 5 && avgInterval <= 9 ? 'Weekly' : 
+                                         `${Math.round(avgInterval)} days`
+                        
+                        return (
+                          <tr key={index} className={isOverdue ? 'bg-yellow-50' : ''}>
+                            <td className="px-4 py-3 text-sm text-gray-900 font-medium">{item.description}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{item.count}</td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(item.averageAmount)}</td>
+                            <td className="px-4 py-3 text-sm font-semibold text-gray-900">{formatCurrency(totalSpent)}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{lastDate.toLocaleDateString()}</td>
+                            <td className={`px-4 py-3 text-sm ${isOverdue ? 'font-semibold text-red-600' : 'text-gray-600'}`}>
+                              {nextExpected.toLocaleDateString()}
+                              {isOverdue && <span className="ml-2 text-xs text-red-600">(Overdue)</span>}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{frequency}</td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -482,30 +564,82 @@ const ExpensesDashboard = () => {
             {/* Duplicate Expenses */}
             {duplicateExpenses.length > 0 && (
               <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Potential Duplicate Expenses</h2>
-                <div className="space-y-4">
-                  {duplicateExpenses.slice(0, 10).map((duplicate, index) => (
-                    <div key={index} className="border border-orange-200 rounded-lg p-4 bg-orange-50">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-orange-900">
-                          {duplicate.count} duplicate(s) found
-                        </span>
-                        <span className="text-sm text-orange-700">
-                          Amount: {formatCurrency(Math.abs(parseFloat(duplicate.expenses[0].amount)))}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-700">
-                        <p className="font-medium mb-1">{duplicate.expenses[0].description}</p>
-                        <div className="space-y-1">
-                          {duplicate.expenses.map((exp, expIndex) => (
-                            <p key={expIndex} className="text-xs text-gray-600">
-                              {new Date(exp.date).toLocaleDateString()} - {exp.source} - {exp.card_member || 'N/A'}
-                            </p>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">Potential Duplicate Expenses</h2>
+                  <span className="text-sm text-gray-500">
+                    {duplicateExpenses.length} duplicate group(s) found
+                  </span>
+                </div>
+                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm text-orange-800">
+                    <strong>Duplicates</strong> are expenses with the same date, amount, and description. 
+                    Review these carefully to ensure they are not accidental duplicate entries.
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Card Member</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Count</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {duplicateExpenses.slice(0, 20).map((duplicate, index) => {
+                        const firstExp = duplicate.expenses[0]
+                        const sources = [...new Set(duplicate.expenses.map(e => e.source))]
+                        const cardMembers = [...new Set(duplicate.expenses.map(e => e.card_member).filter(Boolean))]
+                        
+                        return (
+                          <React.Fragment key={index}>
+                            <tr className="bg-orange-50">
+                              <td className="px-4 py-3 text-sm text-gray-900 font-medium" rowSpan={duplicate.expenses.length}>
+                                {firstExp.description}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-600">
+                                {new Date(firstExp.date).toLocaleDateString()}
+                              </td>
+                              <td className="px-4 py-3 text-sm font-semibold text-gray-900" rowSpan={duplicate.expenses.length}>
+                                {formatCurrency(Math.abs(parseFloat(firstExp.amount)))}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-600">{firstExp.source}</td>
+                              <td className="px-4 py-3 text-sm text-gray-600">{firstExp.card_member || 'N/A'}</td>
+                              <td className="px-4 py-3 text-sm text-orange-600 font-semibold" rowSpan={duplicate.expenses.length}>
+                                {duplicate.count}
+                              </td>
+                              <td className="px-4 py-3 text-sm" rowSpan={duplicate.expenses.length}>
+                                <button
+                                  onClick={() => {
+                                    const details = duplicate.expenses.map((e, i) => 
+                                      `${i + 1}. ID: ${e.id}, Date: ${new Date(e.date).toLocaleDateString()}, Source: ${e.source}, Card: ${e.card_member || 'N/A'}`
+                                    ).join('\n')
+                                    alert(`Duplicate Expense Details:\n\n${details}\n\nReview these in the expense list to decide which to keep.`)
+                                  }}
+                                  className="text-primary-600 hover:text-primary-700 text-xs"
+                                >
+                                  View All
+                                </button>
+                              </td>
+                            </tr>
+                            {duplicate.expenses.slice(1).map((exp, expIndex) => (
+                              <tr key={`${index}-${expIndex}`} className="bg-orange-50">
+                                <td className="px-4 py-3 text-sm text-gray-600">
+                                  {new Date(exp.date).toLocaleDateString()}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">{exp.source}</td>
+                                <td className="px-4 py-3 text-sm text-gray-600">{exp.card_member || 'N/A'}</td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
