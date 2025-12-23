@@ -8,6 +8,8 @@ import supabaseAPI from '../services/supabaseAPI'
 import StaffBonusTiers from '../components/StaffBonusTiers'
 import UserStaffLinker from '../components/UserStaffLinker'
 
+import { FEATURES_VERSION } from '../config/version'
+
 const Staff = () => {
   const { staffData, addStaffEntry, updateStaffEntry, deleteStaffEntry, loading, error, user } = useApp()
   const [showModal, setShowModal] = useState(false)
@@ -249,20 +251,29 @@ const Staff = () => {
           <p className="mt-2 text-secondary-600">
             Manage your staff members and their roles
           </p>
+          {user?.role === 'admin' && (
+            <p className="mt-1 text-xs text-blue-600">
+              ✓ User Management v{FEATURES_VERSION.userManagement} - Create login accounts when adding/editing staff
+            </p>
+          )}
         </div>
         <div className="flex space-x-2">
           {user?.role === 'admin' && (
-            <button
-              onClick={() => setShowUserLinker(true)}
-              className="btn-outline"
-            >
-              <Link className="w-4 h-4 mr-2" />
-              Link Users
-            </button>
+            <>
+              <button
+                onClick={() => setShowUserLinker(true)}
+                className="btn-outline"
+                title="Link existing users to staff or create new user accounts"
+              >
+                <Link className="w-4 h-4 mr-2" />
+                Manage User Accounts
+              </button>
+            </>
           )}
           <button
             onClick={handleAddNew}
             className="btn-primary"
+            title={user?.role === 'admin' ? 'Add staff member - Check "Create Login Account" to create auth account' : 'Add staff member'}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Staff Member
@@ -739,7 +750,13 @@ const Staff = () => {
 
               {/* Create Login Account Section (Admin only) */}
               {user?.role === 'admin' && (
-                <div className="border-t pt-4">
+                <div className="border-t pt-4 mt-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                    <p className="text-sm text-blue-800 font-medium mb-1">User Account Management</p>
+                    <p className="text-xs text-blue-700">
+                      Create a login account for this staff member. They will be able to sign in with their email and password.
+                    </p>
+                  </div>
                   <div className="flex items-center mb-3">
                     <input
                       type="checkbox"
@@ -751,10 +768,10 @@ const Staff = () => {
                           setUserPassword('')
                         }
                       }}
-                      className="mr-2"
+                      className="mr-2 w-4 h-4"
                     />
-                    <label htmlFor="createLoginAccount" className="text-sm font-medium text-secondary-700">
-                      Create Login Account
+                    <label htmlFor="createLoginAccount" className="text-sm font-medium text-secondary-700 cursor-pointer">
+                      Create Login Account for this Staff Member
                     </label>
                   </div>
 

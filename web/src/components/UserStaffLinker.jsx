@@ -110,9 +110,14 @@ export default function UserStaffLinker() {
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">
-        Link Users to Staff Members
-      </h3>
+      <div className="mb-4">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          User Account Management
+        </h3>
+        <p className="text-sm text-gray-600">
+          Create new user accounts or link existing users to staff members. Users can sign in with their email and password.
+        </p>
+      </div>
 
       {message && (
         <div className="rounded-md bg-green-50 p-4 mb-4">

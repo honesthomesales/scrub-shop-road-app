@@ -25,6 +25,7 @@ import { cn } from '../utils/cn'
 import AuthStatus from './AuthStatus'
 import { getFilteredNavigation } from '../utils/permissions'
 import ScrubShopLogo from './ScrubShopLogo'
+import { APP_VERSION } from '../config/version'
 
 const Header = () => {
   const location = useLocation()
@@ -340,6 +341,11 @@ const Header = () => {
 
           {/* Sheet Toggle, User Selector, and Auth Status */}
           <div className="flex items-center space-x-4">
+            {/* Version Display */}
+            <div className="hidden md:flex items-center px-2 py-1 bg-gray-50 rounded text-xs text-gray-500 border border-gray-200" title={`App Version ${APP_VERSION}`}>
+              <span className="font-mono">v{APP_VERSION}</span>
+            </div>
+            
             <AuthStatus />
             
             {/* Current User Role Indicator */}
@@ -390,6 +396,10 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         <div className="md:hidden">
+          {/* Mobile Version Display */}
+          <div className="flex items-center justify-center py-1 border-b border-secondary-200">
+            <span className="text-xs text-gray-500 font-mono">v{APP_VERSION}</span>
+          </div>
           <div className="flex items-center justify-between py-2 border-t border-secondary-200">
             {/* Mobile Dashboard Menu */}
             <div className="flex flex-col items-center px-2 py-1 text-xs font-medium rounded transition-colors duration-200 text-secondary-600">
