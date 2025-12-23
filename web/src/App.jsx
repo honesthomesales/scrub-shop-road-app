@@ -23,6 +23,7 @@ import Documents from './pages/Documents'
 import CategoryManagement from './pages/CategoryManagement'
 import ExpenseCategorization from './pages/ExpenseCategorization'
 import ExpenseCategoryKPI from './pages/ExpenseCategoryKPI'
+import UserManagement from './pages/UserManagement'
 
 function App() {
   return (
@@ -54,6 +55,7 @@ function App() {
                 <Route path="/expense-categories/manage" element={<CategoryManagement />} />
                 <Route path="/expense-categories/categorize" element={<ExpenseCategorization />} />
                 <Route path="/expense-categories/kpi" element={<ExpenseCategoryKPI />} />
+                <Route path="/admin/users" element={<UserManagement />} />
               </Routes>
             </main>
           </ProtectedRoute>

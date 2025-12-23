@@ -118,6 +118,7 @@ const Header = () => {
   ]
 
   const allAdminNavigation = [
+    { name: 'User Management', href: '/admin/users', icon: Users },
     { name: 'Staff', href: '/staff', icon: Users },
     { name: 'Sales Upload', href: '/admin/sales-upload', icon: Upload },
     { name: 'Expense Upload', href: '/admin/expense-upload', icon: DollarSign }

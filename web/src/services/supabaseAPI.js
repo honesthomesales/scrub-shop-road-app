@@ -1026,6 +1026,35 @@ class SupabaseAPI {
     }
   }
 
+  async deleteUser(userId) {
+    try {
+      if (!supabase) {
+        return { success: true }
+      }
+
+      // First, deactivate the user instead of deleting (safer)
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ is_active: false })
+        .eq('id', userId)
+
+      if (updateError) {
+        // If update fails, try delete
+        const { error: deleteError } = await supabase
+          .from('users')
+          .delete()
+          .eq('id', userId)
+
+        if (deleteError) throw new Error(deleteError.message)
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to delete user:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
   // Message Groups Management
   async getMessageGroups() {
     try {
