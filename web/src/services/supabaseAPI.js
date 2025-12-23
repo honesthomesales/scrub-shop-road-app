@@ -810,6 +810,76 @@ class SupabaseAPI {
     }
   }
 
+  // Create auth user for staff member (admin function)
+  async createUserForStaff(email, password, name, role, staffId) {
+    try {
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' }
+      }
+
+      // Step 1: Create auth account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name
+          }
+        }
+      })
+
+      if (authError) {
+        return { success: false, error: authError.message }
+      }
+
+      if (!authData.user) {
+        return { success: false, error: 'Failed to create auth account' }
+      }
+
+      // Step 2: Create/update user profile with staff_id and role
+      const { data: profileData, error: profileError } = await supabase
+        .from('users')
+        .upsert({
+          id: authData.user.id,
+          email: authData.user.email,
+          name: name,
+          role: role || 'user',
+          staff_id: staffId,
+          is_active: true
+        }, {
+          onConflict: 'email'
+        })
+        .select()
+        .single()
+
+      if (profileError && profileError.code !== '23505') { // Ignore duplicate key errors
+        // If profile creation fails, try to update existing
+        const { data: updateData, error: updateError } = await supabase
+          .from('users')
+          .update({
+            staff_id: staffId,
+            role: role || 'user',
+            name: name
+          })
+          .eq('email', email)
+          .select()
+          .single()
+
+        if (updateError) {
+          console.warn('Profile update failed:', updateError)
+          return { success: false, error: updateError.message }
+        }
+
+        return { success: true, data: updateData }
+      }
+
+      return { success: true, data: profileData }
+    } catch (error) {
+      console.error('Failed to create user for staff:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
   // Authenticate user (legacy method - now uses getCurrentUser)
   async authenticate() {
     const result = await this.getCurrentUser()

@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { FileText, Calendar, DollarSign, CreditCard, TrendingUp, Filter, Download, RefreshCw, Users } from 'lucide-react'
+import { FileText, Calendar, DollarSign, CreditCard, TrendingUp, RefreshCw } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import supabaseAPI from '../services/supabaseAPI'
 import { formatCurrency, parseDateString } from '../utils/dateUtils'
+import { useApp } from '../contexts/AppContext'
 
-const ExpenseReports = () => {
+const Profit = () => {
+  const { salesData } = useApp()
   const [expenses, setExpenses] = useState([])
+  const [allExpensesData, setAllExpensesData] = useState([]) // Store all data including income for monthly breakdown
   const [loading, setLoading] = useState(true)
   const [reportType, setReportType] = useState('monthly-summary')
   const [dateRange, setDateRange] = useState(() => {
@@ -35,12 +38,34 @@ const ExpenseReports = () => {
       })
       
       if (result.success) {
-        // Filter to only Truist expenses
-        const truistExpenses = (result.data || []).filter(exp => {
+        // Store all data (including income) for monthly breakdown chart
+        const allData = (result.data || []).filter(exp => {
           const source = (exp.source || '').trim().toUpperCase()
-          return source === 'TRUIST'
+          return source === 'CAPITAL ONE' || source === 'AMEX' || source === 'TRUIST'
         })
-        setExpenses(truistExpenses)
+        setAllExpensesData(allData)
+        
+        // Filter to only include expenses (no income) from CAPITAL ONE, AMEX, and TRUIST
+        // All sources: negative = expense, positive = income (filter out positive)
+        const allExpenses = allData.filter(exp => {
+          const source = (exp.source || '').trim().toUpperCase()
+          const amount = parseFloat(exp.amount) || 0
+          const description = (exp.description || '').toUpperCase()
+          
+          // All sources: only include negative amounts (expenses)
+          if (source === 'AMEX' || source === 'CAPITAL ONE' || source === 'TRUIST') {
+            if (amount < 0) {
+              // Exclude payment transfers (internal transfers to pay other cards)
+              // Exclude any expense with description containing "PMT AMEX" or "CAPITAL ONE"
+              if (description.includes('PMT AMEX') || description.includes('CAPITAL ONE')) {
+                return false
+              }
+              return true
+            }
+          }
+          return false
+        })
+        setExpenses(allExpenses)
       }
     } catch (error) {
       console.error('Error loading expenses:', error)
@@ -50,9 +75,8 @@ const ExpenseReports = () => {
   }
 
   const generateReport = () => {
-    // Filter expenses based on selections (expenses are already filtered to Truist only)
+    // Filter expenses based on date range
     let filtered = expenses.filter(exp => {
-      // Date range filter - ensure dates are in YYYY-MM-DD format for comparison
       const expDateStr = exp.date ? String(exp.date).split('T')[0] : null
       if (!expDateStr) return false
       
@@ -80,7 +104,8 @@ const ExpenseReports = () => {
   }
 
   const generateMonthlySummary = (filteredExpenses) => {
-    // Group by month and separate income (positive) and expenses (negative)
+    // Group by month - only expenses (no income in Profit screen)
+    // All sources: negative = expense
     const monthlyData = {}
     
     filteredExpenses.forEach(exp => {
@@ -94,36 +119,27 @@ const ExpenseReports = () => {
         monthlyData[monthKey] = {
           month: monthName,
           monthKey,
-          income: 0, // Positive values
-          expenses: 0, // Negative values (stored as positive)
+          expenses: 0, // All are expenses (negative amounts stored as positive)
           count: 0
         }
       }
       
       const amount = parseFloat(exp.amount) || 0
-      if (amount > 0) {
-        monthlyData[monthKey].income += amount
-      } else if (amount < 0) {
-        monthlyData[monthKey].expenses += Math.abs(amount)
-      }
+      
+      // Convert all to positive expense amounts (all sources store expenses as negative)
+      monthlyData[monthKey].expenses += Math.abs(amount)
       monthlyData[monthKey].count += 1
     })
 
     const chartData = Object.values(monthlyData).sort((a, b) => a.monthKey.localeCompare(b.monthKey))
     
-    // Calculate totals separately for income and expenses
-    let totalIncome = 0
+    // Calculate totals - all expenses only
     let totalExpenses = 0
     filteredExpenses.forEach(exp => {
       const amount = parseFloat(exp.amount) || 0
-      if (amount > 0) {
-        totalIncome += amount
-      } else if (amount < 0) {
-        totalExpenses += Math.abs(amount)
-      }
+      totalExpenses += Math.abs(amount) // All amounts are expenses, convert to positive
     })
     
-    const avgIncomePerMonth = chartData.length > 0 ? totalIncome / chartData.length : 0
     const avgExpensesPerMonth = chartData.length > 0 ? totalExpenses / chartData.length : 0
 
     return {
@@ -131,10 +147,8 @@ const ExpenseReports = () => {
       title: 'Monthly Summary',
       chartData,
       summary: {
-        totalIncome,
         totalExpenses,
         count: filteredExpenses.length,
-        avgIncomePerMonth,
         avgExpensesPerMonth,
         months: chartData.length
       }
@@ -142,7 +156,6 @@ const ExpenseReports = () => {
   }
 
   const generateDateRangeReport = (filteredExpenses) => {
-    // Use the filtered expenses which already respect date range, source, and card member filters
     let expensesForReport = filteredExpenses
     
     // Group by date - normalize dates to YYYY-MM-DD format for consistent grouping
@@ -166,12 +179,15 @@ const ExpenseReports = () => {
         validDates.push(dateStr)
       }
       
-      const amount = parseFloat(exp.amount) || 0 // Keep sign: positive = income, negative = expense
-      dailyData[dateStr].total += amount
+      // All expenses are stored as negative for consistent display
+      const amount = parseFloat(exp.amount) || 0
+      const expenseAmount = amount // All sources store expenses as negative
+      
+      dailyData[dateStr].total += expenseAmount
       dailyData[dateStr].count += 1
       
-      const source = exp.source || 'Unknown'
-      dailyData[dateStr].bySource[source] = (dailyData[dateStr].bySource[source] || 0) + amount
+      const sourceName = exp.source || 'Unknown'
+      dailyData[dateStr].bySource[sourceName] = (dailyData[dateStr].bySource[sourceName] || 0) + expenseAmount
     })
 
     // Use the actual dates from ALL expenses to determine the complete range
@@ -218,32 +234,39 @@ const ExpenseReports = () => {
 
       const chartData = allDaysData
       
-      // Calculate income (positive) and expenses (negative) separately
-      let totalIncome = 0
+      // Calculate total expenses from filtered expenses
       let totalExpenses = 0
-      let positiveCount = 0
-      let negativeCount = 0
-      
       expensesForReport.forEach(exp => {
         const amount = parseFloat(exp.amount) || 0
+        totalExpenses += Math.abs(amount) // All are expenses, convert to positive
+      })
+      
+      // Calculate total income from all data (including income) for the date range
+      let totalIncome = 0
+      const incomeData = allExpensesData.filter(exp => {
+        const expDateStr = exp.date ? String(exp.date).split('T')[0] : null
+        if (!expDateStr) return false
+        if (expDateStr < dateRange.startDate || expDateStr > dateRange.endDate) {
+          return false
+        }
+        return true
+      })
+      
+      incomeData.forEach(exp => {
+        const amount = parseFloat(exp.amount) || 0
+        
+        // Calculate income: all sources store positive = income
         if (amount > 0) {
           totalIncome += amount
-          positiveCount++
-        } else if (amount < 0) {
-          totalExpenses += Math.abs(amount) // Store as positive for display
-          negativeCount++
         }
       })
       
-      const netProfit = totalIncome - totalExpenses
       const totalTransactions = expensesForReport.length
       
       // Calculate average based on days with transactions (non-zero amounts)
       const daysWithExpenses = chartData.filter(item => item.total !== 0).length
-      // For display purposes, show total of income and expenses divided by days
-      const avgPerDay = daysWithExpenses > 0 ? (totalIncome + totalExpenses) / daysWithExpenses : 0
-      const avgIncomePerDay = daysWithExpenses > 0 ? totalIncome / daysWithExpenses : 0
       const avgExpensePerDay = daysWithExpenses > 0 ? totalExpenses / daysWithExpenses : 0
+      const avgIncomePerDay = daysWithExpenses > 0 ? totalIncome / daysWithExpenses : 0
 
       return {
         type: 'date-range',
@@ -252,11 +275,7 @@ const ExpenseReports = () => {
         summary: {
           totalIncome,
           totalExpenses,
-          netProfit,
           count: totalTransactions,
-          positiveCount,
-          negativeCount,
-          average: avgPerDay,
           avgIncomePerDay,
           avgExpensePerDay,
           days: daysWithExpenses
@@ -271,11 +290,7 @@ const ExpenseReports = () => {
         summary: {
           totalIncome: 0,
           totalExpenses: 0,
-          netProfit: 0,
           count: 0,
-          positiveCount: 0,
-          negativeCount: 0,
-          average: 0,
           avgIncomePerDay: 0,
           avgExpensePerDay: 0,
           days: 0
@@ -284,27 +299,27 @@ const ExpenseReports = () => {
     }
   }
 
-  // Memoize Truist chart data to prevent recalculation on every render
-  const truistChartData = useMemo(() => {
+  // Memoize monthly breakdown chart data (includes income and expenses from all sources)
+  const monthlyBreakdownChartData = useMemo(() => {
     if (reportType !== 'date-range') return null
 
-    const truistExpenses = expenses.filter(exp => {
+    // Use all expenses data (including income) filtered by date range
+    const filteredData = allExpensesData.filter(exp => {
       const expDateStr = exp.date ? String(exp.date).split('T')[0] : null
       if (!expDateStr) return false
       if (expDateStr < dateRange.startDate || expDateStr > dateRange.endDate) {
         return false
       }
-      
       return true
     })
 
-    if (truistExpenses.length === 0) {
+    if (filteredData.length === 0) {
       return null
     }
 
     const monthlyData = {}
     
-    truistExpenses.forEach(exp => {
+    filteredData.forEach(exp => {
       const date = parseDateString(exp.date)
       if (!date) return
       
@@ -315,21 +330,79 @@ const ExpenseReports = () => {
         monthlyData[monthKey] = {
           month: monthName,
           monthKey,
-          positive: 0,
-          negative: 0
+          income: 0,
+          expenses: 0,
+          sales: 0
         }
       }
       
       const amount = parseFloat(exp.amount) || 0
-      if (amount > 0) {
-        monthlyData[monthKey].positive += amount
-      } else if (amount < 0) {
-        monthlyData[monthKey].negative += Math.abs(amount)
+      const description = (exp.description || '').toUpperCase()
+      
+      // Exclude payment transfers (internal transfers to pay other cards)
+      // Exclude any expense with description containing "PMT AMEX" or "CAPITAL ONE"
+      if (amount < 0) {
+        if (description.includes('PMT AMEX') || description.includes('CAPITAL ONE')) {
+          return // Skip this entry
+        }
+        monthlyData[monthKey].expenses += Math.abs(amount)
+      } else if (amount > 0) {
+        monthlyData[monthKey].income += amount
       }
     })
 
+    // Add sales data for all 5 stores (Trailer, Camper, Spartanburg, Greenville, Columbia)
+    const allStores = ['Trailer', 'Camper', 'Spartanburg', 'Greenville', 'Columbia']
+    
+    if (salesData && salesData.length > 0) {
+      salesData.forEach(sale => {
+        if (!sale.date || !sale.grossSales || !sale.store) return
+        
+        const saleDate = parseDateString(sale.date)
+        if (!saleDate) return
+        
+        // Check if sale is in date range
+        const saleDateStr = saleDate.toISOString().split('T')[0]
+        if (saleDateStr < dateRange.startDate || saleDateStr > dateRange.endDate) return
+        
+        // Only include sales from the 5 main stores
+        if (!allStores.includes(sale.store)) return
+        
+        const monthKey = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}`
+        const monthName = saleDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+        
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = {
+            month: monthName,
+            monthKey,
+            income: 0,
+            expenses: 0,
+            sales: 0
+          }
+        }
+        
+        // Add grossSales to the sales total for this month
+        monthlyData[monthKey].sales += parseFloat(sale.grossSales) || 0
+      })
+    }
+
     return Object.values(monthlyData).sort((a, b) => a.monthKey.localeCompare(b.monthKey))
-  }, [reportType, expenses, dateRange.startDate, dateRange.endDate])
+  }, [reportType, allExpensesData, salesData, dateRange.startDate, dateRange.endDate])
+
+  // Calculate totals from monthly breakdown chart data
+  const monthlyTotals = useMemo(() => {
+    if (!monthlyBreakdownChartData || monthlyBreakdownChartData.length === 0) {
+      return { totalIncome: 0, totalSales: 0 }
+    }
+    
+    const totals = monthlyBreakdownChartData.reduce((acc, month) => {
+      acc.totalIncome += month.income || 0
+      acc.totalSales += month.sales || 0
+      return acc
+    }, { totalIncome: 0, totalSales: 0 })
+    
+    return totals
+  }, [monthlyBreakdownChartData])
 
   // Memoize daily breakdown table data to prevent recalculation on every render
   const dailyTableData = useMemo(() => {
@@ -403,7 +476,7 @@ const ExpenseReports = () => {
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Truist</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Profit</h1>
           </div>
           <button
             onClick={loadExpenses}
@@ -474,88 +547,63 @@ const ExpenseReports = () => {
               <div className="space-y-6">
                 {/* Summary Cards */}
                 {reportType === 'date-range' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                    <div className="bg-white rounded-lg shadow p-6">
-                      <div className="flex items-center">
-                        <DollarSign className="w-8 h-8 text-green-500" />
-                        <div className="ml-4">
-                          <p className="text-sm text-gray-600">Total Income</p>
-                          <p className="text-2xl font-bold text-gray-900">{formatCurrency(reportData.summary.totalIncome || 0)}</p>
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center mb-4">
+                          <DollarSign className="w-8 h-8 text-green-500" />
+                          <div className="ml-4">
+                            <p className="text-sm text-gray-600">Total Collected Income</p>
+                            <p className="text-2xl font-bold text-gray-900">{formatCurrency(monthlyTotals.totalIncome || 0)}</p>
+                          </div>
+                        </div>
+                        <div className="border-t border-gray-300 pt-4 mt-4">
+                          <div className="flex items-center">
+                            <TrendingUp className={`w-6 h-6 ${((monthlyTotals.totalIncome || 0) - (reportData.summary.totalExpenses || 0)) >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+                            <div className="ml-3">
+                              <p className="text-xs text-gray-600">Total Profit</p>
+                              <p className={`text-lg font-bold ${((monthlyTotals.totalIncome || 0) - (reportData.summary.totalExpenses || 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {formatCurrency((monthlyTotals.totalIncome || 0) - (reportData.summary.totalExpenses || 0))}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="bg-white rounded-lg shadow p-6">
-                      <div className="flex items-center">
-                        <DollarSign className="w-8 h-8 text-red-500" />
-                        <div className="ml-4">
-                          <p className="text-sm text-gray-600">Total Expenses</p>
-                          <p className="text-2xl font-bold text-gray-900">{formatCurrency(reportData.summary.totalExpenses || 0)}</p>
+                      
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center mb-4">
+                          <DollarSign className="w-8 h-8 text-lime-500" />
+                          <div className="ml-4">
+                            <p className="text-sm text-gray-600">Total Sold</p>
+                            <p className="text-2xl font-bold text-gray-900">{formatCurrency(monthlyTotals.totalSales || 0)}</p>
+                          </div>
+                        </div>
+                        <div className="border-t border-gray-300 pt-4 mt-4">
+                          <div className="flex items-center">
+                            <TrendingUp className={`w-6 h-6 ${((monthlyTotals.totalSales || 0) - (reportData.summary.totalExpenses || 0)) >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+                            <div className="ml-3">
+                              <p className="text-xs text-gray-600">Total Profit</p>
+                              <p className={`text-lg font-bold ${((monthlyTotals.totalSales || 0) - (reportData.summary.totalExpenses || 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {formatCurrency((monthlyTotals.totalSales || 0) - (reportData.summary.totalExpenses || 0))}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="bg-white rounded-lg shadow p-6">
-                      <div className="flex items-center">
-                        <TrendingUp className={`w-8 h-8 ${(reportData.summary.netProfit || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`} />
-                        <div className="ml-4">
-                          <p className="text-sm text-gray-600">Net Profit</p>
-                          <p className={`text-2xl font-bold ${(reportData.summary.netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatCurrency(reportData.summary.netProfit || 0)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white rounded-lg shadow p-6">
-                      <div className="flex items-center">
-                        <CreditCard className="w-8 h-8 text-blue-500" />
-                        <div className="ml-4">
-                          <p className="text-sm text-gray-600">Transactions</p>
-                          <p className="text-2xl font-bold text-gray-900">{reportData.summary.count || 0}</p>
-                          <p className="text-xs text-gray-500">
-                            {reportData.summary.positiveCount || 0} income, {reportData.summary.negativeCount || 0} expense
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white rounded-lg shadow p-6">
-                      <div className="flex items-center">
-                        <TrendingUp className="w-8 h-8 text-green-500" />
-                        <div className="ml-4">
-                          <p className="text-sm text-gray-600">Avg Income/Day</p>
-                          <p className="text-2xl font-bold text-gray-900">
-                            {formatCurrency(reportData.summary.avgIncomePerDay || 0)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white rounded-lg shadow p-6">
-                      <div className="flex items-center">
-                        <TrendingUp className="w-8 h-8 text-red-500" />
-                        <div className="ml-4">
-                          <p className="text-sm text-gray-600">Avg Expenses/Day</p>
-                          <p className="text-2xl font-bold text-gray-900">
-                            {formatCurrency(reportData.summary.avgExpensePerDay || 0)}
-                          </p>
+                      
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center">
+                          <DollarSign className="w-8 h-8 text-red-500" />
+                          <div className="ml-4">
+                            <p className="text-sm text-gray-600">Total Expenses</p>
+                            <p className="text-2xl font-bold text-gray-900">{formatCurrency(reportData.summary.totalExpenses || 0)}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                    <div className="bg-white rounded-lg shadow p-6">
-                      <div className="flex items-center">
-                        <DollarSign className="w-8 h-8 text-green-500" />
-                        <div className="ml-4">
-                          <p className="text-sm text-gray-600">Total Income</p>
-                          <p className="text-2xl font-bold text-gray-900">{formatCurrency(reportData.summary.totalIncome || 0)}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white rounded-lg shadow p-6">
                       <div className="flex items-center">
                         <DollarSign className="w-8 h-8 text-red-500" />
@@ -572,18 +620,6 @@ const ExpenseReports = () => {
                         <div className="ml-4">
                           <p className="text-sm text-gray-600">Transactions</p>
                           <p className="text-2xl font-bold text-gray-900">{reportData.summary.count || 0}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white rounded-lg shadow p-6">
-                      <div className="flex items-center">
-                        <TrendingUp className="w-8 h-8 text-green-500" />
-                        <div className="ml-4">
-                          <p className="text-sm text-gray-600">Avg Income/Month</p>
-                          <p className="text-2xl font-bold text-gray-900">
-                            {formatCurrency(reportData.summary.avgIncomePerMonth || 0)}
-                          </p>
                         </div>
                       </div>
                     </div>
@@ -603,13 +639,13 @@ const ExpenseReports = () => {
                 )}
 
                 {/* Charts */}
-                {/* Truist Monthly Breakdown Chart - Show before Daily Profit Breakdown */}
-                {truistChartData && truistChartData.length > 0 && (
+                {/* Monthly Breakdown Chart - Show before Daily Profit Breakdown */}
+                {monthlyBreakdownChartData && monthlyBreakdownChartData.length > 0 && (
                   <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Truist Monthly Breakdown</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Breakdown</h3>
                     <div className="h-96">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={truistChartData}>
+                        <BarChart data={monthlyBreakdownChartData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                           <XAxis 
                             dataKey="month" 
@@ -624,15 +660,21 @@ const ExpenseReports = () => {
                           <Tooltip content={<CustomTooltip />} />
                           <Legend />
                           <Bar 
-                            dataKey="positive" 
+                            dataKey="income" 
                             fill="#10b981" 
                             name="Income"
                             radius={[4, 4, 0, 0]}
                           />
                           <Bar 
-                            dataKey="negative" 
+                            dataKey="expenses" 
                             fill="#ef4444" 
                             name="Expenses"
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <Bar 
+                            dataKey="sales" 
+                            fill="#32cd32" 
+                            name="Sales"
                             radius={[4, 4, 0, 0]}
                           />
                         </BarChart>
@@ -657,7 +699,6 @@ const ExpenseReports = () => {
                           />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend />
-                          <Bar dataKey="income" fill="#10b981" name="Income" radius={[4, 4, 0, 0]} />
                           <Bar dataKey="expenses" fill="#ef4444" name="Expenses" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
@@ -694,7 +735,7 @@ const ExpenseReports = () => {
                             stroke="#ef4444" 
                             strokeWidth={2}
                             dot={{ fill: '#ef4444', r: 4 }}
-                            name="Daily Net (Income - Expenses)"
+                            name="Daily Expenses"
                           />
                         </LineChart>
                       </ResponsiveContainer>
@@ -759,5 +800,5 @@ const ExpenseReports = () => {
   )
 }
 
-export default ExpenseReports
+export default Profit
 

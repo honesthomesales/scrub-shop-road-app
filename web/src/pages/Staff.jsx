@@ -17,10 +17,17 @@ const Staff = () => {
   const [showBonusTiersModal, setShowBonusTiersModal] = useState(false)
   const [selectedStaffForBonus, setSelectedStaffForBonus] = useState(null)
   const [showUserLinker, setShowUserLinker] = useState(false)
+  const [createLoginAccount, setCreateLoginAccount] = useState(false)
+  const [userPassword, setUserPassword] = useState('')
+  const [userRole, setUserRole] = useState('user')
+  const [userAccounts, setUserAccounts] = useState({}) // Map of staff_id to user account info
 
   const handleAddNew = () => {
     setEditingStaff(null)
     setFormData(getDefaultStaffEntry())
+    setCreateLoginAccount(false)
+    setUserPassword('')
+    setUserRole('user')
     setShowModal(true)
   }
 
@@ -42,6 +49,11 @@ const Staff = () => {
       preferredHoursPerWeek: staff.preferredHoursPerWeek || 0,
       maxHoursPerWeek: staff.maxHoursPerWeek || 0
     })
+    // Check if staff member already has a user account
+    const hasAccount = userAccounts[staff.id] !== undefined
+    setCreateLoginAccount(false) // Don't pre-check, user can create if needed
+    setUserPassword('')
+    setUserRole(hasAccount ? userAccounts[staff.id].role : 'user')
     setShowModal(true)
   }
 
@@ -67,16 +79,84 @@ const Staff = () => {
       return
     }
 
+    // If creating login account, validate password
+    if (createLoginAccount && !userPassword) {
+      alert('Password is required when creating a login account')
+      return
+    }
+
+    // First, create/update staff member
     const result = editingStaff 
       ? await updateStaffEntry(editingStaff.id, formData)
       : await addStaffEntry(formData)
 
-    if (result.success) {
-      setShowModal(false)
-      setFormData(getDefaultStaffEntry())
-    } else {
+    if (!result.success) {
       alert(`Error ${editingStaff ? 'updating' : 'adding'} staff: ${result.error}`)
+      return
     }
+
+    // Get the staff ID
+    let staffId = editingStaff ? editingStaff.id : null
+    
+    // If creating new staff, query database to get the ID by email (since email is unique)
+    if (!staffId && !editingStaff) {
+      try {
+        const { getSupabase } = await import('../services/supabaseAPI')
+        const supabase = getSupabase()
+        if (supabase) {
+          const { data: newStaffData } = await supabase
+            .from('staff')
+            .select('id')
+            .eq('email', formData.email)
+            .single()
+          
+          if (newStaffData) {
+            staffId = newStaffData.id
+          }
+        }
+      } catch (error) {
+        console.error('Error finding new staff ID:', error)
+      }
+    }
+
+    // If creating login account, create user account
+    if (createLoginAccount && staffId && userPassword) {
+      try {
+        const userResult = await supabaseAPI.createUserForStaff(
+          formData.email,
+          userPassword,
+          formData.name,
+          userRole,
+          staffId
+        )
+
+        if (!userResult.success) {
+          alert(`Staff ${editingStaff ? 'updated' : 'created'} but failed to create login account: ${userResult.error}`)
+          // Still close modal since staff was created/updated successfully
+        } else {
+          // Refresh user accounts
+          const accountsResult = await supabaseAPI.getUsers()
+          if (accountsResult.success && accountsResult.data) {
+            const accountMap = {}
+            accountsResult.data.forEach(userAccount => {
+              if (userAccount.staff_id) {
+                accountMap[userAccount.staff_id] = userAccount
+              }
+            })
+            setUserAccounts(accountMap)
+          }
+        }
+      } catch (error) {
+        console.error('Error creating user account:', error)
+        alert(`Staff ${editingStaff ? 'updated' : 'created'} but failed to create login account: ${error.message}`)
+      }
+    }
+
+    setShowModal(false)
+    setFormData(getDefaultStaffEntry())
+    setCreateLoginAccount(false)
+    setUserPassword('')
+    setUserRole('user')
   }
 
   // Fetch stores for store assignment
@@ -93,6 +173,30 @@ const Staff = () => {
     }
     fetchStores()
   }, [])
+
+  // Fetch user accounts for staff members
+  useEffect(() => {
+    const fetchUserAccounts = async () => {
+      if (user?.role !== 'admin') return // Only admins can see user accounts
+      
+      try {
+        const result = await supabaseAPI.getUsers()
+        if (result.success && result.data) {
+          // Create a map of staff_id to user account
+          const accountMap = {}
+          result.data.forEach(userAccount => {
+            if (userAccount.staff_id) {
+              accountMap[userAccount.staff_id] = userAccount
+            }
+          })
+          setUserAccounts(accountMap)
+        }
+      } catch (error) {
+        console.error('Error fetching user accounts:', error)
+      }
+    }
+    fetchUserAccounts()
+  }, [staffData, user])
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -237,6 +341,7 @@ const Staff = () => {
                   <th>Store</th>
                   <th>Hire Date</th>
                   <th>Pay Structure</th>
+                  <th>Login Account</th>
                   <th>Notes</th>
                   <th>Actions</th>
                 </tr>
@@ -244,7 +349,7 @@ const Staff = () => {
               <tbody>
                 {staffData.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="text-center py-8 text-secondary-500">
+                    <td colSpan="9" className="text-center py-8 text-secondary-500">
                       <p className="text-gray-500 text-center">
                         No staff members found. Add your first staff member to get started.
                       </p>
@@ -336,6 +441,23 @@ const Staff = () => {
                             </div>
                           )}
                         </div>
+                      </td>
+                      <td>
+                        {user?.role === 'admin' && userAccounts[staff.id] ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center text-sm text-green-600">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              <span className="font-medium">Active</span>
+                            </div>
+                            <div className="text-xs text-secondary-500">
+                              Role: {userAccounts[staff.id].role}
+                            </div>
+                          </div>
+                        ) : user?.role === 'admin' ? (
+                          <span className="text-secondary-400 text-sm">No account</span>
+                        ) : (
+                          <span className="text-secondary-400 text-sm">-</span>
+                        )}
                       </td>
                       <td>
                         {staff.notes ? (
@@ -614,6 +736,77 @@ const Staff = () => {
                   placeholder="Additional notes about this staff member"
                 />
               </div>
+
+              {/* Create Login Account Section (Admin only) */}
+              {user?.role === 'admin' && (
+                <div className="border-t pt-4">
+                  <div className="flex items-center mb-3">
+                    <input
+                      type="checkbox"
+                      id="createLoginAccount"
+                      checked={createLoginAccount}
+                      onChange={(e) => {
+                        setCreateLoginAccount(e.target.checked)
+                        if (!e.target.checked) {
+                          setUserPassword('')
+                        }
+                      }}
+                      className="mr-2"
+                    />
+                    <label htmlFor="createLoginAccount" className="text-sm font-medium text-secondary-700">
+                      Create Login Account
+                    </label>
+                  </div>
+
+                  {createLoginAccount && (
+                    <div className="space-y-3 ml-6">
+                      {editingStaff && userAccounts[editingStaff.id] && (
+                        <div className="rounded-md bg-yellow-50 p-3 mb-3">
+                          <p className="text-sm text-yellow-800">
+                            This staff member already has a login account. Creating a new account will replace the existing one.
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-1">
+                          Password *
+                        </label>
+                        <input
+                          type="password"
+                          value={userPassword}
+                          onChange={(e) => setUserPassword(e.target.value)}
+                          className="input"
+                          placeholder="Enter password for login"
+                          required={createLoginAccount}
+                          minLength={6}
+                        />
+                        <p className="mt-1 text-xs text-secondary-500">
+                          Minimum 6 characters
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-1">
+                          User Role
+                        </label>
+                        <select
+                          value={userRole}
+                          onChange={(e) => setUserRole(e.target.value)}
+                          className="input"
+                        >
+                          <option value="user">User</option>
+                          <option value="manager">Manager</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        <p className="mt-1 text-xs text-secondary-500">
+                          Determines what features the user can access
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div className="flex justify-end space-x-3 pt-4">
                 <button

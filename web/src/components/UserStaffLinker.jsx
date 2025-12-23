@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useApp } from '../contexts/AppContext'
+import { Plus } from 'lucide-react'
 
 export default function UserStaffLinker() {
   const [unlinkedUsers, setUnlinkedUsers] = useState([])
@@ -7,6 +8,14 @@ export default function UserStaffLinker() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [newUserData, setNewUserData] = useState({
+    email: '',
+    password: '',
+    name: '',
+    role: 'user'
+  })
+  const [selectedStaffId, setSelectedStaffId] = useState('')
   const { supabaseAPI } = useApp()
 
   useEffect(() => {
@@ -56,6 +65,41 @@ export default function UserStaffLinker() {
     }
   }
 
+  const handleCreateAndLinkUser = async () => {
+    if (!newUserData.email || !newUserData.password || !newUserData.name || !selectedStaffId) {
+      setError('Please fill in all fields')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const result = await supabaseAPI.createUserForStaff(
+        newUserData.email,
+        newUserData.password,
+        newUserData.name,
+        newUserData.role,
+        parseInt(selectedStaffId)
+      )
+
+      if (result.success) {
+        setMessage('User account created and linked to staff member successfully!')
+        setShowCreateForm(false)
+        setNewUserData({ email: '', password: '', name: '', role: 'user' })
+        setSelectedStaffId('')
+        await loadData()
+      } else {
+        setError(result.error || 'Failed to create user account')
+      }
+    } catch (error) {
+      setError('An unexpected error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (loading && unlinkedUsers.length === 0) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -82,6 +126,99 @@ export default function UserStaffLinker() {
         </div>
       )}
 
+      {/* Create New User Section */}
+      <div className="mb-6 pb-6 border-b">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-medium text-gray-900">Create New User Account</h4>
+          <button
+            onClick={() => {
+              setShowCreateForm(!showCreateForm)
+              setError('')
+              setMessage('')
+            }}
+            className="flex items-center text-sm text-indigo-600 hover:text-indigo-700"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            {showCreateForm ? 'Cancel' : 'Create New User'}
+          </button>
+        </div>
+
+        {showCreateForm && (
+          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  value={newUserData.name}
+                  onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  placeholder="Full name"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  value={newUserData.email}
+                  onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  placeholder="email@example.com"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Password *</label>
+                <input
+                  type="password"
+                  value={newUserData.password}
+                  onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  placeholder="Minimum 6 characters"
+                  minLength={6}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
+                <select
+                  value={newUserData.role}
+                  onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="user">User</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Link to Staff Member *</label>
+              <select
+                value={selectedStaffId}
+                onChange={(e) => setSelectedStaffId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="">Select staff member...</option>
+                {staffMembers.map((staff) => (
+                  <option key={staff.id} value={staff.id}>
+                    {staff.name} ({staff.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={handleCreateAndLinkUser}
+              disabled={loading}
+              className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium"
+            >
+              {loading ? 'Creating...' : 'Create User Account'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Link Existing Users Section */}
       {unlinkedUsers.length === 0 ? (
         <p className="text-gray-500">All users are already linked to staff members.</p>
       ) : (

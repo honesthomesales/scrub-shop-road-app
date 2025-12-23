@@ -170,4 +170,87 @@ export const getLastFiveSalesForVenue = (salesData, venueName) => {
     }))
   
   return venueSales
+}
+
+/**
+ * Parse a date string from CSV and return YYYY-MM-DD format without timezone conversion
+ * Handles multiple date formats: MM/DD/YYYY, YYYY-MM-DD, DD/MM/YYYY, etc.
+ * @param {string} dateString - The date string from CSV
+ * @returns {string|null} - Date in YYYY-MM-DD format or null if invalid
+ */
+export const parseCSVDate = (dateString) => {
+  if (!dateString) return null
+  
+  const str = String(dateString).trim()
+  if (!str || str === '########' || /^#+$/.test(str)) return null
+  
+  // Already in YYYY-MM-DD format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return str
+  }
+  
+  // Handle MM/DD/YYYY or M/D/YYYY format (US format)
+  const usDateMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (usDateMatch) {
+    const [, month, day, year] = usDateMatch
+    const m = parseInt(month, 10)
+    const d = parseInt(day, 10)
+    const y = parseInt(year, 10)
+    
+    // Validate date
+    if (m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 1900 && y <= 2100) {
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    }
+  }
+  
+  // Handle DD/MM/YYYY format (European format) - but prefer US format if ambiguous
+  const euDateMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (euDateMatch) {
+    const [, day, month, year] = euDateMatch
+    const d = parseInt(day, 10)
+    const m = parseInt(month, 10)
+    const y = parseInt(year, 10)
+    
+    // If day > 12, it's definitely DD/MM/YYYY
+    // If month > 12, it's definitely MM/DD/YYYY (already handled above)
+    // If both <= 12, assume MM/DD/YYYY (US format)
+    if (d > 12 && m >= 1 && m <= 12 && y >= 1900 && y <= 2100) {
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    }
+  }
+  
+  // Handle YYYY/MM/DD format
+  const isoSlashMatch = str.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/)
+  if (isoSlashMatch) {
+    const [, year, month, day] = isoSlashMatch
+    const y = parseInt(year, 10)
+    const m = parseInt(month, 10)
+    const d = parseInt(day, 10)
+    
+    if (m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 1900 && y <= 2100) {
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    }
+  }
+  
+  // Try JavaScript Date parsing as fallback, but extract components directly
+  // to avoid timezone issues
+  try {
+    const date = new Date(str)
+    if (!isNaN(date.getTime())) {
+      // Extract year, month, day from the local date (not UTC)
+      // This preserves the date as entered without timezone conversion
+      const year = date.getFullYear()
+      const month = date.getMonth() + 1
+      const day = date.getDate()
+      
+      // Validate the extracted values make sense
+      if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      }
+    }
+  } catch (e) {
+    // Ignore parsing errors
+  }
+  
+  return null
 } 
