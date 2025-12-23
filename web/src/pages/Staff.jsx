@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Users, Mail, Phone, Calendar, FileText, CheckCircle, XCircle, DollarSign, MapPin, Target, Link } from 'lucide-react'
+import { Plus, Edit, Trash2, Users, Mail, Phone, Calendar, FileText, CheckCircle, XCircle, DollarSign, MapPin, Target, Link, Eye, EyeOff } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { STAFF_ROLE_OPTIONS, STAFF_STATUS_OPTIONS, STAFF_PAY_TYPE_OPTIONS, getDefaultStaffEntry } from '../utils/sheetMappings'
 import { formatDate } from '../utils/dateUtils'
@@ -21,6 +21,7 @@ const Staff = () => {
   const [showUserLinker, setShowUserLinker] = useState(false)
   const [createLoginAccount, setCreateLoginAccount] = useState(false)
   const [userPassword, setUserPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [userRole, setUserRole] = useState('user')
   const [userAccounts, setUserAccounts] = useState({}) // Map of staff_id to user account info
 
@@ -29,6 +30,7 @@ const Staff = () => {
     setFormData(getDefaultStaffEntry())
     setCreateLoginAccount(false)
     setUserPassword('')
+    setShowPassword(false)
     setUserRole('user')
     setShowModal(true)
   }
@@ -789,15 +791,29 @@ const Staff = () => {
                         <label className="block text-sm font-medium text-secondary-700 mb-1">
                           Password *
                         </label>
-                        <input
-                          type="password"
-                          value={userPassword}
-                          onChange={(e) => setUserPassword(e.target.value)}
-                          className="input"
-                          placeholder="Enter password for login"
-                          required={createLoginAccount}
-                          minLength={6}
-                        />
+                        <div className="relative">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={userPassword}
+                            onChange={(e) => setUserPassword(e.target.value)}
+                            className="input pr-10"
+                            placeholder="Enter password for login"
+                            required={createLoginAccount}
+                            minLength={6}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            tabIndex={-1}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
                         <p className="mt-1 text-xs text-secondary-500">
                           Minimum 6 characters
                         </p>

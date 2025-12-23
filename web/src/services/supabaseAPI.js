@@ -836,44 +836,50 @@ class SupabaseAPI {
         return { success: false, error: 'Failed to create auth account' }
       }
 
-      // Step 2: Create/update user profile with staff_id and role
-      const { data: profileData, error: profileError } = await supabase
+      // Step 2: Wait a moment for the trigger to create the user profile (if it exists)
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Step 3: Update the user profile with staff_id and role
+      // The trigger should have created a basic profile, so we update it
+      const { data: updateData, error: updateError } = await supabase
         .from('users')
-        .upsert({
-          id: authData.user.id,
-          email: authData.user.email,
-          name: name,
-          role: role || 'user',
+        .update({
           staff_id: staffId,
+          role: role || 'user',
+          name: name,
           is_active: true
-        }, {
-          onConflict: 'email'
         })
+        .eq('id', authData.user.id)
         .select()
-        .single()
+        .maybeSingle()
 
-      if (profileError && profileError.code !== '23505') { // Ignore duplicate key errors
-        // If profile creation fails, try to update existing
-        const { data: updateData, error: updateError } = await supabase
+      if (updateError) {
+        // If update fails, try to insert (in case trigger didn't run)
+        const { data: insertData, error: insertError } = await supabase
           .from('users')
-          .update({
-            staff_id: staffId,
+          .insert({
+            id: authData.user.id,
+            email: authData.user.email,
+            name: name,
             role: role || 'user',
-            name: name
+            staff_id: staffId,
+            is_active: true
           })
-          .eq('email', email)
           .select()
-          .single()
+          .maybeSingle()
 
-        if (updateError) {
-          console.warn('Profile update failed:', updateError)
-          return { success: false, error: updateError.message }
+        if (insertError) {
+          // If both fail, return error but auth account was created
+          return { 
+            success: false, 
+            error: `User account created but failed to link to staff: ${insertError.message}. Please link manually.` 
+          }
         }
 
-        return { success: true, data: updateData }
+        return { success: true, data: insertData }
       }
 
-      return { success: true, data: profileData }
+      return { success: true, data: updateData }
     } catch (error) {
       console.error('Failed to create user for staff:', error)
       return { success: false, error: error.message }
