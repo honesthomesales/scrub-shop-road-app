@@ -587,12 +587,12 @@ class SupabaseAPI {
         last_sign_in: data.user.last_sign_in_at
       }
 
-      // Try to get profile from users table
+      // Try to get profile from users table - use ID instead of email to avoid 406 error
       const { data: profile } = await supabase
         .from('users')
         .select('*')
-        .eq('email', data.user.email)
-        .single()
+        .eq('id', data.user.id)
+        .maybeSingle()
 
       if (profile) {
         userData.name = profile.name
@@ -937,21 +937,8 @@ class SupabaseAPI {
           isAdmin = currentUser.role === 'admin'
         }
       } catch (error) {
-        // If there's a recursion error, try to get user by email as fallback
-        console.warn('Error checking user role (may be RLS recursion):', error)
-        try {
-          const { data: currentUser } = await supabase
-            .from('users')
-            .select('role')
-            .eq('email', authUser.email)
-            .maybeSingle()
-          
-          if (currentUser) {
-            isAdmin = currentUser.role === 'admin'
-          }
-        } catch (fallbackError) {
-          console.error('Fallback role check also failed:', fallbackError)
-        }
+        // If there's an error, log it but don't try email fallback (causes 406)
+        console.warn('Error checking user role:', error)
       }
 
       let query = supabase.from('users').select('*')

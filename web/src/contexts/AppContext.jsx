@@ -794,7 +794,7 @@ export function AppProvider({ children }) {
                 await supabaseAPI.supabase
                   .from('users')
                   .update({ staff_id: staffMembers.id })
-                  .eq('email', userData.email)
+                  .eq('id', userData.id) // Use ID instead of email to avoid 406 error
               } catch (updateError) {
                 console.warn('Failed to update user profile with staff_id:', updateError)
                 // Continue anyway - the link can be done manually later
