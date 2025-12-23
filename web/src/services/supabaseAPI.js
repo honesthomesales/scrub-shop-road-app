@@ -919,31 +919,61 @@ class SupabaseAPI {
       }
 
       // First check if user is authenticated
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) {
         return { success: true, data: [] }
       }
 
-      // Get current user's role to determine what they can see
-      const { data: currentUser } = await supabase
-        .from('users')
-        .select('role')
-        .eq('email', user.email)
-        .single()
+      // Try to get current user's role, but handle recursion errors gracefully
+      let isAdmin = false
+      try {
+        const { data: currentUser, error: roleError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', authUser.id)
+          .maybeSingle()
+        
+        if (!roleError && currentUser) {
+          isAdmin = currentUser.role === 'admin'
+        }
+      } catch (error) {
+        // If there's a recursion error, try to get user by email as fallback
+        console.warn('Error checking user role (may be RLS recursion):', error)
+        try {
+          const { data: currentUser } = await supabase
+            .from('users')
+            .select('role')
+            .eq('email', authUser.email)
+            .maybeSingle()
+          
+          if (currentUser) {
+            isAdmin = currentUser.role === 'admin'
+          }
+        } catch (fallbackError) {
+          console.error('Fallback role check also failed:', fallbackError)
+        }
+      }
 
       let query = supabase.from('users').select('*')
 
       // If user is admin, they can see all users
-      if (currentUser?.role === 'admin') {
+      if (isAdmin) {
         query = query.eq('is_active', true).order('name')
       } else {
         // Regular users can only see themselves
-        query = query.eq('email', user.email)
+        query = query.eq('id', authUser.id)
       }
 
       const { data, error } = await query
 
-      if (error) throw new Error(error.message)
+      if (error) {
+        // If there's a recursion error, return empty array instead of failing
+        if (error.message && error.message.includes('recursion')) {
+          console.error('RLS recursion error in getUsers:', error)
+          return { success: false, error: 'RLS policy recursion detected. Please run fix-rls-recursion.sql in Supabase SQL editor.', data: [] }
+        }
+        throw new Error(error.message)
+      }
 
       return { success: true, data: data || [] }
     } catch (error) {

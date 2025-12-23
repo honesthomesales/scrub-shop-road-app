@@ -194,9 +194,17 @@ const Staff = () => {
             }
           })
           setUserAccounts(accountMap)
+        } else if (result.error) {
+          // Log error but don't block the UI - buttons will still show
+          console.error('Error fetching user accounts:', result.error)
+          // Show a warning if it's a recursion error
+          if (result.error.includes('recursion')) {
+            console.warn('RLS recursion detected. User management features may be limited. Run fix-rls-recursion.sql to fix.')
+          }
         }
       } catch (error) {
         console.error('Error fetching user accounts:', error)
+        // Don't throw - allow UI to render even if user accounts can't be loaded
       }
     }
     fetchUserAccounts()
