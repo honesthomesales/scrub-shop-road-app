@@ -836,64 +836,59 @@ class SupabaseAPI {
         return { success: false, error: 'Failed to create auth account' }
       }
 
-      // Step 2: Wait a moment for the trigger to create the user profile (if it exists)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Step 2: Wait for the database trigger to create the user profile automatically
+      // The trigger uses SECURITY DEFINER so it bypasses RLS
+      // Try multiple times with increasing delays in case the trigger is slow
+      let profileExists = false
+      let attempts = 0
+      const maxAttempts = 5
+      
+      while (!profileExists && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 500 * (attempts + 1)))
+        
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', authData.user.id)
+          .maybeSingle()
+        
+        if (existingUser) {
+          profileExists = true
+        }
+        attempts++
+      }
 
-      // Step 3: Check if user profile exists, then update or insert
-      const { data: existingUser } = await supabase
+      if (!profileExists) {
+        // Profile wasn't created by trigger - this shouldn't happen but handle gracefully
+        return { 
+          success: false, 
+          error: `User account created but profile was not created automatically. Auth account email: ${email}. The database trigger may need to be checked. User ID: ${authData.user.id}` 
+        }
+      }
+
+      // Step 3: Update the user profile with staff_id and role
+      // Admins can update profiles via RLS policy
+      const { data: updateData, error: updateError } = await supabase
         .from('users')
-        .select('id')
+        .update({
+          staff_id: staffId,
+          role: role || 'user',
+          name: name,
+          is_active: true
+        })
         .eq('id', authData.user.id)
+        .select()
         .maybeSingle()
 
-      if (existingUser) {
-        // User profile exists, update it
-        const { data: updateData, error: updateError } = await supabase
-          .from('users')
-          .update({
-            staff_id: staffId,
-            role: role || 'user',
-            name: name,
-            is_active: true
-          })
-          .eq('id', authData.user.id)
-          .select()
-          .maybeSingle()
-
-        if (updateError) {
-          console.error('Failed to update user profile:', updateError)
-          return { 
-            success: false, 
-            error: `User account created but failed to update profile: ${updateError.message}. Auth account email: ${email}. Please update manually in database.` 
-          }
+      if (updateError) {
+        console.error('Failed to update user profile:', updateError)
+        return { 
+          success: false, 
+          error: `User account created but failed to update profile: ${updateError.message}. Auth account email: ${email}. User ID: ${authData.user.id}. Please update manually in database.` 
         }
-
-        return { success: true, data: updateData }
-      } else {
-        // User profile doesn't exist, insert it
-        const { data: insertData, error: insertError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user.id,
-            email: authData.user.email,
-            name: name,
-            role: role || 'user',
-            staff_id: staffId,
-            is_active: true
-          })
-          .select()
-          .maybeSingle()
-
-        if (insertError) {
-          console.error('Failed to insert user profile:', insertError)
-          return { 
-            success: false, 
-            error: `User account created but failed to create profile: ${insertError.message}. Auth account email: ${email}. Please create profile manually in database.` 
-          }
-        }
-
-        return { success: true, data: insertData }
       }
+
+      return { success: true, data: updateData }
     } catch (error) {
       console.error('Failed to create user for staff:', error)
       return { success: false, error: error.message }
