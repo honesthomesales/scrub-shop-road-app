@@ -837,24 +837,40 @@ class SupabaseAPI {
       }
 
       // Step 2: Wait a moment for the trigger to create the user profile (if it exists)
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
-      // Step 3: Update the user profile with staff_id and role
-      // The trigger should have created a basic profile, so we update it
-      const { data: updateData, error: updateError } = await supabase
+      // Step 3: Check if user profile exists, then update or insert
+      const { data: existingUser } = await supabase
         .from('users')
-        .update({
-          staff_id: staffId,
-          role: role || 'user',
-          name: name,
-          is_active: true
-        })
+        .select('id')
         .eq('id', authData.user.id)
-        .select()
         .maybeSingle()
 
-      if (updateError) {
-        // If update fails, try to insert (in case trigger didn't run)
+      if (existingUser) {
+        // User profile exists, update it
+        const { data: updateData, error: updateError } = await supabase
+          .from('users')
+          .update({
+            staff_id: staffId,
+            role: role || 'user',
+            name: name,
+            is_active: true
+          })
+          .eq('id', authData.user.id)
+          .select()
+          .maybeSingle()
+
+        if (updateError) {
+          console.error('Failed to update user profile:', updateError)
+          return { 
+            success: false, 
+            error: `User account created but failed to update profile: ${updateError.message}. Auth account email: ${email}. Please update manually in database.` 
+          }
+        }
+
+        return { success: true, data: updateData }
+      } else {
+        // User profile doesn't exist, insert it
         const { data: insertData, error: insertError } = await supabase
           .from('users')
           .insert({
@@ -869,17 +885,15 @@ class SupabaseAPI {
           .maybeSingle()
 
         if (insertError) {
-          // If both fail, return error but auth account was created
+          console.error('Failed to insert user profile:', insertError)
           return { 
             success: false, 
-            error: `User account created but failed to link to staff: ${insertError.message}. Please link manually.` 
+            error: `User account created but failed to create profile: ${insertError.message}. Auth account email: ${email}. Please create profile manually in database.` 
           }
         }
 
         return { success: true, data: insertData }
       }
-
-      return { success: true, data: updateData }
     } catch (error) {
       console.error('Failed to create user for staff:', error)
       return { success: false, error: error.message }

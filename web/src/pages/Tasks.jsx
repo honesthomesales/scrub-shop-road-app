@@ -50,10 +50,18 @@ const Tasks = () => {
   const handleCreateTask = async (taskData) => {
     if (!currentUser) return
 
+    // Convert assigned_to array to single integer (database expects BIGINT, not array)
+    let assignedTo = null
+    if (Array.isArray(taskData.assigned_to) && taskData.assigned_to.length > 0) {
+      assignedTo = taskData.assigned_to[0] // Take first assignee only
+    } else if (taskData.assigned_to && !Array.isArray(taskData.assigned_to)) {
+      assignedTo = taskData.assigned_to
+    }
+
     const newTaskData = {
       ...taskData,
       assigned_by: currentUser.id,
-      assigned_to: taskData.assigned_to.length === 0 ? null : taskData.assigned_to
+      assigned_to: assignedTo
     }
 
     const result = await addTask(newTaskData)
@@ -63,10 +71,17 @@ const Tasks = () => {
   }
 
   const handleUpdateTask = async (taskData) => {
-    // Convert empty array to null for assigned_to
+    // Convert assigned_to array to single integer (database expects BIGINT, not array)
+    let assignedTo = null
+    if (Array.isArray(taskData.assigned_to) && taskData.assigned_to.length > 0) {
+      assignedTo = taskData.assigned_to[0] // Take first assignee only
+    } else if (taskData.assigned_to && !Array.isArray(taskData.assigned_to)) {
+      assignedTo = taskData.assigned_to
+    }
+    
     const processedTaskData = {
       ...taskData,
-      assigned_to: taskData.assigned_to.length === 0 ? null : taskData.assigned_to
+      assigned_to: assignedTo
     }
     
     const result = await updateTask(editingTask.id, processedTaskData)
