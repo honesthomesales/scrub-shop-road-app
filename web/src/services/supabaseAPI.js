@@ -859,10 +859,10 @@ class SupabaseAPI {
       }
 
       if (!profileExists) {
-        // Profile wasn't created by trigger - this shouldn't happen but handle gracefully
+        // Profile wasn't created by trigger - provide instructions
         return { 
           success: false, 
-          error: `User account created but profile was not created automatically. Auth account email: ${email}. The database trigger may need to be checked. User ID: ${authData.user.id}` 
+          error: `User account created but profile was not created automatically. Auth account email: ${email}. User ID: ${authData.user.id}. Please run the SQL script 'fix-user-trigger.sql' in your Supabase SQL editor to fix the trigger, or manually create the profile in the users table with this ID.` 
         }
       }
 
