@@ -719,11 +719,11 @@ export function AppProvider({ children }) {
               .single()
             
             if (staffMembers) {
-              // Update the user profile with staff_id
+              // Update the user profile with staff_id - use ID instead of email
               await supabaseAPI.supabase
                 .from('users')
                 .update({ staff_id: staffMembers.id })
-                .eq('email', email)
+                .eq('id', userData.id)
               
               userData.staffMember = staffMembers
               userData.name = staffMembers.name || userData.name

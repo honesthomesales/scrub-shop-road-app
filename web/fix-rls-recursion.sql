@@ -53,7 +53,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
 -- Step 4: Recreate policies using the function (better approach)
 DROP POLICY IF EXISTS "Admins can view all profiles" ON public.users;
-DROP POLICY IF EXISTS "Admins can update all profiles" ON public.users;
+    DROP POLICY IF EXISTS "Admins can update all profiles" ON public.users;
 
 CREATE POLICY "Admins can view all profiles" ON public.users
     FOR SELECT USING (public.is_admin());
