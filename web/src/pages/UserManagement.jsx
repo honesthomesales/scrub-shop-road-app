@@ -125,9 +125,27 @@ const UserManagement = () => {
           alert(`Error updating user: ${result.error}`)
         }
       } else {
-        // Create new user - this requires creating auth account first
-        alert('To create a new user, please use the "Add Staff Member" page and check "Create Login Account", or use the "Manage User Accounts" button on the Staff page.')
-        setShowModal(false)
+        // Create new user - create auth account first
+        if (!password || password.length < 6) {
+          alert('Password is required and must be at least 6 characters')
+          return
+        }
+
+        // Use createUserForStaff but without staff_id (set to null)
+        const result = await supabaseAPI.createUserForStaff(
+          formData.email,
+          password,
+          formData.name,
+          formData.role,
+          null // No staff_id for standalone user
+        )
+
+        if (result.success) {
+          setShowModal(false)
+          await loadUsers()
+        } else {
+          alert(`Error creating user: ${result.error}`)
+        }
       }
     } catch (err) {
       alert(`Error: ${err.message}`)
@@ -175,7 +193,6 @@ const UserManagement = () => {
         <button
           onClick={handleAddNew}
           className="btn-primary"
-          title="Note: New users should be created through the Staff page"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add User
@@ -369,13 +386,6 @@ const UserManagement = () => {
                 </label>
               </div>
 
-              {!editingUser && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Note:</strong> To create a new user account, please use the "Add Staff Member" page and check "Create Login Account", or use the "Manage User Accounts" button on the Staff page. This form is for editing existing users only.
-                  </p>
-                </div>
-              )}
 
               <div className="flex items-center justify-end space-x-3 pt-4">
                 <button

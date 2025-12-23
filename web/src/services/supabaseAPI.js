@@ -534,12 +534,12 @@ class SupabaseAPI {
         return { success: false, error: 'No user found' }
       }
 
-      // Get user profile from our users table
+      // Get user profile from our users table - use ID instead of email to avoid RLS issues
       const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('*')
-        .eq('email', user.email)
-        .single()
+        .eq('id', user.id)
+        .maybeSingle()
 
       if (profileError && profileError.code !== 'PGRST116') {
         console.warn('Could not fetch user profile:', profileError)
