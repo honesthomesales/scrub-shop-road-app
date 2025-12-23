@@ -336,8 +336,13 @@ export function AppProvider({ children }) {
       const isInitialized = await supabaseAPI.init()
       
       if (isInitialized) {
-        // Check authentication status and get user data
-        const authResult = await checkAuth()
+        // Check authentication status and get user data (don't block on errors)
+        try {
+          await checkAuth()
+        } catch (authError) {
+          console.warn('Auth check failed:', authError)
+          // Continue even if auth check fails - user can still log in
+        }
         
         // Load critical data first
         try {
@@ -353,11 +358,12 @@ export function AppProvider({ children }) {
         } catch (timeoutError) {
           // Continue with app even if data loading fails
         }
-        
-        dispatch({ type: ACTIONS.SET_LOADING, payload: false })
       }
     } catch (error) {
+      console.error('Initial data load error:', error)
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message })
+    } finally {
+      // Always set loading to false, even if there were errors
       dispatch({ type: ACTIONS.SET_LOADING, payload: false })
     }
   }
@@ -776,18 +782,23 @@ export function AppProvider({ children }) {
         if (!userData.staffMember) {
           try {
             // Use the existing supabaseAPI instance instead of creating a new client
-            const { data: staffMembers } = await supabaseAPI.supabase
+            const { data: staffMembers, error: staffError } = await supabaseAPI.supabase
               .from('staff')
               .select('*')
               .eq('email', userData.email)
-              .single()
+              .maybeSingle()
             
-            if (staffMembers) {
-              // Update the user profile with staff_id
-              await supabaseAPI.supabase
-                .from('users')
-                .update({ staff_id: staffMembers.id })
-                .eq('email', userData.email)
+            if (staffMembers && !staffError) {
+              // Try to update the user profile with staff_id (don't block if it fails)
+              try {
+                await supabaseAPI.supabase
+                  .from('users')
+                  .update({ staff_id: staffMembers.id })
+                  .eq('email', userData.email)
+              } catch (updateError) {
+                console.warn('Failed to update user profile with staff_id:', updateError)
+                // Continue anyway - the link can be done manually later
+              }
                
               userData.staffMember = staffMembers
               userData.name = staffMembers.name || userData.name
@@ -798,6 +809,7 @@ export function AppProvider({ children }) {
             }
           } catch (error) {
             // Staff member not found, that's okay
+            console.log('No staff member found for email:', userData.email)
           }
         }
         
