@@ -65,10 +65,23 @@ const PWADiagnostics = () => {
         ]
         
         let manifestFound = false
+        let lastError = null
         for (const manifestPath of manifestPaths) {
           try {
             const response = await fetch(manifestPath)
+            console.log(`🔍 Trying manifest path: ${manifestPath}`, {
+              status: response.status,
+              statusText: response.statusText,
+              ok: response.ok,
+              headers: Object.fromEntries(response.headers.entries())
+            })
+            
             if (response.ok) {
+              const contentType = response.headers.get('content-type')
+              if (!contentType || !contentType.includes('json')) {
+                results.errors.push(`Manifest has wrong content-type: ${contentType || 'none'}`)
+              }
+              
               const manifest = await response.json()
               results.manifest = `accessible (${manifestPath})`
               manifestFound = true
@@ -124,8 +137,13 @@ const PWADiagnostics = () => {
                 results.errors.push('No icons in manifest')
               }
               break
+            } else {
+              lastError = `Status ${response.status}: ${response.statusText}`
+              results.errors.push(`${manifestPath}: ${response.status} ${response.statusText}`)
             }
           } catch (e) {
+            lastError = e.message
+            results.errors.push(`${manifestPath}: ${e.message}`)
             // Try next path
             continue
           }
@@ -133,7 +151,16 @@ const PWADiagnostics = () => {
         
         if (!manifestFound) {
           results.manifest = 'not-accessible'
-          results.errors.push(`Manifest not found at any path (tried: ${manifestPaths.join(', ')})`)
+          results.errors.push(`Manifest not found. Last error: ${lastError || 'unknown'}`)
+          
+          // Also try to check what the HTML says
+          const manifestLink = document.querySelector('link[rel="manifest"]')
+          if (manifestLink) {
+            const htmlManifestPath = manifestLink.getAttribute('href')
+            results.errors.push(`HTML manifest link points to: ${htmlManifestPath}`)
+          } else {
+            results.errors.push('No manifest link found in HTML!')
+          }
         }
       } catch (error) {
         results.manifest = 'error'
