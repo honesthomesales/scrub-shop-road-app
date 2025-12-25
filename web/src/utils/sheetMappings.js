@@ -181,6 +181,7 @@ export const SALES_STATUS_OPTIONS = [
 
 // Role options for staff
 export const STAFF_ROLE_OPTIONS = [
+  'Admin',
   'Manager',
   'Worker',
   'Driver',

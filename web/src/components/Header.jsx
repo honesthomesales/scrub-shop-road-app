@@ -352,7 +352,7 @@ const Header = () => {
           {/* Sheet Toggle, User Selector, and Auth Status */}
           <div className="flex items-center space-x-4">
             {/* Version Display - More Prominent */}
-            <div className="flex items-center px-3 py-1.5 bg-blue-50 rounded-md text-xs font-semibold text-blue-700 border border-blue-200 shadow-sm" title={`App Version ${APP_VERSION} - PWA Enabled`}>
+            <div className="flex items-center px-3 py-1.5 bg-blue-50 rounded-md text-xs font-semibold text-blue-700 border border-blue-200 shadow-sm" title={`App Version ${APP_VERSION}`}>
               <span className="font-mono">v{APP_VERSION}</span>
             </div>
             
@@ -594,7 +594,7 @@ const Header = () => {
               {/* Mobile Version Display - More Prominent */}
               <div className="pt-2 mt-2 border-t border-gray-200">
                 <div className="px-3 py-2 text-xs font-semibold text-blue-700 bg-blue-50 rounded-md text-center border border-blue-200">
-                  <span className="font-mono">v{APP_VERSION} - PWA</span>
+                  <span className="font-mono">v{APP_VERSION}</span>
                 </div>
               </div>
             </div>

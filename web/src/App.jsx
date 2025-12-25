@@ -4,7 +4,6 @@ import { AppProvider } from './contexts/AppContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import PWARegistration from './components/PWARegistration'
-import PWADiagnostics from './components/PWADiagnostics'
 import { ErrorBoundaryWrapper } from './components/ErrorBoundaryWrapper'
 import Dashboard from './pages/Dashboard'
 import Venues from './pages/Venues'
@@ -66,7 +65,6 @@ function App() {
                   </ErrorBoundaryWrapper>
                 </main>
                 <PWARegistration />
-                <PWADiagnostics />
               </ErrorBoundaryWrapper>
             </ProtectedRoute>
           </div>

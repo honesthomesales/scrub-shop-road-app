@@ -1,9 +1,34 @@
 // Role-based access control utilities
 
-// Define user roles
+// Define user roles - normalized to handle both auth.users and staff roles
 export const ROLES = {
+  ADMIN: 'admin',
   MANAGER: 'Manager',
-  WORKER: 'Worker'
+  WORKER: 'Worker',
+  DRIVER: 'Driver',
+  SALES: 'Sales',
+  SUPPORT: 'Support'
+}
+
+// Normalize role to handle case differences and variations
+const normalizeRole = (role) => {
+  if (!role) return null
+  const roleLower = role.toLowerCase()
+  
+  // Map variations to standard roles
+  if (roleLower === 'admin' || roleLower === 'administrator') {
+    return ROLES.ADMIN
+  }
+  if (roleLower === 'manager') {
+    return ROLES.MANAGER
+  }
+  if (roleLower === 'worker' || roleLower === 'driver' || roleLower === 'sales' || roleLower === 'support') {
+    // Worker, Driver, Sales, Support all get Worker-level access
+    return ROLES.WORKER
+  }
+  
+  // Return original if no match (for backwards compatibility)
+  return role
 }
 
 // Define page permissions
@@ -26,8 +51,17 @@ export const PAGE_PERMISSIONS = {
   
   // ADMIN navigation
   '/staff': [ROLES.MANAGER],
+  '/admin/users': [ROLES.MANAGER],
   '/admin/sales-upload': [ROLES.MANAGER],
-  '/admin/expense-upload': [ROLES.MANAGER]
+  '/admin/expense-upload': [ROLES.MANAGER],
+  
+  // Expense categories (Manager only)
+  '/expense-categories/manage': [ROLES.MANAGER],
+  '/expense-categories/categorize': [ROLES.MANAGER],
+  '/expense-categories/kpi': [ROLES.MANAGER],
+  
+  // Other pages
+  '/profit': [ROLES.MANAGER]
 }
 
 // Check if user has access to a specific page
@@ -42,16 +76,25 @@ export const hasPageAccess = (user, pagePath) => {
     return false
   }
   
+  // Normalize user's role
+  const userRole = normalizeRole(user.role)
+  
+  // Admin has full access to everything
+  if (userRole === ROLES.ADMIN) {
+    return true
+  }
+  
   // Get allowed roles for the page
   const allowedRoles = PAGE_PERMISSIONS[pagePath]
   
-  // If page is not in permissions list, deny access
+  // If page is not in permissions list, deny access (unless admin)
   if (!allowedRoles) {
     return false
   }
   
-  // Check if user's role is in the allowed roles
-  return allowedRoles.includes(user.role)
+  // Check if user's normalized role is in the allowed roles
+  // Also check original role for backwards compatibility
+  return allowedRoles.includes(userRole) || allowedRoles.includes(user.role)
 }
 
 // Get navigation items filtered by user role
@@ -63,12 +106,23 @@ export const getFilteredNavigation = (navigationItems, user) => {
   return navigationItems.filter(item => hasPageAccess(user, item.href))
 }
 
-// Check if user is a manager
-export const isManager = (user) => {
-  return user && user.role === ROLES.MANAGER
+// Check if user is an admin
+export const isAdmin = (user) => {
+  if (!user || !user.role) return false
+  const normalized = normalizeRole(user.role)
+  return normalized === ROLES.ADMIN
 }
 
-// Check if user is a worker
+// Check if user is a manager
+export const isManager = (user) => {
+  if (!user || !user.role) return false
+  const normalized = normalizeRole(user.role)
+  return normalized === ROLES.MANAGER || normalized === ROLES.ADMIN
+}
+
+// Check if user is a worker (or any worker-level role)
 export const isWorker = (user) => {
-  return user && user.role === ROLES.WORKER
+  if (!user || !user.role) return false
+  const normalized = normalizeRole(user.role)
+  return normalized === ROLES.WORKER || normalized === ROLES.MANAGER || normalized === ROLES.ADMIN
 } 
