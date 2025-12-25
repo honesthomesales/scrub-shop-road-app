@@ -1,5 +1,5 @@
 // Application Version Information
-export const APP_VERSION = '1.3.0-PWA-DEBUG'
+export const APP_VERSION = '1.4.0-MANIFEST-FIX'
 export const FEATURES_VERSION = {
   userManagement: '1.0.0',
   expenseCategorization: '1.0.0',

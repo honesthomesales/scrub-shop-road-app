@@ -27,6 +27,8 @@ export default ({ mode }) => {
         includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png', 'offline.html'],
         strategies: 'generateSW',
         injectRegister: 'auto',
+        manifestFilename: 'manifest.webmanifest',
+        filename: 'sw.js',
         manifest: {
           name: 'Scrub Shop Road App',
           short_name: 'Scrub Shop',

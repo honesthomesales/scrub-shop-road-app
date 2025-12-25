@@ -55,13 +55,21 @@ const PWADiagnostics = () => {
         results.errors.push('Service Workers not supported in this browser')
       }
 
-      // Check Manifest
+      // Check Manifest - try multiple methods
       try {
-        // Try both paths
+        // Method 1: Check if browser already loaded it
+        const manifestLink = document.querySelector('link[rel="manifest"]')
+        if (manifestLink) {
+          const htmlManifestPath = manifestLink.getAttribute('href')
+          console.log('📋 HTML manifest link:', htmlManifestPath)
+        }
+        
+        // Method 2: Try fetching from various paths
         const manifestPaths = [
           '/scrub-shop-road-app/manifest.webmanifest',
           '/manifest.webmanifest',
-          './manifest.webmanifest'
+          './manifest.webmanifest',
+          'manifest.webmanifest'
         ]
         
         let manifestFound = false
@@ -80,7 +88,10 @@ const PWADiagnostics = () => {
             
             // Log to errors for user visibility
             if (!response.ok) {
-              results.errors.push(`${manifestPath}: HTTP ${response.status} ${response.statusText}`)
+              const errorMsg = `${manifestPath}: HTTP ${response.status} ${response.statusText}`
+              results.errors.push(errorMsg)
+              console.error('❌', errorMsg)
+              lastError = errorMsg
             }
             
             if (response.ok) {
@@ -164,9 +175,27 @@ const PWADiagnostics = () => {
           const manifestLink = document.querySelector('link[rel="manifest"]')
           if (manifestLink) {
             const htmlManifestPath = manifestLink.getAttribute('href')
-            results.errors.push(`HTML manifest link points to: ${htmlManifestPath}`)
+            results.errors.push(`HTML manifest link: ${htmlManifestPath}`)
+            
+            // Try to access it directly
+            try {
+              const directUrl = new URL(htmlManifestPath, window.location.origin).href
+              results.errors.push(`Try accessing: ${directUrl}`)
+            } catch (e) {
+              // Ignore
+            }
           } else {
             results.errors.push('No manifest link found in HTML!')
+          }
+          
+          // Check if browser can detect manifest
+          if ('serviceWorker' in navigator && 'getManifest' in navigator.serviceWorker) {
+            try {
+              // This might not work in all browsers, but worth trying
+              results.errors.push('Note: Check Chrome DevTools → Application → Manifest tab')
+            } catch (e) {
+              // Ignore
+            }
           }
         }
       } catch (error) {
