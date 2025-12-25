@@ -190,6 +190,16 @@ const PWARegistration = () => {
       
       // Listen for the appinstalled event
       window.addEventListener('appinstalled', handleAppInstalled)
+      
+      // Check if app is installable after a delay (in case beforeinstallprompt hasn't fired yet)
+      // Chrome may not fire the event immediately due to engagement heuristics
+      setTimeout(() => {
+        if (isInstallable && !deferredPrompt) {
+          console.log('ℹ️ App is installable but beforeinstallprompt has not fired yet')
+          console.log('ℹ️ This is normal - Chrome uses engagement heuristics')
+          console.log('ℹ️ Users can still install via Chrome menu → "Install app"')
+        }
+      }, 5000)
     }
 
     return () => {
@@ -231,6 +241,10 @@ const PWARegistration = () => {
     // The prompt can be shown again if needed
   }
 
+  // Show manual install button if app is installable but beforeinstallprompt hasn't fired
+  // This helps when Chrome's engagement heuristics prevent the automatic prompt
+  const showManualInstall = isInstallable && !deferredPrompt && !showInstallPrompt
+
   // Show install prompt if beforeinstallprompt fired
   if (showInstallPrompt && deferredPrompt) {
     return (
@@ -256,6 +270,27 @@ const PWARegistration = () => {
               Install
             </button>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show manual install button when app is installable but prompt hasn't fired
+  if (showManualInstall) {
+    return (
+      <div className="fixed bottom-4 left-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 md:max-w-md md:left-auto md:right-4 animate-slide-up">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg">Install Scrub Shop App</h3>
+            <p className="text-sm opacity-90 mt-1">Tap the menu (⋮) → "Install app" to install</p>
+          </div>
+          <button
+            onClick={handleDismiss}
+            className="px-4 py-2 text-sm bg-green-700 hover:bg-green-800 rounded transition-colors min-h-[44px] min-w-[80px] touch-manipulation"
+            aria-label="Dismiss"
+          >
+            Got it
+          </button>
         </div>
       </div>
     )

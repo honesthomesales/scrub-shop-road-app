@@ -1,5 +1,5 @@
 // Application Version Information
-export const APP_VERSION = '1.6.0-JSON-FIX'
+export const APP_VERSION = '1.7.0-INSTALL-BTN'
 export const FEATURES_VERSION = {
   userManagement: '1.0.0',
   expenseCategorization: '1.0.0',
