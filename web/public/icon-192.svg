@@ -1,0 +1,8 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" fill="#3B82F6"/>
+  <circle cx="96" cy="96" r="45" fill="white"/>
+  <path d="M75 75 L117 75 L117 117 L75 117 Z" fill="#3B82F6"/>
+  <circle cx="96" cy="96" r="15" fill="white"/>
+  <text x="96" y="105" text-anchor="middle" fill="#3B82F6" font-family="Arial" font-size="18" font-weight="bold">SS</text>
+</svg>
+

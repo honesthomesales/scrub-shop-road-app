@@ -86,26 +86,26 @@ const TaskList = ({ tasks, staffData = [], onEdit, onDelete, onViewComments }) =
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto -mx-3 sm:mx-0">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Assignee(s)
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                 Title & Description
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Priority
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Due Date
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -117,7 +117,7 @@ const TaskList = ({ tasks, staffData = [], onEdit, onDelete, onViewComments }) =
               
               return (
                 <tr key={task.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     {isUnassigned ? (
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4 text-gray-400" />
@@ -151,8 +151,8 @@ const TaskList = ({ tasks, staffData = [], onEdit, onDelete, onViewComments }) =
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="min-w-0">
+                  <td className="px-3 sm:px-6 py-4">
+                    <div className="min-w-0 max-w-[200px] sm:max-w-none">
                       <h3 className="text-sm font-semibold text-gray-900 truncate">
                         {task.title}
                       </h3>
@@ -163,7 +163,7 @@ const TaskList = ({ tasks, staffData = [], onEdit, onDelete, onViewComments }) =
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-1">
                       {getPriorityIcon(task.priority)}
                       <span className={cn(
@@ -174,7 +174,7 @@ const TaskList = ({ tasks, staffData = [], onEdit, onDelete, onViewComments }) =
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     <span className={cn(
                       'px-2 py-1 text-xs font-medium rounded-full',
                       getStatusColor(task.status)
@@ -182,27 +182,29 @@ const TaskList = ({ tasks, staffData = [], onEdit, onDelete, onViewComments }) =
                       {task.status.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-1 text-sm text-gray-500">
-                      <Clock className="w-4 h-4" />
-                      <span>{formatDate(task.due_date)}</span>
+                      <Clock className="w-4 h-4 flex-shrink-0" />
+                      <span className="whitespace-nowrap">{formatDate(task.due_date)}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end space-x-1">
                       <button
                         onClick={() => onEdit(task)}
-                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                         title="Edit task"
+                        aria-label="Edit task"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => onDelete(task.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                         title="Delete task"
+                        aria-label="Delete task"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
                   </td>

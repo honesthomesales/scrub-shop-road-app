@@ -82,3 +82,4 @@ GRANT ALL ON public.users TO anon, authenticated;
 -- 3. That the function owner has proper permissions
 -- 4. Check Supabase logs for any trigger execution errors
 
+

@@ -24,7 +24,13 @@ const Tasks = () => {
   const [editingTask, setEditingTask] = useState(null)
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
-  const [viewMode, setViewMode] = useState('list') // 'card' or 'list'
+  // Default to 'card' view on mobile for better UX, 'list' on desktop
+  const [viewMode, setViewMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768 ? 'card' : 'list'
+    }
+    return 'list'
+  })
 
   useEffect(() => {
     // Auto-login as linked staff member if user is authenticated
@@ -169,102 +175,106 @@ const Tasks = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-4 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-secondary-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-secondary-900">
                 Task Management
               </h1>
-              <p className="mt-2 text-secondary-600">
+              <p className="mt-1 sm:mt-2 text-sm sm:text-base text-secondary-600">
                 Create, assign, and track tasks for your staff
               </p>
             </div>
             <button
               onClick={() => setShowTaskForm(true)}
-              className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="inline-flex items-center justify-center px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px] w-full sm:w-auto"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              New Task
+              <Plus className="w-5 h-5 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="sm:inline">New Task</span>
             </button>
           </div>
         </div>
 
         {/* Filters and View Toggle */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm border border-secondary-200 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="mb-4 sm:mb-6 bg-white rounded-lg shadow-sm border border-secondary-200 p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:space-x-4">
               <div className="flex items-center space-x-2">
-                <Filter className="w-4 h-4 text-gray-500" />
+                <Filter className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-700">Filters:</span>
               </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="all">All Priorities</option>
-                <option value="low">Low</option>
-                <option value="normal">Normal</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full sm:w-auto px-3 py-2 sm:py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px] sm:min-h-0"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  className="w-full sm:w-auto px-3 py-2 sm:py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px] sm:min-h-0"
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="low">Low</option>
+                  <option value="normal">Normal</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
             </div>
             
             {/* View Toggle */}
-            <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1 self-start sm:self-auto">
               <button
                 onClick={() => setViewMode('card')}
-                className={`p-2 rounded-md transition-colors ${
+                className={`p-2 rounded-md transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
                   viewMode === 'card' 
                     ? 'bg-white text-primary-600 shadow-sm' 
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
                 title="Card view"
+                aria-label="Card view"
               >
-                <Grid className="w-4 h-4" />
+                <Grid className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-md transition-colors ${
+                className={`p-2 rounded-md transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
                   viewMode === 'list' 
                     ? 'bg-white text-primary-600 shadow-sm' 
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
                 title="List view"
+                aria-label="List view"
               >
-                <List className="w-4 h-4" />
+                <List className="w-5 h-5" />
               </button>
             </div>
           </div>
         </div>
 
         {/* Tasks Lists */}
-        <div className="space-y-8">
+        <div className="space-y-4 sm:space-y-8">
           {/* Unassigned Tasks */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
               <div className="flex items-center space-x-2">
-                <AlertCircle className="w-5 h-5 text-orange-500" />
-                <h2 className="text-lg font-semibold text-gray-900">Unassigned Tasks</h2>
+                <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">Unassigned Tasks</h2>
                 <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full">
                   {unassignedTasks.length}
                 </span>
               </div>
             </div>
-            <div className="p-6">
+            <div className="p-3 sm:p-6">
               {unassignedTasks.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-gray-400 mb-2">
@@ -275,7 +285,7 @@ const Tasks = () => {
                   <p className="text-gray-500 text-sm">No unassigned tasks</p>
                 </div>
               ) : viewMode === 'card' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {unassignedTasks.map(task => (
                     <TaskCard
                       key={task.id}
@@ -301,10 +311,10 @@ const Tasks = () => {
 
           {/* Assigned Tasks */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
               <div className="flex items-center space-x-2">
-                <User className="w-5 h-5 text-blue-500" />
-                <h2 className="text-lg font-semibold text-gray-900">
+                <User className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                   {isManager(currentUser) ? 'All Assigned Tasks' : 'My Tasks'}
                 </h2>
                 <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
@@ -312,7 +322,7 @@ const Tasks = () => {
                 </span>
               </div>
             </div>
-            <div className="p-6">
+            <div className="p-3 sm:p-6">
               {assignedTasks.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-gray-400 mb-2">
@@ -325,7 +335,7 @@ const Tasks = () => {
                   </p>
                 </div>
               ) : viewMode === 'card' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {assignedTasks.map(task => (
                     <TaskCard
                       key={task.id}
@@ -351,13 +361,13 @@ const Tasks = () => {
 
           {/* No Tasks Message */}
           {filteredTasks.length === 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-12 text-center">
               <div className="text-gray-400 mb-4">
-                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
-              <p className="text-gray-500">
+              <p className="text-sm sm:text-base text-gray-500">
                 {isManager(currentUser) 
                   ? 'No tasks found. Create your first task!' 
                   : 'No tasks assigned to you. Contact your manager for new assignments.'

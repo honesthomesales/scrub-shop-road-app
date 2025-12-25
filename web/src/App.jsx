@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AppProvider } from './contexts/AppContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
+import PWARegistration from './components/PWARegistration'
+import { ErrorBoundaryWrapper } from './components/ErrorBoundaryWrapper'
 import Dashboard from './pages/Dashboard'
 import Venues from './pages/Venues'
 import Staff from './pages/Staff'
@@ -27,41 +29,48 @@ import UserManagement from './pages/UserManagement'
 
 function App() {
   return (
-    <AppProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <ProtectedRoute>
-            <Header />
-            <main className="container mx-auto px-4 py-8">
-              <Routes>
-                <Route path="/" element={<Navigate to="/daily-sales" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/daily-sales" element={<DailySales />} />
-                <Route path="/venues" element={<Venues />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/bonuses" element={<Bonuses />} />
-                <Route path="/expenses" element={<ExpensesDashboard />} />
-                <Route path="/expense-reports" element={<ExpenseReports />} />
-                <Route path="/profit" element={<Profit />} />
-                <Route path="/staff" element={<Staff />} />
-                <Route path="/tasks" element={<Tasks />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/scheduler" element={<Scheduler />} />
-                <Route path="/admin/sales-upload" element={<SalesUpload />} />
-                <Route path="/admin/expense-upload" element={<ExpenseUpload />} />
-                <Route path="/pay-calculator" element={<PayCalculator />} />
-                <Route path="/holiday-manager" element={<HolidayManager />} />
-                <Route path="/documents" element={<Documents />} />
-                <Route path="/expense-categories/manage" element={<CategoryManagement />} />
-                <Route path="/expense-categories/categorize" element={<ExpenseCategorization />} />
-                <Route path="/expense-categories/kpi" element={<ExpenseCategoryKPI />} />
-                <Route path="/admin/users" element={<UserManagement />} />
-              </Routes>
-            </main>
-          </ProtectedRoute>
-        </div>
-      </Router>
-    </AppProvider>
+    <ErrorBoundaryWrapper>
+      <AppProvider>
+        <Router basename="/scrub-shop-road-app">
+          <div className="min-h-screen bg-gray-50">
+            <ProtectedRoute>
+              <ErrorBoundaryWrapper>
+                <Header />
+                <main className="container mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-6 lg:py-8">
+                  <ErrorBoundaryWrapper>
+                    <Routes>
+                      <Route path="/" element={<Navigate to="/daily-sales" replace />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/daily-sales" element={<DailySales />} />
+                      <Route path="/venues" element={<Venues />} />
+                      <Route path="/calendar" element={<Calendar />} />
+                      <Route path="/bonuses" element={<Bonuses />} />
+                      <Route path="/expenses" element={<ExpensesDashboard />} />
+                      <Route path="/expense-reports" element={<ExpenseReports />} />
+                      <Route path="/profit" element={<Profit />} />
+                      <Route path="/staff" element={<Staff />} />
+                      <Route path="/tasks" element={<Tasks />} />
+                      <Route path="/messages" element={<Messages />} />
+                      <Route path="/scheduler" element={<Scheduler />} />
+                      <Route path="/admin/sales-upload" element={<SalesUpload />} />
+                      <Route path="/admin/expense-upload" element={<ExpenseUpload />} />
+                      <Route path="/pay-calculator" element={<PayCalculator />} />
+                      <Route path="/holiday-manager" element={<HolidayManager />} />
+                      <Route path="/documents" element={<Documents />} />
+                      <Route path="/expense-categories/manage" element={<CategoryManagement />} />
+                      <Route path="/expense-categories/categorize" element={<ExpenseCategorization />} />
+                      <Route path="/expense-categories/kpi" element={<ExpenseCategoryKPI />} />
+                      <Route path="/admin/users" element={<UserManagement />} />
+                    </Routes>
+                  </ErrorBoundaryWrapper>
+                </main>
+                <PWARegistration />
+              </ErrorBoundaryWrapper>
+            </ProtectedRoute>
+          </div>
+        </Router>
+      </AppProvider>
+    </ErrorBoundaryWrapper>
   )
 }
 

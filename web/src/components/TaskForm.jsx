@@ -81,21 +81,22 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-0 sm:p-4">
+      <div className="bg-white rounded-none sm:rounded-lg shadow-xl max-w-md w-full h-full sm:h-auto sm:max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
             {task ? 'Edit Task' : 'Create New Task'}
           </h2>
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label="Close"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Title *
@@ -106,7 +107,7 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
               value={formData.title}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[44px]"
             />
           </div>
 
@@ -118,8 +119,8 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[100px]"
             />
           </div>
 
@@ -141,9 +142,10 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
                       <button
                         type="button"
                         onClick={() => removeAssignee(selectedAssignees[index])}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-blue-600 hover:text-blue-800 min-w-[24px] min-h-[24px] flex items-center justify-center"
+                        aria-label="Remove assignee"
                       >
-                        <XIcon className="w-3 h-3" />
+                        <XIcon className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
@@ -156,7 +158,7 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
               <select
                 value=""
                 onChange={handleAssigneeChange}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[44px]"
               >
                 <option value="">Add assignee...</option>
                 {users
@@ -180,7 +182,7 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Priority
@@ -189,7 +191,7 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[44px]"
               >
                 <option value="low">Low</option>
                 <option value="normal">Normal</option>
@@ -206,7 +208,7 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[44px]"
               >
                 <option value="pending">Pending</option>
                 <option value="in_progress">In Progress</option>
@@ -225,7 +227,7 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
               name="due_date"
               value={formData.due_date}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[44px]"
             />
           </div>
 
@@ -237,7 +239,7 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[44px]"
             >
               <option value="general">General</option>
               <option value="sales">Sales</option>
@@ -247,17 +249,17 @@ const TaskForm = ({ task = null, users = [], onSubmit, onCancel }) => {
             </select>
           </div>
 
-          <div className="flex items-center justify-end space-x-3 pt-4">
+          <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="w-full md:w-auto px-4 py-3 md:py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 min-h-[44px]"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full md:w-auto px-4 py-3 md:py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px]"
             >
               {task ? 'Update Task' : 'Create Task'}
             </button>

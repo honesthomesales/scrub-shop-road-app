@@ -72,15 +72,15 @@ const Messages = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-4 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-secondary-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-secondary-900">
                 Staff Messages
               </h1>
-              <p className="mt-2 text-secondary-600">
+              <p className="mt-1 sm:mt-2 text-sm sm:text-base text-secondary-600">
                 Communicate with your staff members and stay connected
               </p>
             </div>
@@ -96,25 +96,25 @@ const Messages = () => {
 
         {/* Messages Interface */}
         <div className="bg-white rounded-lg shadow-sm border border-secondary-200 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-4 h-[600px]">
+          <div className="flex flex-col lg:grid lg:grid-cols-4 h-[calc(100vh-12rem)] sm:h-[600px]">
             {/* Groups Sidebar */}
-            <div className="lg:col-span-1 border-r border-gray-200 bg-gray-50">
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Groups</h3>
+            <div className="lg:col-span-1 border-b lg:border-b-0 lg:border-r border-gray-200 bg-gray-50 overflow-y-auto">
+              <div className="p-3 sm:p-4 border-b border-gray-200 sticky top-0 bg-gray-50 z-10">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Groups</h3>
               </div>
               <div className="p-2">
                 {messageGroups.map(group => (
                   <button
                     key={group.id}
                     onClick={() => handleGroupSelect(group.id)}
-                    className={`w-full text-left p-3 rounded-lg mb-2 transition-colors ${
+                    className={`w-full text-left p-3 rounded-lg mb-2 transition-colors min-h-[44px] ${
                       selectedGroupId === group.id
                         ? 'bg-primary-100 text-primary-700'
                         : 'hover:bg-gray-100 text-gray-700'
                     }`}
                   >
-                    <div className="font-medium">{group.group_name}</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="font-medium text-sm sm:text-base">{group.group_name}</div>
+                    <div className="text-xs sm:text-sm text-gray-500">
                       {group.member_count || 0} members
                     </div>
                   </button>
@@ -123,20 +123,20 @@ const Messages = () => {
             </div>
 
             {/* Messages Area */}
-            <div className="lg:col-span-3 flex flex-col">
+            <div className="lg:col-span-3 flex flex-col min-h-0">
               {/* Messages Header */}
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
+              <div className="p-3 sm:p-4 border-b border-gray-200 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                       {messageGroups.find(g => g.id === selectedGroupId)?.group_name || 'Select a group'}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500">
                       {messagesData.length} messages
                     </p>
                   </div>
                   {currentUser && (
-                    <div className="text-sm text-gray-600">
+                    <div className="text-xs sm:text-sm text-gray-600">
                       <span className="font-medium">You:</span> {currentUser.name}
                     </div>
                   )}
@@ -144,25 +144,25 @@ const Messages = () => {
               </div>
 
               {/* Messages List */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 min-h-0">
                 {!currentUser ? (
-                  <div className="text-center py-8">
-                    <div className="text-gray-400 mb-4">
-                      <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="text-center py-6 sm:py-8">
+                    <div className="text-gray-400 mb-3 sm:mb-4">
+                      <svg className="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
-                    <p className="text-gray-500 mb-2">Please select your name in the header to start messaging</p>
-                    <p className="text-sm text-gray-400">Use the user selector in the top navigation bar</p>
+                    <p className="text-sm sm:text-base text-gray-500 mb-2">Please select your name in the header to start messaging</p>
+                    <p className="text-xs sm:text-sm text-gray-400">Use the user selector in the top navigation bar</p>
                   </div>
                 ) : messagesData.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-gray-400 mb-4">
-                      <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="text-center py-6 sm:py-8">
+                    <div className="text-gray-400 mb-3 sm:mb-4">
+                      <svg className="mx-auto h-8 w-8 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
                     </div>
-                    <p className="text-gray-500">No messages yet. Start the conversation!</p>
+                    <p className="text-sm sm:text-base text-gray-500">No messages yet. Start the conversation!</p>
                   </div>
                 ) : (
                   messagesData.map(message => (
@@ -185,8 +185,8 @@ const Messages = () => {
                 />
               )}
               {selectedGroupId && !currentUser && (
-                <div className="p-4 border-t border-gray-200 bg-gray-50">
-                  <p className="text-center text-gray-500 text-sm">
+                <div className="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+                  <p className="text-center text-gray-500 text-xs sm:text-sm">
                     Please select your name in the header to send messages
                   </p>
                 </div>

@@ -36,3 +36,4 @@ SELECT * FROM public.users WHERE id = '1e78059f-35a1-486c-8ed2-4142e5e077c6'::uu
 -- SET staff_id = (SELECT id FROM staff WHERE email = 'kylie@thescrubshop.com')
 -- WHERE id = '1e78059f-35a1-486c-8ed2-4142e5e077c6'::uuid;
 
+

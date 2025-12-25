@@ -61,30 +61,53 @@ ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email;
 */
 
--- Step 5: Link user to staff member (if staff exists)
--- First check Step 3 to see if staff_id exists, then:
+-- Step 5: Link user to staff member (if staff exists AND staff_id column exists)
+-- First check if staff_id column exists, then uncomment:
 /*
-UPDATE public.users 
-SET staff_id = (
-    SELECT id FROM public.staff 
-    WHERE email = 'honesthomesales@gmail.com'
-    LIMIT 1
-)
-WHERE email = 'honesthomesales@gmail.com';
+-- Check if column exists first
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'staff_id'
+    ) THEN
+        UPDATE public.users 
+        SET staff_id = (
+            SELECT id FROM public.staff 
+            WHERE email = 'honesthomesales@gmail.com'
+            LIMIT 1
+        )
+        WHERE email = 'honesthomesales@gmail.com';
+    ELSE
+        RAISE NOTICE 'staff_id column does not exist in users table';
+    END IF;
+END $$;
 */
 
 -- Step 6: Verify everything is correct
+-- First check if staff_id column exists
 SELECT 
     u.id as user_id,
     u.email,
     u.name,
     u.role,
-    u.staff_id,
     u.is_active,
+    CASE 
+        WHEN EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'staff_id'
+        ) THEN u.staff_id::text
+        ELSE 'N/A (column does not exist)'
+    END as staff_id,
     s.name as staff_name,
     s.role as staff_role
 FROM public.users u
-LEFT JOIN public.staff s ON u.staff_id = s.id
+LEFT JOIN public.staff s ON (
+    EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'staff_id'
+    ) AND u.staff_id = s.id
+)
 WHERE u.email = 'honesthomesales@gmail.com';
 
 -- Step 7: If you need to create a staff member for this user:

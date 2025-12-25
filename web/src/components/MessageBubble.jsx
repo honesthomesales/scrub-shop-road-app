@@ -9,11 +9,11 @@ const MessageBubble = ({ message, currentUserId }) => {
 
   return (
     <div className={cn(
-      'flex mb-4',
+      'flex mb-3 sm:mb-4',
       isOwnMessage ? 'justify-end' : 'justify-start'
     )}>
       <div className={cn(
-        'max-w-xs lg:max-w-md px-4 py-2 rounded-lg',
+        'max-w-[85%] sm:max-w-xs lg:max-w-md px-3 sm:px-4 py-2 rounded-lg',
         isOwnMessage 
           ? 'bg-primary-600 text-white' 
           : 'bg-gray-100 text-gray-900'
@@ -26,7 +26,7 @@ const MessageBubble = ({ message, currentUserId }) => {
           {senderName}
           {isOwnMessage && ' (You)'}
         </div>
-        <div className="text-sm">
+        <div className="text-sm sm:text-sm break-words">
           {message.message_text}
         </div>
         <div className={cn(

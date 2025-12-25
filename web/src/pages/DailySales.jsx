@@ -343,15 +343,16 @@ const DailySales = () => {
 
         {/* Add/Edit Sale Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-secondary-900">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-0 md:p-4">
+            <div className="bg-white rounded-lg md:rounded-lg p-4 md:p-6 max-w-md w-full h-full md:h-auto md:max-h-[90vh] overflow-y-auto md:mx-4">
+              <div className="flex items-center justify-between mb-4 md:mb-6 sticky top-0 bg-white z-10 pb-4 border-b border-gray-200">
+                <h3 className="text-lg md:text-xl font-semibold text-secondary-900">
                   {editingSale ? 'Edit Sale' : 'Add New Sale'}
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-secondary-400 hover:text-secondary-600 text-2xl"
+                  className="text-secondary-400 hover:text-secondary-600 text-2xl p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  aria-label="Close"
                 >
                   ×
                 </button>
