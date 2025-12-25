@@ -814,7 +814,12 @@ class SupabaseAPI {
   async createUserForStaff(email, password, name, role, staffId) {
     try {
       if (!supabase) {
-        return { success: false, error: 'Supabase not configured' }
+        return { success: false, error: 'Supabase not configured. Please check your environment variables (VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY).' }
+      }
+
+      // Verify Supabase client is properly initialized
+      if (!url || url === 'https://placeholder.supabase.co' || !key || key === 'placeholder-key') {
+        return { success: false, error: 'Supabase credentials not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment variables.' }
       }
 
       // Step 1: Create auth account
@@ -829,11 +834,12 @@ class SupabaseAPI {
       })
 
       if (authError) {
-        return { success: false, error: authError.message }
+        console.error('Supabase auth.signUp error:', authError)
+        return { success: false, error: `Failed to create user account: ${authError.message}` }
       }
 
       if (!authData.user) {
-        return { success: false, error: 'Failed to create auth account' }
+        return { success: false, error: 'Failed to create auth account - no user data returned' }
       }
 
       // Step 2: Wait for the database trigger to create the user profile automatically
@@ -846,14 +852,40 @@ class SupabaseAPI {
       while (!profileExists && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 500 * (attempts + 1)))
         
-        const { data: existingUser } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', authData.user.id)
-          .maybeSingle()
-        
-        if (existingUser) {
-          profileExists = true
+        try {
+          const { data: existingUser, error: queryError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('id', authData.user.id)
+            .maybeSingle()
+          
+          if (queryError) {
+            console.error('Error checking for user profile:', queryError)
+            // If it's a 404 or network error, continue trying
+            if (queryError.code === 'PGRST116' || queryError.message?.includes('Failed to fetch')) {
+              attempts++
+              continue
+            }
+            // For other errors, return early
+            return { 
+              success: false, 
+              error: `Failed to check user profile: ${queryError.message}. Please verify your Supabase configuration and network connection.` 
+            }
+          }
+          
+          if (existingUser) {
+            profileExists = true
+          }
+        } catch (err) {
+          console.error('Exception checking for user profile:', err)
+          if (err.message?.includes('Failed to fetch')) {
+            attempts++
+            continue
+          }
+          return { 
+            success: false, 
+            error: `Network error checking user profile: ${err.message}. Please verify your Supabase URL and network connection.` 
+          }
         }
         attempts++
       }
@@ -868,30 +900,53 @@ class SupabaseAPI {
 
       // Step 3: Update the user profile with staff_id and role
       // Admins can update profiles via RLS policy
-      const { data: updateData, error: updateError } = await supabase
-        .from('users')
-        .update({
-          staff_id: staffId,
-          role: role || 'user',
-          name: name,
-          is_active: true
-        })
-        .eq('id', authData.user.id)
-        .select()
-        .maybeSingle()
+      try {
+        const { data: updateData, error: updateError } = await supabase
+          .from('users')
+          .update({
+            staff_id: staffId,
+            role: role || 'user',
+            name: name,
+            is_active: true
+          })
+          .eq('id', authData.user.id)
+          .select()
+          .maybeSingle()
 
-      if (updateError) {
-        console.error('Failed to update user profile:', updateError)
+        if (updateError) {
+          console.error('Failed to update user profile:', updateError)
+          // Check if it's a network/404 error
+          if (updateError.message?.includes('Failed to fetch') || updateError.code === 'PGRST116') {
+            return { 
+              success: false, 
+              error: `Network error updating user profile. Please verify your Supabase URL (${url}) and network connection. Error: ${updateError.message}` 
+            }
+          }
+          return { 
+            success: false, 
+            error: `User account created but failed to update profile: ${updateError.message}. Auth account email: ${email}. User ID: ${authData.user.id}. Please update manually in database.` 
+          }
+        }
+        
+        return { success: true, data: updateData }
+      } catch (err) {
+        console.error('Exception updating user profile:', err)
         return { 
           success: false, 
-          error: `User account created but failed to update profile: ${updateError.message}. Auth account email: ${email}. User ID: ${authData.user.id}. Please update manually in database.` 
+          error: `Network error updating user profile: ${err.message}. Please verify your Supabase configuration.` 
         }
       }
 
-      return { success: true, data: updateData }
     } catch (error) {
       console.error('Failed to create user for staff:', error)
-      return { success: false, error: error.message }
+      // Provide more helpful error messages
+      if (error.message?.includes('Failed to fetch')) {
+        return { 
+          success: false, 
+          error: `Network error: Unable to connect to Supabase. Please verify your Supabase URL (${url || 'not configured'}) and network connection.` 
+        }
+      }
+      return { success: false, error: error.message || 'Unknown error occurred' }
     }
   }
 

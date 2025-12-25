@@ -11,7 +11,6 @@ import {
   X,
   ChevronDown,
   ChevronRight,
-  User,
   Upload,
   TrendingUp,
   Car,
@@ -31,7 +30,6 @@ import { APP_VERSION } from '../config/version'
 const Header = () => {
   const location = useLocation()
   const { currentSheet, setCurrentSheet, currentUser, setCurrentUser, staffData, user } = useApp()
-  const [showUserMenu, setShowUserMenu] = useState(false)
   const [showRoadMenu, setShowRoadMenu] = useState(false)
   const [showAdminMenu, setShowAdminMenu] = useState(false)
   const [showDashboardMenu, setShowDashboardMenu] = useState(false)
@@ -39,7 +37,6 @@ const Header = () => {
   const [mobileDashboardOpen, setMobileDashboardOpen] = useState(false)
   const [mobileRoadOpen, setMobileRoadOpen] = useState(false)
   const [mobileAdminOpen, setMobileAdminOpen] = useState(false)
-  const userMenuRef = useRef(null)
   const roadMenuRef = useRef(null)
   const adminMenuRef = useRef(null)
   const dashboardMenuRef = useRef(null)
@@ -47,9 +44,6 @@ const Header = () => {
   // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
-        setShowUserMenu(false)
-      }
       if (roadMenuRef.current && !roadMenuRef.current.contains(event.target)) {
         setShowRoadMenu(false)
       }
@@ -88,18 +82,6 @@ const Header = () => {
       return location.pathname === '/'
     }
     return location.pathname.startsWith(path)
-  }
-
-  const handleSheetToggle = () => {
-    const newSheet = currentSheet === 'TRAILER_HISTORY' ? 'CAMPER_HISTORY' : 'TRAILER_HISTORY'
-    setCurrentSheet(newSheet)
-  }
-
-  const handleUserSelect = (userId) => {
-    const selectedUser = staffData.find(user => user.id === parseInt(userId))
-
-    setCurrentUser(selectedUser)
-    setShowUserMenu(false)
   }
 
   const allMainNavigation = [
@@ -349,59 +331,10 @@ const Header = () => {
             )}
           </nav>
 
-          {/* Sheet Toggle, User Selector, and Auth Status */}
+          {/* Auth Status and Version */}
           <div className="flex items-center space-x-4">
-            {/* Version Display - More Prominent */}
-            <div className="flex items-center px-3 py-1.5 bg-blue-50 rounded-md text-xs font-semibold text-blue-700 border border-blue-200 shadow-sm" title={`App Version ${APP_VERSION}`}>
-              <span className="font-mono">v{APP_VERSION}</span>
-            </div>
-            
             <AuthStatus />
             
-            {/* Current User Role Indicator */}
-            {currentUser && (
-              <div className="hidden sm:flex items-center px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">
-                <span className="font-medium">{currentUser.role || 'No Role'}</span>
-              </div>
-            )}
-            
-            {/* User Selector */}
-            <div className="relative" ref={userMenuRef}>
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <User className="w-4 h-4" />
-                <span className="hidden sm:inline">
-                  {currentUser ? `${currentUser.name} (${currentUser.role || 'No Role'})` : 'Select User'}
-                </span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
-              
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Select your name
-                  </div>
-                  {staffData.map(user => (
-                    <button
-                      key={user.id}
-                      onClick={() => handleUserSelect(user.id)}
-                      className={cn(
-                        'w-full text-left px-3 py-2 text-sm hover:bg-gray-100 transition-colors',
-                        currentUser?.id === user.id ? 'bg-primary-50 text-primary-700' : 'text-gray-700'
-                      )}
-                    >
-                      <div>
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-xs text-gray-500">{user.role || 'No Role'}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Mobile Menu Button - Hamburger */}
             <button
               type="button"
@@ -415,6 +348,11 @@ const Header = () => {
                 <Menu className="h-6 w-6" />
               )}
             </button>
+            
+            {/* Version Display - Far Right */}
+            <div className="flex items-center px-3 py-1.5 bg-blue-50 rounded-md text-xs font-semibold text-blue-700 border border-blue-200 shadow-sm" title={`App Version ${APP_VERSION}`}>
+              <span className="font-mono">v{APP_VERSION}</span>
+            </div>
           </div>
         </div>
 

@@ -291,31 +291,7 @@ const PWARegistration = () => {
     )
   }
 
-  // Show manual install button when app is installable but prompt hasn't fired
-  if (showManualInstall) {
-    return (
-      <div className="fixed bottom-4 left-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 md:max-w-md md:left-auto md:right-4 animate-slide-up">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 pr-4">
-            <h3 className="font-semibold text-lg mb-2">Install Scrub Shop App</h3>
-            <div className="text-sm opacity-90 space-y-1">
-              <p>1. Tap the 3-dot menu (⋮) in the top right</p>
-              <p>2. Select "Add to Home Screen"</p>
-              <p className="text-xs opacity-75 mt-2">The app will install and work like a native app!</p>
-            </div>
-          </div>
-          <button
-            onClick={handleManualInstallDismiss}
-            className="px-3 py-2 text-sm bg-green-700 hover:bg-green-800 rounded transition-colors min-h-[44px] min-w-[60px] touch-manipulation flex-shrink-0"
-            aria-label="Dismiss"
-          >
-            Got it
-          </button>
-        </div>
-      </div>
-    )
-  }
-
+  // Manual install prompt removed per user request
   return null
 }
 
