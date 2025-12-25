@@ -96,13 +96,25 @@ const PWADiagnostics = () => {
             
             if (response.ok) {
               const contentType = response.headers.get('content-type')
-              if (!contentType || !contentType.includes('json')) {
+              if (!contentType || (!contentType.includes('json') && !contentType.includes('text'))) {
                 results.errors.push(`Manifest has wrong content-type: ${contentType || 'none'}`)
+                lastError = `Wrong content-type: ${contentType}`
+                continue // Try next path
               }
               
-              const manifest = await response.json()
-              results.manifest = `accessible (${manifestPath})`
-              manifestFound = true
+              try {
+                const manifest = await response.json()
+                if (!manifest.name || !manifest.icons) {
+                  throw new Error('Invalid manifest: missing required fields')
+                }
+                results.manifest = 'accessible'
+                manifestFound = true
+                console.log('✅ Manifest is accessible at:', manifestPath, manifest)
+              } catch (jsonError) {
+                results.errors.push(`Manifest JSON parse error: ${jsonError.message}`)
+                lastError = `JSON parse error: ${jsonError.message}`
+                continue // Try next path
+              }
               
               // Log manifest details
               console.log('📋 Manifest loaded:', {
@@ -149,7 +161,11 @@ const PWADiagnostics = () => {
                     results.errors.push(`Icon error: ${icon.src} - ${error.message}`)
                   }
                 }
-                results.icons = iconErrors === 0 ? `accessible (${iconSuccess} checked)` : `${iconSuccess} ok, ${iconErrors} errors`
+                if (iconErrors === 0) {
+                  results.icons = 'accessible'
+                } else {
+                  results.icons = 'some-errors'
+                }
               } else {
                 results.icons = 'missing'
                 results.errors.push('No icons in manifest')
@@ -230,13 +246,15 @@ const PWADiagnostics = () => {
 
   const getStatusColor = (status) => {
     if (status === 'active' || status === 'accessible' || status === 'yes') return 'text-green-600'
-    if (status === 'checking') return 'text-yellow-600'
+    if (status === 'checking' || status?.includes('checking')) return 'text-yellow-600'
+    if (status?.startsWith('accessible')) return 'text-green-600' // Handle "accessible (path)" format
     return 'text-red-600'
   }
 
   const getStatusIcon = (status) => {
     if (status === 'active' || status === 'accessible' || status === 'yes') return '✅'
-    if (status === 'checking') return '⏳'
+    if (status === 'checking' || status?.includes('checking')) return '⏳'
+    if (status?.startsWith('accessible')) return '✅' // Handle "accessible (path)" format
     return '❌'
   }
 

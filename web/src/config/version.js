@@ -1,5 +1,5 @@
 // Application Version Information
-export const APP_VERSION = '1.4.0-MANIFEST-FIX'
+export const APP_VERSION = '1.5.0-STATUS-FIX'
 export const FEATURES_VERSION = {
   userManagement: '1.0.0',
   expenseCategorization: '1.0.0',
