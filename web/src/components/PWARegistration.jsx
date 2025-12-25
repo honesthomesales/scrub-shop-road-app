@@ -90,14 +90,21 @@ const PWARegistration = () => {
       }
 
       try {
-        // Check if manifest is accessible (relative path works with base path)
-        const manifestResponse = await fetch('/manifest.webmanifest')
+        // Check if manifest is accessible (use full path with base)
+        const manifestPath = '/scrub-shop-road-app/manifest.webmanifest'
+        const manifestResponse = await fetch(manifestPath)
         if (!manifestResponse.ok) {
-          console.error('❌ Manifest not accessible:', manifestResponse.status)
+          console.error('❌ Manifest not accessible:', manifestResponse.status, manifestPath)
           return
         }
         const manifest = await manifestResponse.json()
         console.log('✅ Manifest accessible:', manifest.name)
+        console.log('📋 Manifest details:', {
+          start_url: manifest.start_url,
+          scope: manifest.scope,
+          display: manifest.display,
+          icons: manifest.icons?.length || 0
+        })
 
         // Check if icons are accessible
         const icon192 = manifest.icons?.find(icon => icon.sizes === '192x192')
