@@ -69,12 +69,19 @@ const PWADiagnostics = () => {
         for (const manifestPath of manifestPaths) {
           try {
             const response = await fetch(manifestPath)
-            console.log(`🔍 Trying manifest path: ${manifestPath}`, {
+            const responseInfo = {
               status: response.status,
               statusText: response.statusText,
               ok: response.ok,
-              headers: Object.fromEntries(response.headers.entries())
-            })
+              contentType: response.headers.get('content-type'),
+              url: response.url
+            }
+            console.log(`🔍 Trying manifest path: ${manifestPath}`, responseInfo)
+            
+            // Log to errors for user visibility
+            if (!response.ok) {
+              results.errors.push(`${manifestPath}: HTTP ${response.status} ${response.statusText}`)
+            }
             
             if (response.ok) {
               const contentType = response.headers.get('content-type')
