@@ -1,5 +1,5 @@
 // Application Version Information
-export const APP_VERSION = '1.8.0'
+export const APP_VERSION = '1.8.1'
 export const FEATURES_VERSION = {
   userManagement: '1.0.0',
   expenseCategorization: '1.0.0',

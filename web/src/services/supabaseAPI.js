@@ -900,21 +900,61 @@ class SupabaseAPI {
 
       // Step 3: Update the user profile with staff_id and role
       // Admins can update profiles via RLS policy
+      // Note: staff_id column may not exist in all database setups
       try {
+        // Build update object conditionally - only include staff_id if provided
+        const updateData_obj = {
+          role: role || 'user',
+          name: name,
+          is_active: true
+        }
+        
+        // Only include staff_id if it's provided (not null)
+        // If the column doesn't exist, this will fail gracefully with a clear error
+        if (staffId !== null && staffId !== undefined) {
+          updateData_obj.staff_id = staffId
+        }
+        
         const { data: updateData, error: updateError } = await supabase
           .from('users')
-          .update({
-            staff_id: staffId,
-            role: role || 'user',
-            name: name,
-            is_active: true
-          })
+          .update(updateData_obj)
           .eq('id', authData.user.id)
           .select()
           .maybeSingle()
 
         if (updateError) {
           console.error('Failed to update user profile:', updateError)
+          // Check if it's a missing column error (staff_id doesn't exist)
+          if (updateError.message?.includes("Could not find the 'staff_id' column") || 
+              updateError.message?.includes("column staff_id does not exist")) {
+            // Try again without staff_id
+            console.log('staff_id column not found, retrying without it...')
+            const { data: retryData, error: retryError } = await supabase
+              .from('users')
+              .update({
+                role: role || 'user',
+                name: name,
+                is_active: true
+              })
+              .eq('id', authData.user.id)
+              .select()
+              .maybeSingle()
+            
+            if (retryError) {
+              return { 
+                success: false, 
+                error: `User account created but failed to update profile: ${retryError.message}. Auth account email: ${email}. User ID: ${authData.user.id}. Please update manually in database.` 
+              }
+            }
+            
+            // Success without staff_id
+            return { 
+              success: true, 
+              data: retryData,
+              warning: staffId ? `User created successfully, but staff_id column doesn't exist in your database. Staff ID ${staffId} was not linked. To link staff, add the staff_id column to your users table.` : undefined
+            }
+          }
+          
           // Check if it's a network/404 error
           if (updateError.message?.includes('Failed to fetch') || updateError.code === 'PGRST116') {
             return { 
