@@ -22,18 +22,29 @@ const PWADiagnostics = () => {
       // Check Service Worker
       if ('serviceWorker' in navigator) {
         try {
+          // Wait a bit for service worker to potentially register
+          await new Promise(resolve => setTimeout(resolve, 500))
+          
           const registrations = await navigator.serviceWorker.getRegistrations()
           if (registrations.length > 0) {
             const registration = registrations[0]
             const worker = registration.active || registration.installing || registration.waiting
-            if (worker && worker.state === 'activated') {
-              results.serviceWorker = 'active'
+            if (worker) {
+              if (worker.state === 'activated') {
+                results.serviceWorker = 'active'
+              } else {
+                results.serviceWorker = `${worker.state}`
+                if (worker.state !== 'activated') {
+                  results.errors.push(`Service Worker is ${worker.state}, needs to be activated`)
+                }
+              }
             } else {
-              results.serviceWorker = worker?.state || 'waiting'
+              results.serviceWorker = 'no-worker'
+              results.errors.push('Service Worker registered but no worker instance found')
             }
           } else {
             results.serviceWorker = 'not-registered'
-            results.errors.push('Service Worker not registered')
+            results.errors.push('Service Worker not registered - check if registerSW.js loaded')
           }
         } catch (error) {
           results.serviceWorker = 'error'
@@ -41,40 +52,88 @@ const PWADiagnostics = () => {
         }
       } else {
         results.serviceWorker = 'not-supported'
-        results.errors.push('Service Workers not supported')
+        results.errors.push('Service Workers not supported in this browser')
       }
 
       // Check Manifest
       try {
-        const manifestPath = '/scrub-shop-road-app/manifest.webmanifest'
-        const response = await fetch(manifestPath)
-        if (response.ok) {
-          const manifest = await response.json()
-          results.manifest = 'accessible'
-          
-          // Check icons
-          if (manifest.icons && manifest.icons.length > 0) {
-            let iconErrors = 0
-            for (const icon of manifest.icons.slice(0, 2)) { // Check first 2 icons
-              try {
-                const iconResponse = await fetch(icon.src)
-                if (!iconResponse.ok) {
-                  iconErrors++
-                  results.errors.push(`Icon not accessible: ${icon.src}`)
+        // Try both paths
+        const manifestPaths = [
+          '/scrub-shop-road-app/manifest.webmanifest',
+          '/manifest.webmanifest',
+          './manifest.webmanifest'
+        ]
+        
+        let manifestFound = false
+        for (const manifestPath of manifestPaths) {
+          try {
+            const response = await fetch(manifestPath)
+            if (response.ok) {
+              const manifest = await response.json()
+              results.manifest = `accessible (${manifestPath})`
+              manifestFound = true
+              
+              // Log manifest details
+              console.log('📋 Manifest loaded:', {
+                name: manifest.name,
+                start_url: manifest.start_url,
+                scope: manifest.scope,
+                display: manifest.display,
+                icons: manifest.icons?.length || 0
+              })
+              
+              // Check icons
+              if (manifest.icons && manifest.icons.length > 0) {
+                let iconErrors = 0
+                let iconSuccess = 0
+                for (const icon of manifest.icons.slice(0, 2)) { // Check first 2 icons
+                  try {
+                    // Try absolute path first, then relative
+                    const iconPaths = [
+                      icon.src.startsWith('/') ? icon.src : `/${icon.src}`,
+                      icon.src,
+                      `/scrub-shop-road-app/${icon.src.replace(/^\//, '')}`
+                    ]
+                    
+                    let iconFound = false
+                    for (const iconPath of iconPaths) {
+                      try {
+                        const iconResponse = await fetch(iconPath)
+                        if (iconResponse.ok) {
+                          iconSuccess++
+                          iconFound = true
+                          break
+                        }
+                      } catch (e) {
+                        // Try next path
+                      }
+                    }
+                    
+                    if (!iconFound) {
+                      iconErrors++
+                      results.errors.push(`Icon not accessible: ${icon.src} (tried: ${iconPaths.join(', ')})`)
+                    }
+                  } catch (error) {
+                    iconErrors++
+                    results.errors.push(`Icon error: ${icon.src} - ${error.message}`)
+                  }
                 }
-              } catch (error) {
-                iconErrors++
-                results.errors.push(`Icon error: ${icon.src}`)
+                results.icons = iconErrors === 0 ? `accessible (${iconSuccess} checked)` : `${iconSuccess} ok, ${iconErrors} errors`
+              } else {
+                results.icons = 'missing'
+                results.errors.push('No icons in manifest')
               }
+              break
             }
-            results.icons = iconErrors === 0 ? 'accessible' : 'some-errors'
-          } else {
-            results.icons = 'missing'
-            results.errors.push('No icons in manifest')
+          } catch (e) {
+            // Try next path
+            continue
           }
-        } else {
+        }
+        
+        if (!manifestFound) {
           results.manifest = 'not-accessible'
-          results.errors.push(`Manifest not accessible: ${response.status}`)
+          results.errors.push(`Manifest not found at any path (tried: ${manifestPaths.join(', ')})`)
         }
       } catch (error) {
         results.manifest = 'error'
@@ -91,15 +150,20 @@ const PWADiagnostics = () => {
       setDiagnostics(results)
     }
 
-    // Run diagnostics after a short delay to allow service worker to register
-    const timer = setTimeout(runDiagnostics, 2000)
-    return () => clearTimeout(timer)
+    // Run diagnostics immediately and then again after delays
+    runDiagnostics()
+    const timer1 = setTimeout(runDiagnostics, 2000)
+    const timer2 = setTimeout(runDiagnostics, 5000)
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+    }
   }, [])
 
-  // Only show if there are errors or if not installable
-  if (diagnostics.installable === 'yes' && diagnostics.errors.length === 0) {
-    return null
-  }
+  // Always show diagnostics for now to help debug
+  // if (diagnostics.installable === 'yes' && diagnostics.errors.length === 0) {
+  //   return null
+  // }
 
   const getStatusColor = (status) => {
     if (status === 'active' || status === 'accessible' || status === 'yes') return 'text-green-600'
@@ -114,8 +178,16 @@ const PWADiagnostics = () => {
   }
 
   return (
-    <div className="fixed top-20 right-4 bg-white border border-gray-300 rounded-lg shadow-lg p-4 z-50 max-w-sm text-xs">
-      <h3 className="font-semibold mb-2 text-sm">PWA Diagnostics</h3>
+    <div className="fixed top-20 right-4 bg-white border-2 border-blue-300 rounded-lg shadow-xl p-4 z-50 max-w-sm text-xs">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-semibold text-sm">PWA Diagnostics</h3>
+        <button
+          onClick={() => setDiagnostics({ serviceWorker: 'checking', manifest: 'checking', icons: 'checking', installable: 'checking', errors: [] })}
+          className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+        >
+          Refresh
+        </button>
+      </div>
       <div className="space-y-1">
         <div className="flex justify-between">
           <span>Service Worker:</span>
