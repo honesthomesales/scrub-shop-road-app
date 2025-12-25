@@ -102,31 +102,38 @@ const PWADiagnostics = () => {
                 continue // Try next path
               }
               
+              let manifest
               try {
-                const manifest = await response.json()
-                if (!manifest.name || !manifest.icons) {
-                  throw new Error('Invalid manifest: missing required fields')
+                const text = await response.text()
+                console.log('📄 Manifest raw response:', text.substring(0, 200))
+                
+                try {
+                  manifest = JSON.parse(text)
+                } catch (parseError) {
+                  throw new Error(`Invalid JSON: ${parseError.message}. Content: ${text.substring(0, 100)}`)
                 }
+                
+                if (!manifest || typeof manifest !== 'object') {
+                  throw new Error('Manifest is not a valid object')
+                }
+                
+                if (!manifest.name || !manifest.icons) {
+                  throw new Error(`Invalid manifest: missing required fields. Has name: ${!!manifest.name}, has icons: ${!!manifest.icons}`)
+                }
+                
                 results.manifest = 'accessible'
                 manifestFound = true
-                console.log('✅ Manifest is accessible at:', manifestPath, manifest)
-              } catch (jsonError) {
-                results.errors.push(`Manifest JSON parse error: ${jsonError.message}`)
-                lastError = `JSON parse error: ${jsonError.message}`
-                continue // Try next path
-              }
-              
-              // Log manifest details
-              console.log('📋 Manifest loaded:', {
-                name: manifest.name,
-                start_url: manifest.start_url,
-                scope: manifest.scope,
-                display: manifest.display,
-                icons: manifest.icons?.length || 0
-              })
-              
-              // Check icons
-              if (manifest.icons && manifest.icons.length > 0) {
+                console.log('✅ Manifest is accessible at:', manifestPath)
+                console.log('📋 Manifest content:', {
+                  name: manifest.name,
+                  icons: manifest.icons?.length || 0,
+                  start_url: manifest.start_url,
+                  scope: manifest.scope,
+                  display: manifest.display
+                })
+                
+                // Check icons
+                if (manifest.icons && manifest.icons.length > 0) {
                 let iconErrors = 0
                 let iconSuccess = 0
                 for (const icon of manifest.icons.slice(0, 2)) { // Check first 2 icons
@@ -166,11 +173,20 @@ const PWADiagnostics = () => {
                 } else {
                   results.icons = 'some-errors'
                 }
-              } else {
-                results.icons = 'missing'
-                results.errors.push('No icons in manifest')
+                } else {
+                  results.icons = 'missing'
+                  results.errors.push('No icons in manifest')
+                }
+                
+                // Successfully processed manifest, break out of path loop
+                break
+              } catch (jsonError) {
+                const errorMsg = `Manifest parse error at ${manifestPath}: ${jsonError.message}`
+                results.errors.push(errorMsg)
+                console.error('❌', errorMsg)
+                lastError = errorMsg
+                continue // Try next path
               }
-              break
             } else {
               lastError = `Status ${response.status}: ${response.statusText}`
               results.errors.push(`${manifestPath}: ${response.status} ${response.statusText}`)
