@@ -5,6 +5,7 @@ const PWARegistration = () => {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false)
   const [isInstallable, setIsInstallable] = useState(false)
   const [swStatus, setSwStatus] = useState('checking')
+  const [showManualInstall, setShowManualInstall] = useState(false)
 
   useEffect(() => {
     // Global error handlers for better mobile error handling
@@ -241,9 +242,24 @@ const PWARegistration = () => {
     // The prompt can be shown again if needed
   }
 
+  const handleManualInstallDismiss = () => {
+    setShowManualInstall(false)
+    console.log('Manual install prompt dismissed')
+  }
+
   // Show manual install button if app is installable but beforeinstallprompt hasn't fired
-  // This helps when Chrome's engagement heuristics prevent the automatic prompt
-  const showManualInstall = isInstallable && !deferredPrompt && !showInstallPrompt
+  useEffect(() => {
+    // Show manual install button if app is installable but prompt hasn't fired after 3 seconds
+    if (isInstallable && !deferredPrompt && !showInstallPrompt) {
+      const timer = setTimeout(() => {
+        console.log('Showing manual install button - beforeinstallprompt has not fired')
+        setShowManualInstall(true)
+      }, 3000)
+      return () => clearTimeout(timer)
+    } else {
+      setShowManualInstall(false)
+    }
+  }, [isInstallable, deferredPrompt, showInstallPrompt])
 
   // Show install prompt if beforeinstallprompt fired
   if (showInstallPrompt && deferredPrompt) {
@@ -279,14 +295,18 @@ const PWARegistration = () => {
   if (showManualInstall) {
     return (
       <div className="fixed bottom-4 left-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 md:max-w-md md:left-auto md:right-4 animate-slide-up">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg">Install Scrub Shop App</h3>
-            <p className="text-sm opacity-90 mt-1">Tap the menu (⋮) → "Install app" to install</p>
+        <div className="flex items-start justify-between">
+          <div className="flex-1 pr-4">
+            <h3 className="font-semibold text-lg mb-2">Install Scrub Shop App</h3>
+            <div className="text-sm opacity-90 space-y-1">
+              <p>1. Tap the 3-dot menu (⋮) in the top right</p>
+              <p>2. Select "Add to Home Screen"</p>
+              <p className="text-xs opacity-75 mt-2">The app will install and work like a native app!</p>
+            </div>
           </div>
           <button
-            onClick={handleDismiss}
-            className="px-4 py-2 text-sm bg-green-700 hover:bg-green-800 rounded transition-colors min-h-[44px] min-w-[80px] touch-manipulation"
+            onClick={handleManualInstallDismiss}
+            className="px-3 py-2 text-sm bg-green-700 hover:bg-green-800 rounded transition-colors min-h-[44px] min-w-[60px] touch-manipulation flex-shrink-0"
             aria-label="Dismiss"
           >
             Got it
