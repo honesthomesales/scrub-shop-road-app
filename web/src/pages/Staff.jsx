@@ -102,6 +102,68 @@ const Staff = () => {
     // Get the staff ID
     let staffId = editingStaff ? editingStaff.id : null
     
+    // If updating staff and role changed, sync the linked user account role
+    if (editingStaff && formData.role && formData.role !== editingStaff.role) {
+      try {
+        const { getSupabase } = await import('../services/supabaseAPI')
+        const supabase = getSupabase()
+        if (supabase) {
+          // Map staff role to user role
+          let userRole = 'user' // Default
+          if (formData.role === 'Admin') {
+            userRole = 'admin'
+          } else if (formData.role === 'Manager') {
+            userRole = 'manager'
+          }
+          
+          // Try to find linked user account by staff_id first (if column exists)
+          let updated = false
+          
+          // Check if staff_id column exists by trying to query it
+          try {
+            const { data: userByStaffId } = await supabase
+              .from('users')
+              .select('id')
+              .eq('staff_id', staffId)
+              .maybeSingle()
+            
+            if (userByStaffId) {
+              // Update by staff_id
+              const { error } = await supabase
+                .from('users')
+                .update({ role: userRole })
+                .eq('staff_id', staffId)
+              
+              if (!error) {
+                updated = true
+                console.log(`Synced user account role to ${userRole} for staff member ${formData.name} (by staff_id)`)
+              }
+            }
+          } catch (staffIdError) {
+            // staff_id column doesn't exist, try email fallback
+            console.log('staff_id column not available, using email fallback')
+          }
+          
+          // Fallback: update by email if staff_id update didn't work
+          if (!updated) {
+            const { error: emailError } = await supabase
+              .from('users')
+              .update({ role: userRole })
+              .eq('email', formData.email)
+            
+            if (!emailError) {
+              console.log(`Synced user account role to ${userRole} for staff member ${formData.name} (by email)`)
+            } else {
+              console.warn('Failed to sync user account role:', emailError)
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to sync user account role:', error)
+        // Don't block the staff update if user sync fails
+      }
+    }
+    
     // If creating new staff, query database to get the ID by email (since email is unique)
     if (!staffId && !editingStaff) {
       try {
